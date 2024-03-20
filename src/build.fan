@@ -22,6 +22,7 @@ class Build : BuildPod
                "org.uri":      "https://xetobase.com/",
                "license.name": "Commercial"]
     depends = ["sys 1.0",
+               "sql 1.0",
                "xeto 3.1.9",
               ]
     srcDirs = [`fan/`]

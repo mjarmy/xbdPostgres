@@ -5,6 +5,8 @@
 // History:
 //   19 Mar 2024  Mike Jarmy  Creation
 //
+
+using sql
 using xeto
 
 **
@@ -15,9 +17,24 @@ class DbXetoSpec
   Void main()
   {
     dx := DbXetoSpec()
-    //dx.openDb
+    dx.openConn
     dx.populateAll
-    //dx.closeDb
+    dx.closeConn
+  }
+
+  Void openConn()
+  {
+    conn = SqlConn.open(
+      "jdbc:postgresql://localhost/postgres", "xbd", "s3crkEt")
+
+    addSpec := conn.sql(
+      "insert into spec (qname) values (@qname)").prepare
+  }
+
+  Void closeConn()
+  {
+    addSpec.close
+    conn.close
   }
 
   // Populate all the specs from every library
@@ -37,54 +54,53 @@ class DbXetoSpec
     // Ignore synthetic types like "_0" for now
     if (spec.name.startsWith("_")) return
 
-    debug("${spec.qname}")
-    //writeDbSpec(spec.qname)
-    //traverseHierarchy(spec, [,])
+    echo("${spec.qname}")
+    conn.sql("insert into spec (qname) values (@qname)")
+      .execute(["qname":spec.qname])
   }
 
-  //// Traverse the specs inheritance hierarchy 'backwards' up to the root.
-  //// If the spec has multiple inheritance, multiple paths will be generated.
-  //internal Void traverseHierarchy(Spec spec, Str[] path)
-  //{
-  //  path.add(spec.qname)
-
-  //  // Mutliple inheritance
-  //  if (spec.isBaseAnd)
-  //  {
-  //    spec.ofs.each |b| { traverseHierarchy(b, path) }
-  //  }
-  //  // Root
-  //  else if (spec.base == null)
-  //  {
-  //    // generate a path
-  //    populateHierarchy(path)
-  //  }
-  //  // Single inheritance
-  //  else
-  //  {
-  //    traverseHierarchy(spec.base, path)
-  //  }
-
-  //  path.removeAt(-1)
-  //}
-
-  //internal Void populateHierarchy(Str[] path)
-  //{
-  //  Str[] forwards := [,]
-  //  path.eachr |s| { forwards.add(s) }
-  //  debug("    $forwards")
-  //}
-
-  internal Void debug(Str msg)
-  {
-    echo(msg)
-  }
+//  // Traverse the specs inheritance hierarchy 'backwards' up to the root.
+//  // If the spec has multiple inheritance, multiple paths will be generated.
+//  internal Void traverseHierarchy(Spec spec, Str[] path)
+//  {
+//    path.add(spec.qname)
+//
+//    // Mutliple inheritance
+//    if (spec.isBaseAnd)
+//    {
+//      spec.ofs.each |b| { traverseHierarchy(b, path) }
+//    }
+//    // Root
+//    else if (spec.base == null)
+//    {
+//      // generate a path
+//      populateHierarchy(path)
+//    }
+//    // Single inheritance
+//    else
+//    {
+//      traverseHierarchy(spec.base, path)
+//    }
+//
+//    path.removeAt(-1)
+//  }
+//
+//  internal Void populateHierarchy(Str[] path)
+//  {
+//    Str[] forwards := [,]
+//    path.eachr |s| { forwards.add(s) }
+//    debug("    $forwards")
+//  }
+//
+//  internal Void debug(Str msg)
+//  {
+//    echo(msg)
+//  }
 
 //////////////////////////////////////////////////////////////////////////
-// Native
+// Fields
 //////////////////////////////////////////////////////////////////////////
 
-  //native Void openDb()
-  //native Void closeDb()
-  //native Int writeDbSpec(Str specName)
+  SqlConn? conn
+  Statement? addSpec
 }
