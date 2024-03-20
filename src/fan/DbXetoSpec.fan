@@ -39,41 +39,41 @@ class DbXetoSpec
 
     debug("${spec.qname}")
     //writeDbSpec(spec.qname)
-    traverseHierarchy(spec, [,])
+    //traverseHierarchy(spec, [,])
   }
 
-  // Traverse the specs inheritance hierarchy 'backwards' up to the root.
-  // If the spec has multiple inheritance, multiple paths will be generated.
-  internal Void traverseHierarchy(Spec spec, Str[] path)
-  {
-    path.add(spec.qname)
+  //// Traverse the specs inheritance hierarchy 'backwards' up to the root.
+  //// If the spec has multiple inheritance, multiple paths will be generated.
+  //internal Void traverseHierarchy(Spec spec, Str[] path)
+  //{
+  //  path.add(spec.qname)
 
-    // Mutliple inheritance
-    if (spec.isBaseAnd)
-    {
-      spec.ofs.each |b| { traverseHierarchy(b, path) }
-    }
-    // Root
-    else if (spec.base == null)
-    {
-      // generate a path
-      populateHierarchy(path)
-    }
-    // Single inheritance
-    else
-    {
-      traverseHierarchy(spec.base, path)
-    }
+  //  // Mutliple inheritance
+  //  if (spec.isBaseAnd)
+  //  {
+  //    spec.ofs.each |b| { traverseHierarchy(b, path) }
+  //  }
+  //  // Root
+  //  else if (spec.base == null)
+  //  {
+  //    // generate a path
+  //    populateHierarchy(path)
+  //  }
+  //  // Single inheritance
+  //  else
+  //  {
+  //    traverseHierarchy(spec.base, path)
+  //  }
 
-    path.removeAt(-1)
-  }
+  //  path.removeAt(-1)
+  //}
 
-  internal Void populateHierarchy(Str[] path)
-  {
-    Str[] forwards := [,]
-    path.eachr |s| { forwards.add(s) }
-    debug("    $forwards")
-  }
+  //internal Void populateHierarchy(Str[] path)
+  //{
+  //  Str[] forwards := [,]
+  //  path.eachr |s| { forwards.add(s) }
+  //  debug("    $forwards")
+  //}
 
   internal Void debug(Str msg)
   {
