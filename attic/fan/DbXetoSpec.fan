@@ -6,7 +6,7 @@
 //   19 Mar 2024  Mike Jarmy  Creation
 //
 
-using sql
+//using sql
 using xeto
 
 **
@@ -22,20 +22,9 @@ class DbXetoSpec
     dx.closeConn
   }
 
-  Void openConn()
-  {
-    conn = SqlConn.open(
-      "jdbc:postgresql://localhost/postgres", "xbd", "s3crkEt")
-
-    addSpec := conn.sql(
-      "insert into spec (qname) values (@qname)").prepare
-  }
-
-  Void closeConn()
-  {
-    addSpec.close
-    conn.close
-  }
+  native Void openConn()
+  native Void closeConn()
+  native Void writeSpec(Str spec)
 
   // Populate all the specs from every library
   Void populateAll()
@@ -54,9 +43,7 @@ class DbXetoSpec
     // Ignore synthetic types like "_0" for now
     if (spec.name.startsWith("_")) return
 
-    echo("${spec.qname}")
-    conn.sql("insert into spec (qname) values (@qname)")
-      .execute(["qname":spec.qname])
+    writeSpec(spec.qname)
   }
 
 //  // Traverse the specs inheritance hierarchy 'backwards' up to the root.
@@ -96,11 +83,4 @@ class DbXetoSpec
 //  {
 //    echo(msg)
 //  }
-
-//////////////////////////////////////////////////////////////////////////
-// Fields
-//////////////////////////////////////////////////////////////////////////
-
-  SqlConn? conn
-  Statement? addSpec
 }

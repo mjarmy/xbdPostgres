@@ -21,8 +21,8 @@ class Build : BuildPod
     meta    = ["org.name":     "XetoBase",
                "org.uri":      "https://xetobase.com/",
                "license.name": "Commercial"]
-    depends = ["sys @{fan.depend}",
-               "xeto @{hx.depend}",
+    depends = ["sys 1.0",
+               "xeto 3.1.9",
               ]
     srcDirs = [`fan/`]
     javaDirs = [`java/`]
