@@ -41,10 +41,10 @@ public class DbSpec extends FanObj
     props.setProperty("user", username);
     props.setProperty("password", password);
     this.conn = DriverManager.getConnection(uri, props);
-    //conn.setAutoCommit(false);
+    conn.setAutoCommit(false);
 
     this.insertSpec = conn.prepareStatement(
-      "insert into spec (qname) values (?)");
+      "insert into spec (qname, inherits_from) values (?, ?)");
   }
 
   public void close() throws Exception
@@ -53,12 +53,16 @@ public class DbSpec extends FanObj
     conn.close();
   }
 
-  public void writeSpec(String name) throws Exception
+  public void writeSpec(String name, fan.sys.List inherits) throws Exception
   {
-    System.out.println("writeSpec: " + name);
+    String[] arr = new String[(int)inherits.size()];
+    for (int i = 0; i < inherits.size(); i++)
+      arr[i] = (String) inherits.get(i);
+
     insertSpec.setString(1, name);
+    insertSpec.setObject(2, arr);
     insertSpec.executeUpdate();
-    //conn.commit();
+    conn.commit();
   }
 
 //////////////////////////////////////////////////////////////////////////

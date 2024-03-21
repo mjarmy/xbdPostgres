@@ -11,5 +11,5 @@ native class DbSpec
   native Void open(Str uri, Str username, Str password)
   native Void close()
 
-  native Void writeSpec(Str name)
+  native Void writeSpec(Str name, Str[] inherits)
 }
