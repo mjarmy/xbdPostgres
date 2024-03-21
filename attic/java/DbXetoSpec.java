@@ -60,6 +60,6 @@ public class DbXetoSpec
 //////////////////////////////////////////////////////////////////////////
 
   private Connection conn;
-  //private PreparedStatement insertSpec;
+  private PreparedStatement insertSpec;
 }
 

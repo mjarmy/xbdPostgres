@@ -34,27 +34,31 @@ public class DbSpec extends FanObj
 // Native
 //////////////////////////////////////////////////////////////////////////
 
-  public void open(String uri, String username, String password) throws Exception
+  public void open(String uri, String username, String password)
+      throws Exception
   {
     Properties props = new Properties();
     props.setProperty("user", username);
     props.setProperty("password", password);
     this.conn = DriverManager.getConnection(uri, props);
-    conn.setAutoCommit(false);
+    //conn.setAutoCommit(false);
 
-    //conn.sql("insert into spec (qname) values (@qname)")
-    //  .execute(["qname":spec.qname])
+    this.insertSpec = conn.prepareStatement(
+      "insert into spec (qname) values (?)");
   }
 
   public void close() throws Exception
   {
-    //insertSpec.close();
+    insertSpec.close();
     conn.close();
   }
 
-  public void writeSpec(String name)
+  public void writeSpec(String name) throws Exception
   {
     System.out.println("writeSpec: " + name);
+    insertSpec.setString(1, name);
+    insertSpec.executeUpdate();
+    //conn.commit();
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -62,6 +66,6 @@ public class DbSpec extends FanObj
 //////////////////////////////////////////////////////////////////////////
 
   private Connection conn;
-  //private PreparedStatement insertSpec;
+  private PreparedStatement insertSpec;
 }
 

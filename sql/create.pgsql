@@ -23,3 +23,5 @@ create table spec (
 -- create index obj_tags on obj using gin (tags);
 
 grant select, insert, update, delete on all tables in schema xbd to xbd;
+grant usage, select on sequence spec_id_seq to xbd;
+
