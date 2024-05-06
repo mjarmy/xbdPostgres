@@ -9,12 +9,14 @@
 using concurrent
 using haystack
 
+**
+** RefTags defines the Set of brio tags that end in "Ref" or "Of"
+**
 const class RefTags
 {
   static RefTags cur() { curRef.val }
   private static const AtomicRef curRef := AtomicRef(null)
 
-  // Set of brio tags that end in "Ref" or "Of"
   const [Str:Str] tags
 
   static
@@ -30,9 +32,13 @@ const class RefTags
 
   private static RefTags load()
   {
-    echo("RefTags.load")
-
     tags := [Str:Str][:]
+
+    BrioConsts.cur.byVal.each |v,k|
+    {
+      if ((k != "Ref" && k.endsWith("Ref")) || k.endsWith("Of"))
+        tags[k] = k
+    }
 
     return make
     {
