@@ -46,23 +46,14 @@ class SpecBuilder
     echo("${spec.qname}")
 
     inherit := [Str:Str][:] /* Set */
-    path := Str[,]
-    traverseHierarchy(spec, inherit, path)
-
-    echo("    inherit ${inherit.keys}")
-    echo()
-    //ds.writeSpec(spec.qname, inherit.keys)
+    traverseHierarchy(spec, inherit)
+    ds.writeSpec(spec.qname, inherit.keys)
   }
 
   // Recursively traverse the spec's inheritance hierarchy up to the root. If
   // the spec has multiple inheritance, multiple paths will be generated.
-  internal Void traverseHierarchy(
-    Spec spec,
-    [Str:Str] inherit /* Set */,
-    Str[] path)
+  internal Void traverseHierarchy(Spec spec, [Str:Str] inherit /* Set */)
   {
-    path.add(spec.qname)
-
     // Add to the set of inherited types
     if (!inherit.containsKey(spec.qname))
       inherit.add(spec.qname, spec.qname)
@@ -70,20 +61,13 @@ class SpecBuilder
     // Mutliple inheritance
     if (spec.isBaseAnd)
     {
-      spec.ofs.each |b| { traverseHierarchy(b, inherit, path) }
+      spec.ofs.each |b| { traverseHierarchy(b, inherit) }
     }
     // Single inheritance
     else if (spec.base != null)
     {
-      traverseHierarchy(spec.base, inherit, path)
+      traverseHierarchy(spec.base, inherit)
     }
-    else
-    {
-      echo("    path $path")
-
-    }
-
-    path.removeAt(-1)
   }
 
 //////////////////////////////////////////////////////////////////////////
