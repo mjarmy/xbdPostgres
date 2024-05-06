@@ -26,7 +26,7 @@ class Build : BuildPod
                "xeto @{hx.depend}",
                "haystack @{hx.depend}",
               ]
-    srcDirs = [`fan/`]
+    srcDirs = [`fan/`, `test/`]
     javaDirs = [`java/`]
   }
 }

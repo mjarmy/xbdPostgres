@@ -8,11 +8,11 @@
 
 using xeto
 
-class SpecBuilder
+class SpecLoader
 {
   Void main()
   {
-    SpecBuilder().buildAll()
+    SpecLoader().buildAll()
   }
 
 //////////////////////////////////////////////////////////////////////////
