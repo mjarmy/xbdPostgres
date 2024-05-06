@@ -14,14 +14,13 @@ create table spec (
 );
 create index spec_inherits_from on spec using gin (inherits_from);
 
--- Objects
-create table obj (
+-- Recs
+create table rec (
   id text primary key,
-  tags text[],
-  -- spec_id is nullable, since not every object has a spec
+  hayson jsonb,
   spec_id int references spec (id)
 );
-create index obj_tags on obj using gin (tags);
+create index rec_hayson on rec using gin (hayson);
 
 grant select, insert, update, delete on all tables in schema xbd to xbd;
 grant usage, select on all sequences in schema xbd to xbd;
