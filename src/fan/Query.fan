@@ -8,68 +8,24 @@
 
 using haystack
 
-**
+****************************************************************
 ** Query
-**
+****************************************************************
+
 const class Query
 {
   new make(Filter f)
   {
-    sb := StrBuf()
-    params := Obj[,]
-
-    sb.add("select r.hayson from rec as r where ")
-    visit(f, sb, params)
-
-    this.sql = sb.toStr
-    this.params = params
-  }
-
-  private static Void visit(
-    Filter f, StrBuf sb, Obj[] params)
-  {
-    if      (f.type == FilterType.has) visitHas(f.argA, sb, params)
-    else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB, sb, params)
-    else if (f.type == FilterType.and) visitAnd(f.argA, f.argB, sb, params)
-    else throw Err("Encountered unknown FilterType ${f.type}")
-  }
-
-  private static Void visitHas(
-    FilterPath path,
-    StrBuf sb, Obj[] params)
-  {
-    sb.add("(r.hayson ? '")
-      .add(path.toStr)
-      .add("')")
-  }
-
-  private static Void visitEq(
-    FilterPath path, Obj arg,
-    StrBuf sb, Obj[] params)
-  {
-    sb.add("(r.hayson @> '{\"")
-      .add(path.toStr)
-      .add("\":?}'::jsonb)")
-
-    params.add(arg)
-  }
-
-  private static Void visitAnd(
-    Filter a, Filter b,
-    StrBuf sb, Obj[] params)
-  {
-    sb.add("(");
-    visit(a, sb, params)
-    sb.add(" and ");
-    visit(b, sb, params)
-    sb.add(")");
+    qb := QueryBuilder(f)
+    this.sql = qb.sqlBuf.toStr
+    this.params = qb.params
   }
 
   //////////////////////////////////////////////////////////////
   // Obj
   //////////////////////////////////////////////////////////////
 
-  override Int hash() { sql.hash.xor(params.hash) }
+  //override Int hash() { sql.hash.xor(params.hash) }
 
   override Bool equals(Obj? that)
   {
@@ -87,3 +43,63 @@ const class Query
   const Str sql
   const Obj[] params
 }
+
+****************************************************************
+** QueryBuilder
+****************************************************************
+
+internal class QueryBuilder {
+
+  new make(Filter f)
+  {
+    this.sqlBuf = StrBuf()
+    this.params = Obj[,]
+
+    sqlBuf.add("select r.hayson from rec as r where ")
+    visit(f)
+  }
+
+  private Void visit(Filter f)
+  {
+    if      (f.type == FilterType.has) visitHas(f.argA)
+    else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
+    else if (f.type == FilterType.and) visitAnd(f.argA, f.argB)
+    else throw Err("Encountered unknown FilterType ${f.type}")
+  }
+
+  private Void visitHas(FilterPath path)
+  {
+    sqlBuf
+      .add("(r.hayson ? '")
+      .add(path.toStr)
+      .add("')")
+  }
+
+  private Void visitEq(FilterPath path, Obj arg)
+  {
+    sqlBuf
+      .add("(r.hayson @> '{\"")
+      .add(path.toStr)
+      .add("\":?}'::jsonb)")
+
+    params.add(arg)
+  }
+
+  private Void visitAnd(Filter a, Filter b)
+  {
+    sqlBuf.add("(");
+    visit(a)
+    sqlBuf.add(" and ");
+    visit(b)
+    sqlBuf.add(")");
+  }
+
+  //////////////////////////////////////////////////////////////
+  // Fields
+  //////////////////////////////////////////////////////////////
+
+  internal StrBuf sqlBuf
+  internal Obj[] params
+}
+
+
