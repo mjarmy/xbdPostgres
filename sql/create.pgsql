@@ -18,9 +18,21 @@ create index spec_inherits_from on spec using gin (inherits_from);
 create table rec (
   id text primary key,
   hayson jsonb,
+  -- A rec does not necessarilly have a spec
   spec_id int references spec (id)
 );
 create index rec_hayson on rec using gin (hayson);
+
+-- Arrow is a bridge table for self-joins
+create table arrow (
+  from_id text not null references rec (id),
+  to_path text,
+  -- could be dangling...
+  -- to_id text not null references rec (id),
+  to_id text,
+  constraint arrow_pkey primary key (from_id, to_path, to_id)
+);
+--create index arrow_tag_to on arrow (tag, to_path, to_id);
 
 grant select, insert, update, delete on all tables in schema xbd to xbd;
 grant usage, select on all sequences in schema xbd to xbd;

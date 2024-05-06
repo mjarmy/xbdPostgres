@@ -46,6 +46,9 @@ public class PostgresDb extends FanObj
     this.insertRec = conn.prepareStatement(
       "insert into rec (id, hayson) values (?, ?::jsonb)");
 
+    this.insertArrow = conn.prepareStatement(
+      "insert into arrow (from_id, to_path, to_id) values (?, ?, ?)");
+
     this.insertSpec = conn.prepareStatement(
       "insert into spec (qname, inherits_from) values (?, ?)");
   }
@@ -53,11 +56,13 @@ public class PostgresDb extends FanObj
   public void close() throws Exception
   {
     insertRec.close();
+    insertArrow.close();
     insertSpec.close();
     conn.close();
   }
 
-  public void writeSpec(String name, fan.sys.List inherits) throws Exception
+  public void writeSpec(String name, fan.sys.List inherits)
+      throws Exception
   {
     String[] arr = new String[(int)inherits.size()];
     for (int i = 0; i < inherits.size(); i++)
@@ -69,11 +74,23 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-  public void writeRec(String id, String hayson) throws Exception
+  public void writeRec(String id, String hayson, fan.sys.List arrows)
+      throws Exception
   {
     insertRec.setString(1, id);
     insertRec.setString(2, hayson);
     insertRec.executeUpdate();
+
+    for (int i = 0; i < arrows.size(); i++)
+    {
+      Arrow a = (Arrow) arrows.get(i);
+      insertArrow.setString(1, id);
+      insertArrow.setString(2, a.toPath);
+      insertArrow.setString(3, a.toId);
+      insertArrow.addBatch();
+    }
+    insertArrow.executeBatch();
+
     conn.commit();
   }
 
@@ -83,6 +100,7 @@ public class PostgresDb extends FanObj
 
   private Connection conn;
   private PreparedStatement insertRec;
+  private PreparedStatement insertArrow;
   private PreparedStatement insertSpec;
 }
 
