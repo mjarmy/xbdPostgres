@@ -28,16 +28,27 @@ const class Query
   private static Void visit(
     Filter f, StrBuf sb, Obj[] params)
   {
-    if (f.type == FilterType.has)
-      visitHas(f.argA, sb, params)
-    else
-      throw Err("Encountered unknown FilterType ${f.type}")
+    if      (f.type == FilterType.has) visitHas(f.argA, sb, params)
+    else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB, sb, params)
+    else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
   private static Void visitHas(
-    FilterPath fp, StrBuf sb, Obj[] params)
+    FilterPath path, StrBuf sb, Obj[] params)
   {
-    sb.add("(r.hayson ? '").add(fp.toStr).add("')")
+    sb.add("(r.hayson ? '")
+      .add(path.toStr)
+      .add("')")
+  }
+
+  private static Void visitEq(
+    FilterPath path, Obj param, StrBuf sb, Obj[] params)
+  {
+    sb.add("(r.hayson @> '{\"")
+      .add(path.toStr)
+      .add("\":?}'::jsonb)")
+
+    params.add(param)
   }
 
   //////////////////////////////////////////////////////////////

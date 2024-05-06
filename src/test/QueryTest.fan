@@ -16,6 +16,11 @@ class QueryTest : Test
       Query(Filter("point")),
       "select r.hayson from rec as r where (r.hayson ? 'point')",
       Obj[,])
+
+    verifyQuery(
+      Query(Filter("compName == \"Services\"")),
+      "select r.hayson from rec as r where (r.hayson @> '{\"compName\":?}'::jsonb)",
+      Obj["Services"])
   }
 
   internal Void verifyQuery(Query q, Str sql, Obj[] params)
