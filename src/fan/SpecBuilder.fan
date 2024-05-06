@@ -22,7 +22,7 @@ class SpecBuilder
   // Build all the specs from every library
   Void buildAll()
   {
-    ds.open(
+    postgres.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -34,7 +34,7 @@ class SpecBuilder
       lib.types.each |s| { buildSpec(s) }
     }
 
-    ds.close()
+    postgres.close()
   }
 
   // Build a spec and its inheritance hierarchy
@@ -47,7 +47,7 @@ class SpecBuilder
 
     inherit := [Str:Str][:] /* Set */
     traverseHierarchy(spec, inherit)
-    ds.writeSpec(spec.qname, inherit.keys)
+    postgres.writeSpec(spec.qname, inherit.keys)
   }
 
   // Recursively traverse the spec's inheritance hierarchy up to the root. If
@@ -74,5 +74,5 @@ class SpecBuilder
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
-  internal DbSpec ds := DbSpec()
+  internal PostgresDb postgres := PostgresDb()
 }

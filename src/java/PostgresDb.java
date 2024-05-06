@@ -13,22 +13,22 @@ import fan.sys.*;
 import java.sql.*;
 import java.util.*;
 
-public class DbSpec extends FanObj
+public class PostgresDb extends FanObj
 {
 
 //////////////////////////////////////////////////////////////////////////
 // Lifecycle
 //////////////////////////////////////////////////////////////////////////
 
-  public static DbSpec make()
+  public static PostgresDb make()
   {
-    DbSpec self = new DbSpec();
+    PostgresDb self = new PostgresDb();
     //make$(self, arg);
     return self;
   }
 
   public final Type typeof() { return typeof; }
-  private static final Type typeof = Type.find("xbdPostgres::DbSpec");
+  private static final Type typeof = Type.find("xbdPostgres::PostgresDb");
 
 //////////////////////////////////////////////////////////////////////////
 // Native
@@ -43,12 +43,16 @@ public class DbSpec extends FanObj
     this.conn = DriverManager.getConnection(uri, props);
     conn.setAutoCommit(false);
 
+    this.insertRec = conn.prepareStatement(
+      "insert into rec (id, hayson) values (?, ?::jsonb)");
+
     this.insertSpec = conn.prepareStatement(
       "insert into spec (qname, inherits_from) values (?, ?)");
   }
 
   public void close() throws Exception
   {
+    insertRec.close();
     insertSpec.close();
     conn.close();
   }
@@ -65,11 +69,20 @@ public class DbSpec extends FanObj
     conn.commit();
   }
 
+  public void writeRec(String id, String hayson) throws Exception
+  {
+    insertRec.setString(1, id);
+    insertRec.setString(2, hayson);
+    insertRec.executeUpdate();
+    conn.commit();
+  }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
   private Connection conn;
+  private PreparedStatement insertRec;
   private PreparedStatement insertSpec;
 }
 
