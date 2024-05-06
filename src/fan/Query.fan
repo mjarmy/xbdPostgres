@@ -30,11 +30,13 @@ const class Query
   {
     if      (f.type == FilterType.has) visitHas(f.argA, sb, params)
     else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB, sb, params)
+    else if (f.type == FilterType.and) visitAnd(f.argA, f.argB, sb, params)
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
   private static Void visitHas(
-    FilterPath path, StrBuf sb, Obj[] params)
+    FilterPath path,
+    StrBuf sb, Obj[] params)
   {
     sb.add("(r.hayson ? '")
       .add(path.toStr)
@@ -42,13 +44,25 @@ const class Query
   }
 
   private static Void visitEq(
-    FilterPath path, Obj param, StrBuf sb, Obj[] params)
+    FilterPath path, Obj arg,
+    StrBuf sb, Obj[] params)
   {
     sb.add("(r.hayson @> '{\"")
       .add(path.toStr)
       .add("\":?}'::jsonb)")
 
-    params.add(param)
+    params.add(arg)
+  }
+
+  private static Void visitAnd(
+    Filter a, Filter b,
+    StrBuf sb, Obj[] params)
+  {
+    sb.add("(");
+    visit(a, sb, params)
+    sb.add(" and ");
+    visit(b, sb, params)
+    sb.add(")");
   }
 
   //////////////////////////////////////////////////////////////
