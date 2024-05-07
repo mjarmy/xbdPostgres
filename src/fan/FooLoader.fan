@@ -30,9 +30,10 @@ class FooLoader
 
     seed := DateTime.nowTicks()
     echo("seed: $seed")
+    //seed: 768411826304000000
     Random rnd := Random.makeSeeded(seed)
 
-    (0..10).each |n|
+    (0..<100000).each |n|
     {
       id := "$n"
       Str:Obj? map := [:]
@@ -42,7 +43,8 @@ class FooLoader
 
       rec := Etc.makeDict(map)
       hayson := JsonWriter.valToStr(rec)
-      echo("$id: $hayson")
+
+      postgres.writeFoo(id, hayson)
     }
 
     postgres.close()
