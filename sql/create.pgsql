@@ -18,10 +18,11 @@ create index spec_inherits_from on spec using gin (inherits_from);
 create table rec (
   id text primary key,
   hayson jsonb,
-  -- A rec does not necessarilly have a spec
+  -- A rec does not necessarily have a spec
   spec_id int references spec (id)
 );
-create index rec_hayson on rec using gin (hayson);
+--create index rec_hayson on rec using gin (hayson);
+create index rec_hayson on rec using gin (hayson jsonb_path_ops);
 
 -- Arrow is a bridge table for self-joins
 create table arrow (

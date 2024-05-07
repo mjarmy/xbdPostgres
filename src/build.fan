@@ -23,6 +23,7 @@ class Build : BuildPod
                "license.name": "Commercial"]
     depends = ["sys @{fan.depend}",
                "concurrent @{fan.depend}",
+               "util @{fan.depend}",
                "xeto @{hx.depend}",
                "haystack @{hx.depend}",
               ]

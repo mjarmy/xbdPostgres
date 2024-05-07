@@ -51,6 +51,9 @@ public class PostgresDb extends FanObj
 
     this.insertSpec = conn.prepareStatement(
       "insert into spec (qname, inherits_from) values (?, ?)");
+
+    this.insertFoo = conn.prepareStatement(
+      "insert into foo (id, hayson) values (?, ?::jsonb)");
   }
 
   public void close() throws Exception
@@ -58,6 +61,7 @@ public class PostgresDb extends FanObj
     insertRec.close();
     insertArrow.close();
     insertSpec.close();
+    insertFoo.close();
     conn.close();
   }
 
@@ -94,6 +98,15 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
+  public void writeFoo(String id, String hayson) throws Exception
+  {
+    insertFoo.setString(1, id);
+    insertFoo.setString(2, hayson);
+    insertFoo.executeUpdate();
+
+    conn.commit();
+  }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
@@ -102,5 +115,6 @@ public class PostgresDb extends FanObj
   private PreparedStatement insertRec;
   private PreparedStatement insertArrow;
   private PreparedStatement insertSpec;
+  private PreparedStatement insertFoo;
 }
 
