@@ -13,5 +13,5 @@ native class PostgresDb
 
   native Void writeSpec(Str name, Str[] inherits)
   native Void writeRec(Str id, Str hayson, Arrow[] arrows)
-  native Void writeFoo(Str id, Str hayson)
+  native Void writeFoo(Str id, Str[] paths, Str hayson)
 }

@@ -53,7 +53,7 @@ public class PostgresDb extends FanObj
       "insert into spec (qname, inherits_from) values (?, ?)");
 
     this.insertFoo = conn.prepareStatement(
-      "insert into foo (id, hayson) values (?, ?::jsonb)");
+      "insert into foo (id, paths, obj) values (?, ?, ?::jsonb)");
   }
 
   public void close() throws Exception
@@ -68,12 +68,8 @@ public class PostgresDb extends FanObj
   public void writeSpec(String name, fan.sys.List inherits)
       throws Exception
   {
-    String[] arr = new String[(int)inherits.size()];
-    for (int i = 0; i < inherits.size(); i++)
-      arr[i] = (String) inherits.get(i);
-
     insertSpec.setString(1, name);
-    insertSpec.setObject(2, arr);
+    insertSpec.setObject(2, toStringArray(inherits));
     insertSpec.executeUpdate();
     conn.commit();
   }
@@ -98,13 +94,23 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-  public void writeFoo(String id, String hayson) throws Exception
+  public void writeFoo(String id, fan.sys.List paths, String hayson)
+      throws Exception
   {
     insertFoo.setString(1, id);
-    insertFoo.setString(2, hayson);
+    insertFoo.setObject(2, toStringArray(paths));
+    insertFoo.setString(3, hayson);
     insertFoo.executeUpdate();
 
     conn.commit();
+  }
+
+  private static String[] toStringArray(fan.sys.List list)
+  {
+    String[] arr = new String[(int)list.size()];
+    for (int i = 0; i < list.size(); i++)
+      arr[i] = (String) list.get(i);
+    return arr;
   }
 
 //////////////////////////////////////////////////////////////////////////

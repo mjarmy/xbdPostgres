@@ -28,24 +28,35 @@ class FooLoader
       "xbd",
       "s3crkEt")
 
-    seed := DateTime.nowTicks()
+    //seed := DateTime.nowTicks()
+    seed := 768413414708000000
     echo("seed: $seed")
-    //seed: 768411826304000000
     Random rnd := Random.makeSeeded(seed)
 
-    (0..<100000).each |n|
+    //(0..<100_000).each |n|
+    (0..<10_000).each |n|
+    //(0..<10).each |n|
     {
+      if ((n % 1000) == 0) echo(".")
+
       id := "$n"
       Str:Obj? map := [:]
       map.add("id", id)
 
       generateStruct(rnd, map)
-
       rec := Etc.makeDict(map)
+      paths := findPaths(rec, [,], [,])
       hayson := JsonWriter.valToStr(rec)
 
-      postgres.writeFoo(id, hayson)
+      //echo("----------------------------------------")
+      //echo(paths)
+      //echo(hayson)
+
+      postgres.writeFoo(id, paths, hayson)
     }
+
+    echo("")
+    echo("done")
 
     postgres.close()
   }
@@ -80,6 +91,23 @@ class FooLoader
     }
 
     return tags.keys
+  }
+
+  private Str[] findPaths(Dict d, Str[] curPath, Str[] paths)
+  {
+    d.each |v,k|
+    {
+      curPath.add(k)
+      paths.add(curPath.join("."))
+
+      if (v is Dict)
+      {
+        findPaths(v, curPath, paths)
+      }
+
+      curPath.removeAt(-1)
+    }
+    return paths
   }
 
 //////////////////////////////////////////////////////////////////////////
