@@ -17,23 +17,23 @@ create index spec_inherits_from on spec using gin (inherits_from);
 -- Recs
 create table rec (
   id text primary key,
-  hayson jsonb,
-  -- A rec does not necessarily have a spec
-  spec_id int references spec (id)
+  paths text[] not null,
+  values_ jsonb not null,
+  units jsonb not null,
+  spec text -- nullable, no foreign key to spec(id), since it could be dangling
 );
---create index rec_hayson on rec using gin (hayson);
-create index rec_hayson on rec using gin (hayson jsonb_path_ops);
+create index rec_paths on rec using gin (paths);
+create index rec_values_ on rec using gin (values_ jsonb_path_ops);
 
--- Arrow is a bridge table for self-joins
-create table arrow (
-  from_id text not null references rec (id),
-  to_path text,
-  -- could be dangling...
-  -- to_id text not null references rec (id),
-  to_id text,
-  constraint arrow_pkey primary key (from_id, to_path, to_id)
+-- pathref does Ref lookups via self-joins
+create table pathref (
+  rec_id text not null references rec (id),
+  path_ text not null,
+  ref_ text not null, -- no foreign key to rec(id), since it could be dangling
+  constraint pathref_pkey primary key (rec_id, path_, ref_)
 );
---create index arrow_tag_to on arrow (tag, to_path, to_id);
+-- TODO do we need this?
+--create index pathref_tag_to on pathref (tag, path_, ref_);
 
 grant select, insert, update, delete on all tables in schema xbd to xbd;
 grant usage, select on all sequences in schema xbd to xbd;
