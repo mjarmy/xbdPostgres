@@ -22,7 +22,7 @@ class DbRecTest : Test
       "geoElevation", "geoPostalCode", "geoState", "geoStreet", "site", "tz",
       "weatherStationRef"])
     verifyEq(rec.pathRefs,
-      [PathRef("weatherStationRef", Ref.fromStr("a-07eb"))])
+      [PathRef("weatherStationRef", "a-07eb")])
     verifyEq(JsonWriter.valToStr(rec.values), """{"area":151455.0, "geoState":"CO", "geoPostalCode":"80821", "tz":"Denver", "geoCity":"Hugo", "dis":"Alpha", "geoAddr":"123 Prarie St, Hugo, CO 80821", "geoElevation":2956.0, "geoCoord":{"_kind":"coord", "lng":-103.57159, "lat":39.04532}, "geoStreet":"123 Prarie St", "geoCountry":"US"}""")
     verifyEq(JsonWriter.valToStr(rec.units), """{"area":"ft\\u00b2", "geoElevation":"m"}""")
     verifyNull(rec.spec)
@@ -35,8 +35,8 @@ class DbRecTest : Test
       "point", "siteRef", "tz", "unit", "valve", "water", "custom",
       "custom.description"])
     verifyEq(rec.pathRefs,
-      [PathRef("equipRef", Ref.fromStr("a-0001")),
-       PathRef("siteRef", Ref.fromStr("a-0000"))])
+      [PathRef("equipRef", "a-0001"),
+       PathRef("siteRef",  "a-0000")])
     verifyEq(JsonWriter.valToStr(rec.values),
       """{"unit":"%", "kind":"Number", "tz":"Denver", "custom":{"description":"Clg_Valve_Cmd"}, "dis":"Alpha Airside AHU-2 Chilled Water Valve"}""")
     verifyEq(JsonWriter.valToStr(rec.units), "{}")
@@ -83,10 +83,10 @@ class DbRecTest : Test
       "point", "out", "out.value", "out.status", "wsAnnotation", "parentRef",
       "slotPath"])
     verifyEq(rec.pathRefs,
-      [PathRef("spec", Ref.fromStr("cc.niagara.control::NumericWritable")),
-       PathRef("links.in10.fromRef", Ref.fromStr("h:2c4")),
-       PathRef("meta.wsAnnotation.slotSpec", Ref.fromStr("cc.niagara.baja::WsAnnotation")),
-       PathRef("parentRef", Ref.fromStr("h:2bf"))])
+      [PathRef("spec", "cc.niagara.control::NumericWritable"),
+       PathRef("links.in10.fromRef", "h:2c4"),
+       PathRef("meta.wsAnnotation.slotSpec", "cc.niagara.baja::WsAnnotation"),
+       PathRef("parentRef", "h:2bf")])
     verifyEq(JsonWriter.valToStr(rec.values),
 """{"compName":"damper", "overrideExpiration":{"_kind":"dateTime", "val":"1969-12-31T19:00:00-05:00", "tz":"New_York"}, "facets":{"min":{"_kind":"number", "val":"-INF"}, "max":{"_kind":"number", "val":"INF"}, "precision":1.0, "units":"null_"}, "dis":"damper", "out":{"value":0.0, "status":"ok"}, "links":{"in10":{"fromOrd":"h:2c4", "fromSlot":"out", "enabled":true}}, "wsAnnotation":"64,10,8", "kind":"Number", "in2":{"value":0.0, "status":"ok"}, "in1":{"value":0.0, "status":"ok"}, "in4":{"value":0.0, "status":"ok"}, "in3":{"value":0.0, "status":"ok"}, "in6":{"value":0.0, "status":"ok"}, "in5":{"value":0.0, "status":"ok"}, "in8":{"value":0.0, "status":"ok"}, "in7":{"value":0.0, "status":"ok"}, "in11":{"value":0.0, "status":"ok"}, "in9":{"value":0.0, "status":"ok"}, "in10":{"value":0.0, "status":"ok"}, "in13":{"value":0.0, "status":"ok"}, "in12":{"value":0.0, "status":"ok"}, "in15":{"value":0.0, "status":"ok"}, "in14":{"value":0.0, "status":"ok"}, "slotPath":"slot:/AHUSystem/vavs/vav8/damper", "in16":{"value":0.0, "status":"ok"}, "fallback":{"value":76.0, "status":"ok"}}""")
     verifyEq(JsonWriter.valToStr(rec.units), "{}")

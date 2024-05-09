@@ -47,8 +47,8 @@ public class PostgresDb extends FanObj
       "insert into rec (id, paths, values_, units, spec) " +
       "values (?, ?, ?::jsonb, ?::jsonb, ?)");
 
-    //this.insertPathRef = conn.prepareStatement(
-    //  "insert into pathRef (from_id, to_path, to_id) values (?, ?, ?)");
+    this.insertPathRef = conn.prepareStatement(
+      "insert into pathRef (rec_id, path_, ref_) values (?, ?, ?)");
 
     this.insertSpec = conn.prepareStatement(
       "insert into spec (qname, inherits_from) values (?, ?)");
@@ -57,7 +57,7 @@ public class PostgresDb extends FanObj
   public void close() throws Exception
   {
     insertRec.close();
-    //insertPathRef.close();
+    insertPathRef.close();
     insertSpec.close();
     conn.close();
   }
@@ -87,15 +87,15 @@ public class PostgresDb extends FanObj
     insertRec.setString(5, spec);
     insertRec.executeUpdate();
 
-    //for (int i = 0; i < pathRefs.size(); i++)
-    //{
-    //  PathRef a = (PathRef) pathRefs.get(i);
-    //  insertPathRef.setString(1, id);
-    //  insertPathRef.setString(2, a.toPath);
-    //  insertPathRef.setString(3, a.toId);
-    //  insertPathRef.addBatch();
-    //}
-    //insertPathRef.executeBatch();
+    for (int i = 0; i < pathRefs.size(); i++)
+    {
+      PathRef p = (PathRef) pathRefs.get(i);
+      insertPathRef.setString(1, id);
+      insertPathRef.setString(2, p.path);
+      insertPathRef.setString(3, p.ref);
+      insertPathRef.addBatch();
+    }
+    insertPathRef.executeBatch();
 
     conn.commit();
   }
@@ -114,7 +114,7 @@ public class PostgresDb extends FanObj
 
   private Connection conn;
   private PreparedStatement insertRec;
-  //private PreparedStatement insertPathRef;
+  private PreparedStatement insertPathRef;
   private PreparedStatement insertSpec;
 }
 

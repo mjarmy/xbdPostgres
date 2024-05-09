@@ -56,7 +56,10 @@ const class DbRec
       else if (v is Ref)
       {
         if (k != "id")
-          pathRefs.add(PathRef(cp, v))
+        {
+          r := (Ref) v
+          pathRefs.add(PathRef(cp, r.id))
+        }
       }
       // Number
       else if (v is Number)
@@ -100,22 +103,22 @@ const class DbRec
 
 const class PathRef
 {
-  new make(Str path, Ref ref)
+  new make(Str path, Str ref)
   {
     this.path = path
     this.ref = ref
   }
 
   const Str path
-  const Ref ref
+  const Str ref
 
-  override Int hash() { path.hash.xor(ref.id.hash) }
+  override Int hash() { path.hash.xor(ref.hash) }
 
   override Bool equals(Obj? that)
   {
     x := that as PathRef
     if (x == null) return false
-    return path == x.path && ref.id == x.ref.id
+    return path == x.path && ref == x.ref
   }
 
   override Str toStr() { "PathRef($path, $ref)" }
