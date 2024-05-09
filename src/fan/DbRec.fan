@@ -19,31 +19,36 @@ const class DbRec
     this.id = ((Ref) hayson->id)->id
 
     paths := Str[,]
+    pathRefs := PathRef[,]
     Str:Obj values := Str:Obj[:]
-    transform(hayson, Str[,], paths, values)
+    transform(hayson, Str[,], paths, pathRefs, values)
 
     this.paths = paths
+    this.pathRefs = pathRefs
     this.values = Etc.makeDict(values)
   }
 
   private static Void transform(
-      Dict d, Str[] curPath, Str[] paths, Str:Obj values)
+      Dict d, Str[] curPath, Str[] paths, PathRef[] pathRefs, Str:Obj values)
   {
     d.each |v,k|
     {
       curPath.add(k)
-      paths.add(curPath.join("."))
+      cp := curPath.join(".")
+      paths.add(cp)
 
       // transform nested dict
       if (v is Dict)
       {
         Str:Obj nested := Str:Obj[:]
-        transform(v, curPath, paths, nested)
+        transform(v, curPath, paths, pathRefs, nested)
         values.add(k, Etc.makeDict(nested))
       }
+      // Ref
       else if (v is Ref)
       {
-
+        if (k != "id")
+          pathRefs.add(PathRef(cp, v))
       }
       // remove markers
       else if (!(v is Marker))
@@ -55,19 +60,18 @@ const class DbRec
     }
   }
 
-  override Str toStr() { "DbRec('$id', $paths, ${JsonWriter.valToStr(values)})" }
-
   //////////////////////////////////////////////////////////////
   // Fields
   //////////////////////////////////////////////////////////////
 
   const Str id
   const Str[] paths
+  const PathRef[] pathRefs
   const Dict values
 }
 
 ****************************************************************
-** DbRec
+** PathRef
 ****************************************************************
 
 const class PathRef
@@ -80,6 +84,8 @@ const class PathRef
 
   const Str path
   const Ref ref
+
+  override Int hash() { path.hash.xor(ref.id.hash) }
 
   override Bool equals(Obj? that)
   {

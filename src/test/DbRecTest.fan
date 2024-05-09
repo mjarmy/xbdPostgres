@@ -16,17 +16,19 @@ class DbRecTest : Test
     DbRec rec := DbRec(alpha.get(2))
 
     echo(rec.paths)
+    echo(rec.pathRefs)
     echo(JsonWriter.valToStr(rec.values))
 
     verifyEq(rec.id, "a-0002")
-
     verifyEq(rec.paths,
       ["id", "chilled", "cmd", "cool", "cur", "dis", "equipRef", "his", "kind",
       "point", "siteRef", "tz", "unit", "valve", "water", "custom",
       "custom.description"])
-
-//    verifyEq(JsonWriter.valToStr(rec.values),
-//      "{\"kind\":\"Number\", \"tz\":\"Denver\", \"siteRef\":{\"_kind\":\"ref\", \"val\":\"a-0000\"}, \"custom\":{\"description\":\"Clg_Valve_Cmd\"}, \"dis\":\"Alpha Airside AHU-2 Chilled Water Valve\", \"unit\":\"%\", \"equipRef\":{\"_kind\":\"ref\", \"val\":\"a-0001\"}, \"id\":{\"_kind\":\"ref\", \"val\":\"a-0002\"}}");
+    verifyEq(rec.pathRefs,
+      [PathRef("equipRef", Ref.fromStr("a-0001")),
+       PathRef("siteRef", Ref.fromStr("a-0000"))])
+    verifyEq(JsonWriter.valToStr(rec.values),
+      "{\"unit\":\"%\", \"kind\":\"Number\", \"tz\":\"Denver\", \"custom\":{\"description\":\"Clg_Valve_Cmd\"}, \"dis\":\"Alpha Airside AHU-2 Chilled Water Valve\"}")
   }
 
 }
