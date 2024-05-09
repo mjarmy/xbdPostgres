@@ -20,14 +20,15 @@ const class DbRec
 
     paths := Str[,]
     pathRefs := PathRef[,]
-    Str:Obj values := Str:Obj[:]
-    Str:Obj units := Str:Obj[:]
+    values := Str:Obj[:]
+    units := Str:Obj[:]
     transform(hayson, Str[,], paths, pathRefs, values, units)
 
     this.paths = paths
     this.pathRefs = pathRefs
     this.values = Etc.makeDict(values)
     this.units = Etc.makeDict(units)
+    this.spec = hayson.has("spec") ? hayson->spec : null
   }
 
   private static Void transform(
@@ -60,7 +61,13 @@ const class DbRec
       else if (v is Number)
       {
         n := (Number) v
-        values.add(k, n.toFloat)
+
+        f := n.toFloat
+        if (f.isNaN || f == Float.posInf || f == Float.negInf)
+          values.add(k, n)
+        else
+          values.add(k, n.toFloat)
+
         if (n.unit != null)
           units.add(k, n.unit.toStr)
       }
@@ -83,6 +90,7 @@ const class DbRec
   const PathRef[] pathRefs
   const Dict values
   const Dict units
+  const Ref? spec
 }
 
 ****************************************************************
