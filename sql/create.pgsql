@@ -32,8 +32,7 @@ create table pathref (
   ref_ text not null, -- no foreign key to rec(id), since it could be dangling
   constraint pathref_pkey primary key (rec_id, path_, ref_)
 );
--- TODO do we need this?
---create index pathref_tag_to on pathref (tag, path_, ref_);
+create index pathref_path_ref on pathref (path_, ref_);
 
 grant select, insert, update, delete on all tables in schema xbd to xbd;
 grant usage, select on all sequences in schema xbd to xbd;
