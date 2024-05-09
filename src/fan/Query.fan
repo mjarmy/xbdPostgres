@@ -25,7 +25,7 @@ const class Query
   // Obj
   //////////////////////////////////////////////////////////////
 
-  //override Int hash() { sql.hash.xor(params.hash) }
+  override Int hash() { throw UnsupportedErr() }
 
   override Bool equals(Obj? that)
   {
