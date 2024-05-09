@@ -47,7 +47,8 @@ const class DbRec
         Str:Obj nvalues := Str:Obj[:]
         Str:Obj nunits := Str:Obj[:]
         transform(v, curPath, paths, pathRefs, nvalues, nunits)
-        values.add(k, Etc.makeDict(nvalues))
+        if (!nvalues.isEmpty)
+          values.add(k, Etc.makeDict(nvalues))
         if (!nunits.isEmpty)
           units.add(k, Etc.makeDict(nunits))
       }
