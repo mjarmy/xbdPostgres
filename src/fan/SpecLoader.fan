@@ -43,7 +43,7 @@ class SpecLoader
     // Ignore synthetic types like "_0" for now
     if (spec.name.startsWith("_")) return
 
-    echo("${spec.qname}")
+    //echo("${spec.qname}")
 
     inherit := [Str:Str][:] /* Set */
     traverseHierarchy(spec, inherit)

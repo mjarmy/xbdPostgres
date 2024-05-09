@@ -13,53 +13,44 @@ class JsonLoader
 {
   Void main()
   {
-    JsonLoader().loadTestData()
+    JsonLoader().load()
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Methods
-//////////////////////////////////////////////////////////////////////////
-
-  Void loadTestData()
+  Void load()
   {
-    postgres := PostgresDb()
     postgres.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
 
+    // alpha
+    Grid alpha := JsonReader(File(`test_data/alpha.json`).in).readVal
+    alpha.each |row, i|
+    {
+      DbRec rec := DbRec(row)
+      writeRec(rec)
+    }
+
+    // niagara
     f := File(`test_data/jason.txt`)
     f.eachLine |line|
     {
-      Dict rec := JsonReader(line.in).readVal
-      Str id := ((Ref)rec->id).id
-      echo(id)
-
-      arrows := Arrow[,]
-      findArrows(rec, Str[,], arrows)
-      postgres.writeRec(id, JsonWriter.valToStr(rec), arrows)
+      DbRec rec := DbRec(JsonReader(line.in).readVal)
+      writeRec(rec)
     }
 
     postgres.close()
   }
 
-  private Void findArrows(Dict rec, Str[] path, Arrow[] arrows)
+  private Void writeRec(DbRec rec)
   {
-    rec.each |val, name|
-    {
-      if ((name != "id") && (val is Ref))
-      {
-        path.add(name)
-        arrows.add(Arrow(path.join("."), ((Ref) val).id))
-        path.removeAt(-1)
-      }
-      else if (val is Dict)
-      {
-        path.add(name)
-        findArrows((Dict) val, path, arrows)
-        path.removeAt(-1)
-      }
-    }
+    postgres.writeRec(
+      rec.id,
+      rec.paths,
+      rec.pathRefs,
+      JsonWriter.valToStr(rec.values),
+      JsonWriter.valToStr(rec.units),
+      rec.spec == null ? null : rec.spec.id)
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -67,22 +58,4 @@ class JsonLoader
 //////////////////////////////////////////////////////////////////////////
 
   private PostgresDb postgres := PostgresDb()
-}
-
-//////////////////////////////////////////////////////////////////////////
-// Arrow
-//////////////////////////////////////////////////////////////////////////
-
-const class Arrow
-{
-  new make(Str toPath, Str toId)
-  {
-    this.toPath = toPath
-    this.toId = toId
-  }
-
-  const Str toPath
-  const Str toId
-
-  override Str toStr() { "Arrow($toPath, $toId)" }
 }

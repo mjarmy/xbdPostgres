@@ -44,29 +44,26 @@ public class PostgresDb extends FanObj
     conn.setAutoCommit(false);
 
     this.insertRec = conn.prepareStatement(
-      "insert into rec (id, hayson) values (?, ?::jsonb)");
+      "insert into rec (id, paths, values_, units, spec) " +
+      "values (?, ?, ?::jsonb, ?::jsonb, ?)");
 
-    this.insertArrow = conn.prepareStatement(
-      "insert into arrow (from_id, to_path, to_id) values (?, ?, ?)");
+    //this.insertPathRef = conn.prepareStatement(
+    //  "insert into pathRef (from_id, to_path, to_id) values (?, ?, ?)");
 
     this.insertSpec = conn.prepareStatement(
       "insert into spec (qname, inherits_from) values (?, ?)");
-
-    this.insertFoo = conn.prepareStatement(
-      "insert into foo (id, paths, obj) values (?, ?, ?::jsonb)");
   }
 
   public void close() throws Exception
   {
     insertRec.close();
-    insertArrow.close();
+    //insertPathRef.close();
     insertSpec.close();
-    insertFoo.close();
     conn.close();
   }
 
   public void writeSpec(String name, fan.sys.List inherits)
-      throws Exception
+    throws Exception
   {
     insertSpec.setString(1, name);
     insertSpec.setObject(2, toStringArray(inherits));
@@ -74,33 +71,31 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-  public void writeRec(String id, String hayson, fan.sys.List arrows)
-      throws Exception
+  public void writeRec(
+      String id,
+      fan.sys.List paths,
+      fan.sys.List pathRefs,
+      String values, // json
+      String units,  // json
+      String spec)
+    throws Exception
   {
     insertRec.setString(1, id);
-    insertRec.setString(2, hayson);
+    insertRec.setObject(2, toStringArray(paths));
+    insertRec.setString(3, values);
+    insertRec.setString(4, units);
+    insertRec.setString(5, spec);
     insertRec.executeUpdate();
 
-    for (int i = 0; i < arrows.size(); i++)
-    {
-      Arrow a = (Arrow) arrows.get(i);
-      insertArrow.setString(1, id);
-      insertArrow.setString(2, a.toPath);
-      insertArrow.setString(3, a.toId);
-      insertArrow.addBatch();
-    }
-    insertArrow.executeBatch();
-
-    conn.commit();
-  }
-
-  public void writeFoo(String id, fan.sys.List paths, String hayson)
-      throws Exception
-  {
-    insertFoo.setString(1, id);
-    insertFoo.setObject(2, toStringArray(paths));
-    insertFoo.setString(3, hayson);
-    insertFoo.executeUpdate();
+    //for (int i = 0; i < pathRefs.size(); i++)
+    //{
+    //  PathRef a = (PathRef) pathRefs.get(i);
+    //  insertPathRef.setString(1, id);
+    //  insertPathRef.setString(2, a.toPath);
+    //  insertPathRef.setString(3, a.toId);
+    //  insertPathRef.addBatch();
+    //}
+    //insertPathRef.executeBatch();
 
     conn.commit();
   }
@@ -119,8 +114,7 @@ public class PostgresDb extends FanObj
 
   private Connection conn;
   private PreparedStatement insertRec;
-  private PreparedStatement insertArrow;
+  //private PreparedStatement insertPathRef;
   private PreparedStatement insertSpec;
-  private PreparedStatement insertFoo;
 }
 
