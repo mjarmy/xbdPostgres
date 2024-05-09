@@ -21,15 +21,18 @@ const class DbRec
     paths := Str[,]
     pathRefs := PathRef[,]
     Str:Obj values := Str:Obj[:]
-    transform(hayson, Str[,], paths, pathRefs, values)
+    Str:Obj units := Str:Obj[:]
+    transform(hayson, Str[,], paths, pathRefs, values, units)
 
     this.paths = paths
     this.pathRefs = pathRefs
     this.values = Etc.makeDict(values)
+    this.units = Etc.makeDict(units)
   }
 
   private static Void transform(
-      Dict d, Str[] curPath, Str[] paths, PathRef[] pathRefs, Str:Obj values)
+      Dict d, Str[] curPath, Str[] paths, PathRef[] pathRefs,
+      Str:Obj values, Str:Obj units)
   {
     d.each |v,k|
     {
@@ -40,15 +43,26 @@ const class DbRec
       // transform nested dict
       if (v is Dict)
       {
-        Str:Obj nested := Str:Obj[:]
-        transform(v, curPath, paths, pathRefs, nested)
-        values.add(k, Etc.makeDict(nested))
+        Str:Obj nvalues := Str:Obj[:]
+        Str:Obj nunits := Str:Obj[:]
+        transform(v, curPath, paths, pathRefs, nvalues, nunits)
+        values.add(k, Etc.makeDict(nvalues))
+        if (!nunits.isEmpty)
+          units.add(k, Etc.makeDict(nunits))
       }
       // Ref
       else if (v is Ref)
       {
         if (k != "id")
           pathRefs.add(PathRef(cp, v))
+      }
+      // Number
+      else if (v is Number)
+      {
+        n := (Number) v
+        values.add(k, n.toFloat)
+        if (n.unit != null)
+          units.add(k, n.unit.toStr)
       }
       // remove markers
       else if (!(v is Marker))
@@ -68,6 +82,7 @@ const class DbRec
   const Str[] paths
   const PathRef[] pathRefs
   const Dict values
+  const Dict units
 }
 
 ****************************************************************
