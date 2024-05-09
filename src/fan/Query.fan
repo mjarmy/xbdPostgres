@@ -17,8 +17,12 @@ const class Query
   new make(Filter f)
   {
     qb := QueryBuilder(f)
-    this.sql = qb.sqlBuf.toStr
-    this.params = qb.params
+    this.sql =
+      ["select * from rec",
+       "where",
+       "  ${qb.whereClause}"].join("\n") + ";"
+
+    this.params = qb.whereParams
   }
 
   //////////////////////////////////////////////////////////////
@@ -34,14 +38,14 @@ const class Query
     return sql == x.sql && params == x.params
   }
 
-  override Str toStr() { "Query('$sql', $params)" }
+  override Str toStr() { "Query:\n$sql\n$params" }
 
   //////////////////////////////////////////////////////////////
   // Fields
   //////////////////////////////////////////////////////////////
 
   const Str sql
-  const Obj[] params
+  const Str[] params
 }
 
 ****************************************************************
@@ -52,54 +56,32 @@ internal class QueryBuilder {
 
   new make(Filter f)
   {
-    this.sqlBuf = StrBuf()
-    this.params = Obj[,]
+    this.whereClause = StrBuf()
+    this.whereParams = Str[,]
 
-    sqlBuf.add("select r.hayson from rec as r where ")
     visit(f)
   }
 
   private Void visit(Filter f)
   {
     if      (f.type == FilterType.has) visitHas(f.argA)
-    else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
-    else if (f.type == FilterType.and) visitAnd(f.argA, f.argB)
+    //else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
+    //else if (f.type == FilterType.and) visitAnd(f.argA, f.argB)
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
   private Void visitHas(FilterPath path)
   {
-    sqlBuf
-      .add("(r.hayson ? '")
-      .add(path.toStr)
-      .add("')")
-  }
-
-  private Void visitEq(FilterPath path, Obj arg)
-  {
-    sqlBuf
-      .add("(r.hayson @> '{\"")
-      .add(path.toStr)
-      .add("\":?}'::jsonb)")
-
-    params.add(arg)
-  }
-
-  private Void visitAnd(Filter a, Filter b)
-  {
-    sqlBuf.add("(");
-    visit(a)
-    sqlBuf.add(" and ");
-    visit(b)
-    sqlBuf.add(")");
+    whereClause.add("(rec.paths @> ?::jsonb)");
+    whereParams.add("'{\"$path\"}'");
   }
 
   //////////////////////////////////////////////////////////////
   // Fields
   //////////////////////////////////////////////////////////////
 
-  internal StrBuf sqlBuf
-  internal Obj[] params
+  internal StrBuf whereClause
+  internal Str[] whereParams
 }
 
 
