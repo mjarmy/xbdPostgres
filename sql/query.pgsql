@@ -40,6 +40,21 @@ where
   ((rec.paths @> '{"ahu"}'::text[]) and
   ((rec.paths @> '{"elec"}'::text[])));
 
+-- compName == 'Services'
+explain analyze
+select * from rec
+where
+  (rec.values_ @> '{"compName":"Services"}'::jsonb);
+
+-- dis == 'Alpha Airside AHU-4'
+explain analyze
+select * from rec
+where
+  (rec.values_ @> '{"dis":"Alpha Airside AHU-4"}'::jsonb);
+
+-- area == 151455
+-- TODO
+
 -- facets->min == -INF
 explain analyze
 select * from rec
@@ -54,19 +69,6 @@ select * from rec
 where
   (p1.path_ = 'chilledWaterRef') and
   (r1.paths @> '{"chilled"}'::text[]);
-
-
--- compName == 'Services'
-explain analyze
-select * from rec
-where
-  (rec.values_ @> '{"compName":"Services"}'::jsonb);
-
--- dis == 'Alpha Airside AHU-4'
-explain analyze
-select * from rec
-where
-  (rec.values_ @> '{"dis":"Alpha Airside AHU-4"}'::jsonb);
 
 -- links->in4->fromRef->meta->inA->flags->linkTarget
 explain analyze

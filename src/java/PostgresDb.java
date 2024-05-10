@@ -104,11 +104,17 @@ public class PostgresDb extends FanObj
   {
     List result = new List(Type.find("xbdPostgres::DbRec"));
 
+    // prepare
     try (PreparedStatement stmt = conn.prepareStatement(query.sql)) {
+
+      // set params
       for (int i = 0; i < query.params.size(); i++)
         stmt.setString(i+1, (String) query.params.get(i));
 
+      // execute
       try (ResultSet rs = stmt.executeQuery()) {
+
+        // for each
         while(rs.next()) {
           // TODO populate other fields
           result.add(DbRec.make(
