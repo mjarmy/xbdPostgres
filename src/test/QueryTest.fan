@@ -10,15 +10,21 @@ using haystack
 
 class QueryTest : Test
 {
-  Void testQuery()
+  override Void setup()
   {
     postgres.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
+  }
 
-    //-----------------------------
+  override Void teardown()
+  {
+    postgres.close
+  }
 
+  Void testQuery()
+  {
     f :=  Filter("ahu")
     expected := testData.filter(f).keys.sort
     echo(expected)
@@ -31,10 +37,6 @@ class QueryTest : Test
       Str["{\"ahu\"}"]))
 
     echo(postgres.query(q))
-
-    //-----------------------------
-
-    postgres.close()
   }
 
   private TestData testData := TestData()

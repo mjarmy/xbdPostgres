@@ -60,6 +60,11 @@ public class PostgresDb extends FanObj
     insertPathRef.close();
     insertSpec.close();
     conn.close();
+
+    insertRec = null;
+    insertPathRef = null;
+    insertSpec = null;
+    conn = null;
   }
 
   public void writeSpec(String name, List inherits)

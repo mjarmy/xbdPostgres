@@ -16,9 +16,11 @@ const class TestData
 
     // alpha
     Grid alpha := JsonReader(File(`test_data/alpha.json`).in).readVal
-    alpha.each |row, i|
+    alpha.each |d, i|
     {
-      recs.add(row->id, row)
+      if (recs.containsKey(d->id))
+        throw Err("oops ${d->id}")
+      recs.add(d->id, d)
     }
 
     // niagara
@@ -26,6 +28,9 @@ const class TestData
     f.eachLine |line|
     {
       Dict d := JsonReader(line.in).readVal
+
+      if (recs.containsKey(d->id))
+        throw Err("oops ${d->id}")
       recs.add(d->id, d)
     }
 
