@@ -17,8 +17,9 @@ create index spec_inherits_from on spec using gin (inherits_from);
 -- Recs
 create table rec (
   id text primary key,
-  paths text[] not null,
-  values_ jsonb not null,
+  paths text[] not null,  -- indexed
+  values_ jsonb not null, -- indexed
+  refs jsonb not null,
   units jsonb not null,
   spec text -- nullable, no foreign key to spec(id), since it could be dangling
 );

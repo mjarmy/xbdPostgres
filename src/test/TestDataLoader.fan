@@ -27,7 +27,9 @@ class TestDataLoader
     td := TestData()
     td.recs.each |r,id|
     {
-      postgres.writeRec(DbRec(r))
+      pathRefs := PathRef[,]
+      rec := DbRec.fromDict(r, pathRefs)
+      postgres.writeRec(rec, pathRefs)
       n++
     }
     echo("loaded $n recs")

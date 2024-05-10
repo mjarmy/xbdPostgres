@@ -17,39 +17,40 @@ const class DbRec
   new make(
     Str id,
     Str[] paths,
-    PathRef[] pathRefs,
     Str values,
+    Str refs,
     Str units,
     Str? spec)
   {
-    this.id       = id
-    this.paths    = paths
-    this.pathRefs = pathRefs
-    this.values   = values
-    this.units    = units
-    this.spec     = spec
+    this.id     = id
+    this.paths  = paths
+    this.refs   = refs
+    this.values = values
+    this.units  = units
+    this.spec   = spec
   }
 
-  static new fromDict(Dict dict)
+  static new fromDict(Dict dict, PathRef[] pathRefs)
   {
     paths := Str[,]
-    pathRefs := PathRef[,]
     values := Str:Obj[:]
+    refs := Str:Obj[:]
     units := Str:Obj[:]
-    transform(dict, Str[,], paths, pathRefs, values, units)
+    transform(dict, Str[,], paths, values, refs, units, pathRefs)
 
     return DbRec(
       ((Ref) dict->id)->id,
       paths,
-      pathRefs,
       JsonWriter.valToStr(Etc.makeDict(values)),
+      JsonWriter.valToStr(Etc.makeDict(refs)),
       JsonWriter.valToStr(Etc.makeDict(units)),
       dict.has("spec") ? ((Ref)dict->spec).id : null)
   }
 
   private static Void transform(
-      Dict d, Str[] curPath, Str[] paths, PathRef[] pathRefs,
-      Str:Obj values, Str:Obj units)
+      Dict d, Str[] curPath, Str[] paths,
+      Str:Obj values, Str:Obj refs, Str:Obj units,
+      PathRef[] pathRefs)
   {
     d.each |v,k|
     {
@@ -61,10 +62,13 @@ const class DbRec
       if (v is Dict)
       {
         Str:Obj nvalues := Str:Obj[:]
+        Str:Obj nrefs := Str:Obj[:]
         Str:Obj nunits := Str:Obj[:]
-        transform(v, curPath, paths, pathRefs, nvalues, nunits)
+        transform(v, curPath, paths, nvalues, nrefs, nunits, pathRefs)
         if (!nvalues.isEmpty)
           values.add(k, Etc.makeDict(nvalues))
+        if (!nrefs.isEmpty)
+          refs.add(k, Etc.makeDict(nrefs))
         if (!nunits.isEmpty)
           units.add(k, Etc.makeDict(nunits))
       }
@@ -75,6 +79,7 @@ const class DbRec
         {
           r := (Ref) v
           pathRefs.add(PathRef(cp, r.id))
+          refs.add(k, r)
         }
       }
       // Number
@@ -110,8 +115,8 @@ const class DbRec
     return (
       (id == x.id) &&
       (paths == x.paths) &&
-      (pathRefs == x.pathRefs) &&
       (values == x.values) &&
+      (refs == x.refs) &&
       (units == x.units) &&
       (spec == x.spec)
     )
@@ -125,8 +130,8 @@ const class DbRec
 
   const Str id
   const Str[] paths
-  const PathRef[] pathRefs
   const Str values // hayson
+  const Str refs   // hayson
   const Str units  // hayson
   const Str? spec
 }

@@ -44,8 +44,8 @@ public class PostgresDb extends FanObj
     conn.setAutoCommit(false);
 
     this.insertRec = conn.prepareStatement(
-      "insert into rec (id, paths, values_, units, spec) " +
-      "values (?, ?, ?::jsonb, ?::jsonb, ?)");
+      "insert into rec (id, paths, values_, refs, units, spec) " +
+      "values (?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?)");
 
     this.insertPathRef = conn.prepareStatement(
       "insert into pathRef (rec_id, path_, ref_) values (?, ?, ?)");
@@ -76,19 +76,20 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-  public void writeRec(DbRec rec)
+  public void writeRec(DbRec rec, List pathRefs)
     throws Exception
   {
     insertRec.setString(1, rec.id);
     insertRec.setObject(2, toStringArray(rec.paths));
     insertRec.setString(3, rec.values);
-    insertRec.setString(4, rec.units);
-    insertRec.setString(5, rec.spec);
+    insertRec.setString(4, rec.refs);
+    insertRec.setString(5, rec.units);
+    insertRec.setString(6, rec.spec);
     insertRec.executeUpdate();
 
-    for (int i = 0; i < rec.pathRefs.size(); i++)
+    for (int i = 0; i < pathRefs.size(); i++)
     {
-      PathRef p = (PathRef) rec.pathRefs.get(i);
+      PathRef p = (PathRef) pathRefs.get(i);
       insertPathRef.setString(1, rec.id);
       insertPathRef.setString(2, p.path);
       insertPathRef.setString(3, p.ref);
@@ -99,37 +100,37 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-  public List query(Query query)
-    throws Exception
-  {
-    List result = new List(Type.find("xbdPostgres::DbRec"));
-
-    // prepare
-    try (PreparedStatement stmt = conn.prepareStatement(query.sql)) {
-
-      // set params
-      for (int i = 0; i < query.params.size(); i++)
-        stmt.setString(i+1, (String) query.params.get(i));
-
-      // execute
-      try (ResultSet rs = stmt.executeQuery()) {
-
-        // for each
-        while(rs.next()) {
-          // TODO populate other fields
-          result.add(DbRec.make(
-            rs.getString(1),
-            new List(Type.find("sys::Str")),
-            new List(Type.find("xbdPostgres::PathRef")),
-            "",
-            "",
-            null));
-        }
-      }
-    }
-
-    return result;
-  }
+//  public List query(Query query)
+//    throws Exception
+//  {
+//    List result = new List(Type.find("xbdPostgres::DbRec"));
+//
+//    // prepare
+//    try (PreparedStatement stmt = conn.prepareStatement(query.sql)) {
+//
+//      // set params
+//      for (int i = 0; i < query.params.size(); i++)
+//        stmt.setString(i+1, (String) query.params.get(i));
+//
+//      // execute
+//      try (ResultSet rs = stmt.executeQuery()) {
+//
+//        // for each
+//        while(rs.next()) {
+//          // TODO populate other fields
+//          result.add(DbRec.make(
+//            rs.getString(1),
+//            new List(Type.find("sys::Str")),
+//            new List(Type.find("xbdPostgres::PathRef")),
+//            "",
+//            "",
+//            null));
+//        }
+//      }
+//    }
+//
+//    return result;
+//  }
 
   private static String[] toStringArray(List list)
   {
