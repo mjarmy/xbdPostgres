@@ -25,20 +25,20 @@ select * from rec where id in ('a-0000','a-0011','a-0022');
 explain analyze
 select * from rec
 where
-  (rec.paths @> '{"ahu"}');
+  (rec.paths @> '{"ahu"}'::text[]);
 
 -- facets->min
 explain analyze
 select * from rec
 where
-  (rec.paths @> '{"facets.min"}');
+  (rec.paths @> '{"facets.min"}'::text[]);
 
 -- ahu and elec
 explain analyze
 select * from rec
 where
-  ((rec.paths @> '{"ahu"}') and
-  ((rec.paths @> '{"elec"}')));
+  ((rec.paths @> '{"ahu"}'::text[]) and
+  ((rec.paths @> '{"elec"}'::text[])));
 
 -- facets->min == -INF
 explain analyze
@@ -53,7 +53,7 @@ select * from rec
   inner join rec     r1 on r1.id     = p1.ref_
 where
   (p1.path_ = 'chilledWaterRef') and
-  (r1.paths @> '{"chilled"}');
+  (r1.paths @> '{"chilled"}'::text[]);
 
 
 -- compName == 'Services'
@@ -75,7 +75,7 @@ select * from rec
   inner join rec     r1 on r1.id     = p1.ref_
 where
   (p1.path_ = 'links.in4.fromRef') and
-  (r1.paths @> '{"meta.inA.flags.linkTarget"}');
+  (r1.paths @> '{"meta.inA.flags.linkTarget"}'::text[]);
 
 -- chilled and pump and sensor and equipRef->siteRef->area == 151455
 explain analyze
@@ -85,9 +85,9 @@ select * from rec
   inner join pathref p2 on p2.rec_id = r1.id
   inner join rec     r2 on r2.id     = p2.ref_
 where
-  (rec.paths @> '{"chilled"}') and
-  (rec.paths @> '{"pump"}') and
-  (rec.paths @> '{"sensor"}') and
+  (rec.paths @> '{"chilled"}'::text[]) and
+  (rec.paths @> '{"pump"}'::text[]) and
+  (rec.paths @> '{"sensor"}'::text[]) and
   (p1.path_ = 'equipRef') and
   (p2.path_ = 'siteRef') and
   (r2.values_ @> '{"area":151455}'::jsonb);
