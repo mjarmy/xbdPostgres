@@ -12,12 +12,16 @@ class QueryTest : Test
 {
   Void testQuery()
   {
+    query :=  Query(Filter("ahu"))
     verifyQuery(
-      Query(Filter("ahu")),
+      query,
       """select * from rec
          where
            (rec.paths @> ?::jsonb);""",
       Str["'{\"ahu\"}'"])
+
+//    query =  Query(Filter("facets->min"))
+//    echo(query)
 
 //    verifyQuery(
 //      Query(Filter("compName == \"Services\"")),
@@ -31,10 +35,9 @@ class QueryTest : Test
 //      Obj[,])
   }
 
-  internal Void verifyQuery(Query q, Str sql, Str[] params)
+  internal Void verifyQuery(Query query, Str sql, Str[] params)
   {
-    echo(q)
-    verifyEq(q.sql, sql)
-    verifyEq(q.params, params)
+    verifyEq(query.sql, sql)
+    verifyEq(query.params, params)
   }
 }

@@ -70,10 +70,22 @@ internal class QueryBuilder {
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
-  private Void visitHas(FilterPath path)
+  private Void visitHas(FilterPath fp)
   {
+    path := dotPath(fp)
     whereClause.add("(rec.paths @> ?::jsonb)");
     whereParams.add("'{\"$path\"}'");
+  }
+
+  private static Str dotPath(FilterPath fp)
+  {
+    sb := StrBuf()
+    for (i := 0; i < fp.size; i++)
+    {
+      if (i > 0) sb.add(".")
+      sb.add(fp.get(i))
+    }
+    return sb.toStr
   }
 
   //////////////////////////////////////////////////////////////

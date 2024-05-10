@@ -27,6 +27,12 @@ select * from rec
 where
   (rec.paths @> '{"ahu"}');
 
+-- facets->min
+explain analyze
+select * from rec
+where
+  (rec.paths @> '{"facets.min"}');
+
 -- ahu and elec
 explain analyze
 select * from rec
@@ -34,17 +40,21 @@ where
   ((rec.paths @> '{"ahu"}') and
   ((rec.paths @> '{"elec"}')));
 
--- facets->min
-explain analyze
-select * from rec
-where
-  (rec.paths @> '{"facets.min"}');
-
 -- facets->min == -INF
 explain analyze
 select * from rec
 where
   (rec.values_ @> '{"facets.min":{"val": "-INF", "_kind": "number"}}'::jsonb);
+
+-- chilledWaterRef->chilled
+explain analyze
+select * from rec
+  inner join pathref p1 on p1.rec_id = rec.id
+  inner join rec     r1 on r1.id     = p1.ref_
+where
+  (p1.path_ = 'chilledWaterRef') and
+  (r1.paths @> '{"chilled"}');
+
 
 -- compName == 'Services'
 explain analyze
@@ -57,15 +67,6 @@ explain analyze
 select * from rec
 where
   (rec.values_ @> '{"dis":"Alpha Airside AHU-4"}'::jsonb);
-
--- chilledWaterRef->chilled
-explain analyze
-select * from rec
-  inner join pathref p1 on p1.rec_id = rec.id
-  inner join rec     r1 on r1.id     = p1.ref_
-where
-  (p1.path_ = 'chilledWaterRef') and
-  (r1.paths @> '{"chilled"}');
 
 -- links->in4->fromRef->meta->inA->flags->linkTarget
 explain analyze
