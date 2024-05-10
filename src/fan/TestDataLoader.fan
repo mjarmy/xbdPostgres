@@ -9,11 +9,11 @@
 using haystack
 
 
-class JsonLoader
+class TestDataLoader
 {
   Void main()
   {
-    JsonLoader().load()
+    TestDataLoader().load()
   }
 
   Void load()
@@ -23,21 +23,14 @@ class JsonLoader
       "xbd",
       "s3crkEt")
 
-    // alpha
-    Grid alpha := JsonReader(File(`test_data/alpha.json`).in).readVal
-    alpha.each |row, i|
+    n := 0
+    td := TestData()
+    td.recs.each |r,id|
     {
-      DbRec rec := DbRec(row)
-      writeRec(rec)
+      writeRec(DbRec(r))
+      n++
     }
-
-    // niagara
-    f := File(`test_data/jason.txt`)
-    f.eachLine |line|
-    {
-      DbRec rec := DbRec(JsonReader(line.in).readVal)
-      writeRec(rec)
-    }
+    echo("loaded $n recs")
 
     postgres.close()
   }
@@ -52,10 +45,6 @@ class JsonLoader
       JsonWriter.valToStr(rec.units),
       rec.spec == null ? null : rec.spec.id)
   }
-
-//////////////////////////////////////////////////////////////////////////
-// Fields
-//////////////////////////////////////////////////////////////////////////
 
   private PostgresDb postgres := PostgresDb()
 }
