@@ -105,26 +105,25 @@ public class PostgresDb extends FanObj
   {
     List result = new List(Type.find("xbdPostgres::DbRec"));
 
-    // prepare
     try (PreparedStatement stmt = conn.prepareStatement(query.sql)) {
 
-      // set params
       for (int i = 0; i < query.params.size(); i++)
         stmt.setString(i+1, (String) query.params.get(i));
 
-      // execute
       try (ResultSet rs = stmt.executeQuery()) {
 
-        // for each
         while(rs.next()) {
-          // TODO populate other fields
+
+          String[] paths = (String[])
+            ((java.sql.Array) rs.getObject(2)).getArray();
+
           result.add(DbRec.make(
             rs.getString(1),
-            new List(Type.find("sys::Str")),
-            "",
-            "",
-            "",
-            null));
+            fromStringArray(paths),
+            rs.getString(3),
+            rs.getString(4),
+            rs.getString(5),
+            rs.getString(6)));
         }
       }
     }
@@ -138,6 +137,14 @@ public class PostgresDb extends FanObj
     for (int i = 0; i < list.size(); i++)
       arr[i] = (String) list.get(i);
     return arr;
+  }
+
+  private static List fromStringArray(String[] arr)
+  {
+    List list = new List(Type.find("sys::Str"));
+    for (int i = 0; i < arr.length; i++)
+      list.add(arr[i]);
+    return list;
   }
 
 //////////////////////////////////////////////////////////////////////////

@@ -26,17 +26,18 @@ class QueryTest : Test
   Void testQuery()
   {
     f :=  Filter("ahu")
-    expected := testData.filter(f).keys.sort
-    echo(expected)
+    expected := testData.filter(f)
+    echo(expected.keys)
 
-    q :=  Query.fromFilter(f)
+    q := Query.fromFilter(f)
     verifyEq(q, Query(
       """select * from rec
          where
            (rec.paths @> ?::text[]);""",
       Str["{\"ahu\"}"]))
 
-    echo(postgres.query(q))
+    found := postgres.query(q)
+    echo(found[0]->paths)
   }
 
   private TestData testData := TestData()
