@@ -12,6 +12,13 @@ class QueryTest : Test
 {
   Void testQuery()
   {
+    postgres.open(
+      "jdbc:postgresql://localhost/postgres",
+      "xbd",
+      "s3crkEt")
+
+    //-----------------------------
+
     f :=  Filter("ahu")
     expected := testData.filter(f).keys.sort
     echo(expected)
@@ -20,9 +27,16 @@ class QueryTest : Test
     verifyEq(q, Query(
       """select * from rec
          where
-           (rec.paths @> ?::jsonb);""",
-      Str["'{\"ahu\"}'"]))
+           (rec.paths @> ?::text[]);""",
+      Str["{\"ahu\"}"]))
+
+    echo(postgres.query(q))
+
+    //-----------------------------
+
+    postgres.close()
   }
 
-  TestData testData := TestData()
+  private TestData testData := TestData()
+  private PostgresDb postgres := PostgresDb()
 }

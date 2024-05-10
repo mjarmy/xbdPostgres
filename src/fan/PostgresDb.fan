@@ -13,4 +13,6 @@ native class PostgresDb
 
   native Void writeSpec(Str name, Str[] inherits)
   native Void writeRec(DbRec rec)
+
+  native DbRec[] query(Query query)
 }

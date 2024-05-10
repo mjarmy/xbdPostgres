@@ -8,10 +8,12 @@
 
 package fan.xbdPostgres;
 
-import fan.sys.*;
+import fan.sys.FanObj;
+import fan.sys.Type;
+import fan.sys.List;
 
 import java.sql.*;
-import java.util.*;
+import java.util.Properties;
 
 public class PostgresDb extends FanObj
 {
@@ -22,9 +24,7 @@ public class PostgresDb extends FanObj
 
   public static PostgresDb make()
   {
-    PostgresDb self = new PostgresDb();
-    //make$(self, arg);
-    return self;
+    return new PostgresDb();
   }
 
   public final Type typeof() { return typeof; }
@@ -62,7 +62,7 @@ public class PostgresDb extends FanObj
     conn.close();
   }
 
-  public void writeSpec(String name, fan.sys.List inherits)
+  public void writeSpec(String name, List inherits)
     throws Exception
   {
     insertSpec.setString(1, name);
@@ -94,7 +94,33 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-  private static String[] toStringArray(fan.sys.List list)
+  public List query(Query query)
+    throws Exception
+  {
+    List result = new List(Type.find("xbdPostgres::DbRec"));
+
+    try (PreparedStatement stmt = conn.prepareStatement(query.sql)) {
+      for (int i = 0; i < query.params.size(); i++)
+        stmt.setString(i+1, (String) query.params.get(i));
+
+      try (ResultSet rs = stmt.executeQuery()) {
+        while(rs.next()) {
+          // TODO populate other fields
+          result.add(DbRec.make(
+            rs.getString(1),
+            new List(Type.find("sys::Str")),
+            new List(Type.find("xbdPostgres::PathRef")),
+            "",
+            "",
+            null));
+        }
+      }
+    }
+
+    return result;
+  }
+
+  private static String[] toStringArray(List list)
   {
     String[] arr = new String[(int)list.size()];
     for (int i = 0; i < list.size(); i++)

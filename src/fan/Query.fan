@@ -79,8 +79,8 @@ internal class QueryBuilder {
   private Void visitHas(FilterPath fp)
   {
     path := dotPath(fp)
-    whereClause.add("(rec.paths @> ?::jsonb)");
-    whereParams.add("'{\"$path\"}'");
+    whereClause.add("(rec.paths @> ?::text[])");
+    whereParams.add("{\"$path\"}");
   }
 
   private static Str dotPath(FilterPath fp)
