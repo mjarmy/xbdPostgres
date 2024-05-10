@@ -100,37 +100,37 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-//  public List query(Query query)
-//    throws Exception
-//  {
-//    List result = new List(Type.find("xbdPostgres::DbRec"));
-//
-//    // prepare
-//    try (PreparedStatement stmt = conn.prepareStatement(query.sql)) {
-//
-//      // set params
-//      for (int i = 0; i < query.params.size(); i++)
-//        stmt.setString(i+1, (String) query.params.get(i));
-//
-//      // execute
-//      try (ResultSet rs = stmt.executeQuery()) {
-//
-//        // for each
-//        while(rs.next()) {
-//          // TODO populate other fields
-//          result.add(DbRec.make(
-//            rs.getString(1),
-//            new List(Type.find("sys::Str")),
-//            new List(Type.find("xbdPostgres::PathRef")),
-//            "",
-//            "",
-//            null));
-//        }
-//      }
-//    }
-//
-//    return result;
-//  }
+  public List query(Query query)
+    throws Exception
+  {
+    List result = new List(Type.find("xbdPostgres::DbRec"));
+
+    // prepare
+    try (PreparedStatement stmt = conn.prepareStatement(query.sql)) {
+
+      // set params
+      for (int i = 0; i < query.params.size(); i++)
+        stmt.setString(i+1, (String) query.params.get(i));
+
+      // execute
+      try (ResultSet rs = stmt.executeQuery()) {
+
+        // for each
+        while(rs.next()) {
+          // TODO populate other fields
+          result.add(DbRec.make(
+            rs.getString(1),
+            new List(Type.find("sys::Str")),
+            "",
+            "",
+            "",
+            null));
+        }
+      }
+    }
+
+    return result;
+  }
 
   private static String[] toStringArray(List list)
   {

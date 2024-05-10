@@ -36,7 +36,7 @@ class QueryTest : Test
            (rec.paths @> ?::text[]);""",
       Str["{\"ahu\"}"]))
 
-    //echo(postgres.query(q))
+    echo(postgres.query(q))
   }
 
   private TestData testData := TestData()

@@ -14,5 +14,5 @@ native class PostgresDb
   native Void writeSpec(Str name, Str[] inherits)
   native Void writeRec(DbRec rec, PathRef[] pathRefs)
 
-  //native DbRec[] query(Query query)
+  native DbRec[] query(Query query)
 }
