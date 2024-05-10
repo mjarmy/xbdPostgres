@@ -8,7 +8,6 @@
 
 using haystack
 
-
 const class TestData
 {
   new make()
