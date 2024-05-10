@@ -15,32 +15,29 @@ class DbRecTest : Test
     Grid alpha := JsonReader(File(`test_data/alpha.json`).in).readVal
 
     //-----------------------------------
-    DbRec rec := DbRec(alpha.get(0))
-    verifyEq(rec.id, "a-0000")
-    verifyEq(rec.paths,
+    DbRec rec := DbRec.fromDict(alpha.get(0))
+    verifyEq(rec, DbRec(
+      "a-0000",
       ["id", "area", "dis", "geoAddr", "geoCity", "geoCoord", "geoCountry",
       "geoElevation", "geoPostalCode", "geoState", "geoStreet", "site", "tz",
-      "weatherStationRef"])
-    verifyEq(rec.pathRefs,
-      [PathRef("weatherStationRef", "a-07eb")])
-    verifyEq(rec.values, """{"area":151455.0, "geoState":"CO", "geoPostalCode":"80821", "tz":"Denver", "geoCity":"Hugo", "dis":"Alpha", "geoAddr":"123 Prarie St, Hugo, CO 80821", "geoElevation":2956.0, "geoCoord":{"_kind":"coord", "lng":-103.57159, "lat":39.04532}, "geoStreet":"123 Prarie St", "geoCountry":"US"}""")
-    verifyEq(rec.units, """{"area":"ft\\u00b2", "geoElevation":"m"}""")
-    verifyNull(rec.spec)
+      "weatherStationRef"],
+      [PathRef("weatherStationRef", "a-07eb")],
+"""{"area":151455.0, "geoState":"CO", "geoPostalCode":"80821", "tz":"Denver", "geoCity":"Hugo", "dis":"Alpha", "geoAddr":"123 Prarie St, Hugo, CO 80821", "geoElevation":2956.0, "geoCoord":{"_kind":"coord", "lng":-103.57159, "lat":39.04532}, "geoStreet":"123 Prarie St", "geoCountry":"US"}""",
+      """{"area":"ft\\u00b2", "geoElevation":"m"}""",
+      null))
 
     //-----------------------------------
-    rec = DbRec(alpha.get(2))
-    verifyEq(rec.id, "a-0002")
-    verifyEq(rec.paths,
+    rec = DbRec.fromDict(alpha.get(2))
+    verifyEq(rec, DbRec(
+      "a-0002",
       ["id", "chilled", "cmd", "cool", "cur", "dis", "equipRef", "his", "kind",
       "point", "siteRef", "tz", "unit", "valve", "water", "custom",
-      "custom.description"])
-    verifyEq(rec.pathRefs,
+      "custom.description"],
       [PathRef("equipRef", "a-0001"),
-       PathRef("siteRef",  "a-0000")])
-    verifyEq(rec.values,
-      """{"unit":"%", "kind":"Number", "tz":"Denver", "custom":{"description":"Clg_Valve_Cmd"}, "dis":"Alpha Airside AHU-2 Chilled Water Valve"}""")
-    verifyEq(rec.units, "{}")
-    verifyNull(rec.spec)
+       PathRef("siteRef",  "a-0000")],
+"""{"unit":"%", "kind":"Number", "tz":"Denver", "custom":{"description":"Clg_Valve_Cmd"}, "dis":"Alpha Airside AHU-2 Chilled Water Valve"}""",
+      "{}",
+      null))
   }
 
   Void testNiagara()
@@ -54,7 +51,7 @@ class DbRecTest : Test
       niagara.add(id, rec)
     }
 
-    DbRec rec := DbRec(niagara.get("h:2c6"))
+    DbRec rec := DbRec.fromDict(niagara.get("h:2c6"))
     //echo(rec.id)
     //echo(rec.paths)
     //echo(rec.pathRefs)
@@ -62,8 +59,8 @@ class DbRecTest : Test
     //echo(JsonWriter.valToStr(rec.units))
     //echo(rec.spec)
 
-    verifyEq(rec.id, "h:2c6")
-    verifyEq(rec.paths,
+    verifyEq(rec, DbRec(
+      "h:2c6",
       ["compName", "spec", "facets", "facets.min", "facets.max",
       "facets.precision", "facets.units", "dis", "links", "links.in10",
       "links.in10.fromOrd", "links.in10.fromSlot", "links.in10.fromRef",
@@ -81,29 +78,27 @@ class DbRecTest : Test
       "in14.value", "in14.status", "in16", "in16.value", "in16.status",
       "fallback", "fallback.value", "fallback.status", "overrideExpiration",
       "point", "out", "out.value", "out.status", "wsAnnotation", "parentRef",
-      "slotPath"])
-    verifyEq(rec.pathRefs,
+      "slotPath"],
       [PathRef("spec", "cc.niagara.control::NumericWritable"),
        PathRef("links.in10.fromRef", "h:2c4"),
        PathRef("meta.wsAnnotation.slotSpec", "cc.niagara.baja::WsAnnotation"),
-       PathRef("parentRef", "h:2bf")])
-    verifyEq(rec.values,
-"""{"compName":"damper", "overrideExpiration":{"_kind":"dateTime", "val":"1969-12-31T19:00:00-05:00", "tz":"New_York"}, "facets":{"min":{"_kind":"number", "val":"-INF"}, "max":{"_kind":"number", "val":"INF"}, "precision":1.0, "units":"null_"}, "dis":"damper", "out":{"value":0.0, "status":"ok"}, "links":{"in10":{"fromOrd":"h:2c4", "fromSlot":"out", "enabled":true}}, "wsAnnotation":"64,10,8", "kind":"Number", "in2":{"value":0.0, "status":"ok"}, "in1":{"value":0.0, "status":"ok"}, "in4":{"value":0.0, "status":"ok"}, "in3":{"value":0.0, "status":"ok"}, "in6":{"value":0.0, "status":"ok"}, "in5":{"value":0.0, "status":"ok"}, "in8":{"value":0.0, "status":"ok"}, "in7":{"value":0.0, "status":"ok"}, "in11":{"value":0.0, "status":"ok"}, "in9":{"value":0.0, "status":"ok"}, "in10":{"value":0.0, "status":"ok"}, "in13":{"value":0.0, "status":"ok"}, "in12":{"value":0.0, "status":"ok"}, "in15":{"value":0.0, "status":"ok"}, "in14":{"value":0.0, "status":"ok"}, "slotPath":"slot:/AHUSystem/vavs/vav8/damper", "in16":{"value":0.0, "status":"ok"}, "fallback":{"value":76.0, "status":"ok"}}""")
-    verifyEq(rec.units, "{}")
-    verifyEq(rec.spec, "cc.niagara.control::NumericWritable")
+       PathRef("parentRef", "h:2bf")],
+"""{"compName":"damper", "overrideExpiration":{"_kind":"dateTime", "val":"1969-12-31T19:00:00-05:00", "tz":"New_York"}, "facets":{"min":{"_kind":"number", "val":"-INF"}, "max":{"_kind":"number", "val":"INF"}, "precision":1.0, "units":"null_"}, "dis":"damper", "out":{"value":0.0, "status":"ok"}, "links":{"in10":{"fromOrd":"h:2c4", "fromSlot":"out", "enabled":true}}, "wsAnnotation":"64,10,8", "kind":"Number", "in2":{"value":0.0, "status":"ok"}, "in1":{"value":0.0, "status":"ok"}, "in4":{"value":0.0, "status":"ok"}, "in3":{"value":0.0, "status":"ok"}, "in6":{"value":0.0, "status":"ok"}, "in5":{"value":0.0, "status":"ok"}, "in8":{"value":0.0, "status":"ok"}, "in7":{"value":0.0, "status":"ok"}, "in11":{"value":0.0, "status":"ok"}, "in9":{"value":0.0, "status":"ok"}, "in10":{"value":0.0, "status":"ok"}, "in13":{"value":0.0, "status":"ok"}, "in12":{"value":0.0, "status":"ok"}, "in15":{"value":0.0, "status":"ok"}, "in14":{"value":0.0, "status":"ok"}, "slotPath":"slot:/AHUSystem/vavs/vav8/damper", "in16":{"value":0.0, "status":"ok"}, "fallback":{"value":76.0, "status":"ok"}}""",
+    "{}",
+    "cc.niagara.control::NumericWritable"))
   }
 
   Void testNestedUnits()
   {
     json := """ { "id": { "_kind": "ref", "val": "xyz" }, "a":{"_kind":"number", "val":1, "unit":"ft\u00b2"}, "b":{"_kind":"number", "val":2}, "c": { "d":{"_kind":"number", "val":3, "unit":"m"}, "e":{"_kind":"number", "val":4} }, "f": { "g":{"_kind":"number", "val":5} } } """
-    DbRec rec := DbRec(JsonReader(json.in).readVal)
+    DbRec rec := DbRec.fromDict(JsonReader(json.in).readVal)
 
-    verifyEq(rec.id, "xyz")
-    verifyEq(rec.paths, ["a", "b", "c", "c.d", "c.e", "f", "f.g", "id"])
-    verifyEq(rec.pathRefs, PathRef[,])
-    verifyEq(rec.values,
-      """{"a":1.0, "b":2.0, "c":{"d":3.0, "e":4.0}, "f":{"g":5.0}}""")
-    verifyEq(rec.units, """{"a":"ft\\u00b2", "c":{"d":"m"}}""")
-    verifyNull(rec.spec)
+    verifyEq(rec, DbRec(
+      "xyz",
+      ["a", "b", "c", "c.d", "c.e", "f", "f.g", "id"],
+      PathRef[,],
+      """{"a":1.0, "b":2.0, "c":{"d":3.0, "e":4.0}, "f":{"g":5.0}}""",
+      """{"a":"ft\\u00b2", "c":{"d":"m"}}""",
+      null))
   }
 }

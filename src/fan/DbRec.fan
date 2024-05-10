@@ -14,21 +14,37 @@ using haystack
 
 const class DbRec
 {
-  new fromDict(Dict dict)
+  new make(
+    Str id,
+    Str[] paths,
+    PathRef[] pathRefs,
+    Str values,
+    Str units,
+    Str? spec)
   {
-    this.id = ((Ref) dict->id)->id
+    this.id       = id
+    this.paths    = paths
+    this.pathRefs = pathRefs
+    this.values   = values
+    this.units    = units
+    this.spec     = spec
+  }
 
+  static new fromDict(Dict dict)
+  {
     paths := Str[,]
     pathRefs := PathRef[,]
     values := Str:Obj[:]
     units := Str:Obj[:]
     transform(dict, Str[,], paths, pathRefs, values, units)
 
-    this.paths = paths
-    this.pathRefs = pathRefs
-    this.values = JsonWriter.valToStr(Etc.makeDict(values))
-    this.units = JsonWriter.valToStr(Etc.makeDict(units))
-    this.spec = dict.has("spec") ? ((Ref)dict->spec).id : null
+    return DbRec(
+      ((Ref) dict->id)->id,
+      paths,
+      pathRefs,
+      JsonWriter.valToStr(Etc.makeDict(values)),
+      JsonWriter.valToStr(Etc.makeDict(units)),
+      dict.has("spec") ? ((Ref)dict->spec).id : null)
   }
 
   private static Void transform(
@@ -85,6 +101,22 @@ const class DbRec
     }
   }
 
+  override Int hash() { id.hash }
+
+  override Bool equals(Obj? that)
+  {
+    x := that as DbRec
+    if (x == null) return false
+    return (
+      (id == x.id) &&
+      (paths == x.paths) &&
+      (pathRefs == x.pathRefs) &&
+      (values == x.values) &&
+      (units == x.units) &&
+      (spec == x.spec)
+    )
+  }
+
   //////////////////////////////////////////////////////////////
   // Fields
   //////////////////////////////////////////////////////////////
@@ -120,6 +152,4 @@ const class PathRef
     if (x == null) return false
     return path == x.path && ref == x.ref
   }
-
-  override Str toStr() { "PathRef($path, $ref)" }
 }
