@@ -8,11 +8,11 @@
 
 using xeto
 
-class SpecLoader
+class XetoSpecLoader
 {
   Void main()
   {
-    SpecLoader().buildAll()
+    XetoSpecLoader().buildAll()
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -33,6 +33,7 @@ class SpecLoader
       lib := env.lib(e.name)
       lib.types.each |s| { buildSpec(s) }
     }
+    echo("loaded $count recs")
 
     postgres.close()
   }
@@ -48,6 +49,7 @@ class SpecLoader
     inherit := [Str:Str][:] /* Set */
     traverseHierarchy(spec, inherit)
     postgres.writeSpec(spec.qname, inherit.keys)
+    count++
   }
 
   // Recursively traverse the spec's inheritance hierarchy up to the root. If
@@ -75,4 +77,5 @@ class SpecLoader
 //////////////////////////////////////////////////////////////////////////
 
   internal PostgresDb postgres := PostgresDb()
+  internal Int count := 0
 }
