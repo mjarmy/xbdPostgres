@@ -32,5 +32,19 @@ const class TestData
     this.recs = recs
   }
 
+  Ref:Dict filter(Filter f)
+  {
+    result := Ref:Dict[:]
+
+    pather := |Ref r->Dict?| { recs.get(r) }
+    recs.each |rec, id|
+    {
+      if (f.matches(rec, PatherContext(pather)))
+        result.add(id, rec)
+    }
+
+    return result
+  }
+
   const Ref:Dict recs
 }

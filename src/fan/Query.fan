@@ -14,22 +14,28 @@ using haystack
 
 const class Query
 {
-  new make(Filter f)
+  new make(Str sql, Str[] params)
+  {
+    this.sql = sql
+    this.params = params
+  }
+
+  static new fromFilter(Filter f)
   {
     qb := QueryBuilder(f)
-    this.sql =
+
+    return Query(
       ["select * from rec",
        "where",
-       "  ${qb.whereClause}"].join("\n") + ";"
-
-    this.params = qb.whereParams
+       "  ${qb.whereClause}"].join("\n") + ";",
+      qb.whereParams)
   }
 
   //////////////////////////////////////////////////////////////
   // Obj
   //////////////////////////////////////////////////////////////
 
-  override Int hash() { throw UnsupportedErr() }
+  override Int hash() { return sql.hash.xor(params.hash) }
 
   override Bool equals(Obj? that)
   {

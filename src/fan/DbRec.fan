@@ -14,21 +14,21 @@ using haystack
 
 const class DbRec
 {
-  new make(Dict hayson)
+  new make(Dict recDict)
   {
-    this.id = ((Ref) hayson->id)->id
+    this.id = ((Ref) recDict->id)->id
 
     paths := Str[,]
     pathRefs := PathRef[,]
     values := Str:Obj[:]
     units := Str:Obj[:]
-    transform(hayson, Str[,], paths, pathRefs, values, units)
+    transform(recDict, Str[,], paths, pathRefs, values, units)
 
     this.paths = paths
     this.pathRefs = pathRefs
     this.values = Etc.makeDict(values)
     this.units = Etc.makeDict(units)
-    this.spec = hayson.has("spec") ? hayson->spec : null
+    this.spec = recDict.has("spec") ? recDict->spec : null
   }
 
   private static Void transform(
