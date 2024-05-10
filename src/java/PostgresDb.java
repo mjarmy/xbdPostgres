@@ -71,26 +71,20 @@ public class PostgresDb extends FanObj
     conn.commit();
   }
 
-  public void writeRec(
-      String id,
-      fan.sys.List paths,
-      fan.sys.List pathRefs,
-      String values, // json
-      String units,  // json
-      String spec)
+  public void writeRec(DbRec rec)
     throws Exception
   {
-    insertRec.setString(1, id);
-    insertRec.setObject(2, toStringArray(paths));
-    insertRec.setString(3, values);
-    insertRec.setString(4, units);
-    insertRec.setString(5, spec);
+    insertRec.setString(1, rec.id);
+    insertRec.setObject(2, toStringArray(rec.paths));
+    insertRec.setString(3, rec.values);
+    insertRec.setString(4, rec.units);
+    insertRec.setString(5, rec.spec);
     insertRec.executeUpdate();
 
-    for (int i = 0; i < pathRefs.size(); i++)
+    for (int i = 0; i < rec.pathRefs.size(); i++)
     {
-      PathRef p = (PathRef) pathRefs.get(i);
-      insertPathRef.setString(1, id);
+      PathRef p = (PathRef) rec.pathRefs.get(i);
+      insertPathRef.setString(1, rec.id);
       insertPathRef.setString(2, p.path);
       insertPathRef.setString(3, p.ref);
       insertPathRef.addBatch();

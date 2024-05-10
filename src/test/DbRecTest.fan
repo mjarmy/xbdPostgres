@@ -23,8 +23,8 @@ class DbRecTest : Test
       "weatherStationRef"])
     verifyEq(rec.pathRefs,
       [PathRef("weatherStationRef", "a-07eb")])
-    verifyEq(JsonWriter.valToStr(rec.values), """{"area":151455.0, "geoState":"CO", "geoPostalCode":"80821", "tz":"Denver", "geoCity":"Hugo", "dis":"Alpha", "geoAddr":"123 Prarie St, Hugo, CO 80821", "geoElevation":2956.0, "geoCoord":{"_kind":"coord", "lng":-103.57159, "lat":39.04532}, "geoStreet":"123 Prarie St", "geoCountry":"US"}""")
-    verifyEq(JsonWriter.valToStr(rec.units), """{"area":"ft\\u00b2", "geoElevation":"m"}""")
+    verifyEq(rec.values, """{"area":151455.0, "geoState":"CO", "geoPostalCode":"80821", "tz":"Denver", "geoCity":"Hugo", "dis":"Alpha", "geoAddr":"123 Prarie St, Hugo, CO 80821", "geoElevation":2956.0, "geoCoord":{"_kind":"coord", "lng":-103.57159, "lat":39.04532}, "geoStreet":"123 Prarie St", "geoCountry":"US"}""")
+    verifyEq(rec.units, """{"area":"ft\\u00b2", "geoElevation":"m"}""")
     verifyNull(rec.spec)
 
     //-----------------------------------
@@ -37,9 +37,9 @@ class DbRecTest : Test
     verifyEq(rec.pathRefs,
       [PathRef("equipRef", "a-0001"),
        PathRef("siteRef",  "a-0000")])
-    verifyEq(JsonWriter.valToStr(rec.values),
+    verifyEq(rec.values,
       """{"unit":"%", "kind":"Number", "tz":"Denver", "custom":{"description":"Clg_Valve_Cmd"}, "dis":"Alpha Airside AHU-2 Chilled Water Valve"}""")
-    verifyEq(JsonWriter.valToStr(rec.units), "{}")
+    verifyEq(rec.units, "{}")
     verifyNull(rec.spec)
   }
 
@@ -87,10 +87,10 @@ class DbRecTest : Test
        PathRef("links.in10.fromRef", "h:2c4"),
        PathRef("meta.wsAnnotation.slotSpec", "cc.niagara.baja::WsAnnotation"),
        PathRef("parentRef", "h:2bf")])
-    verifyEq(JsonWriter.valToStr(rec.values),
+    verifyEq(rec.values,
 """{"compName":"damper", "overrideExpiration":{"_kind":"dateTime", "val":"1969-12-31T19:00:00-05:00", "tz":"New_York"}, "facets":{"min":{"_kind":"number", "val":"-INF"}, "max":{"_kind":"number", "val":"INF"}, "precision":1.0, "units":"null_"}, "dis":"damper", "out":{"value":0.0, "status":"ok"}, "links":{"in10":{"fromOrd":"h:2c4", "fromSlot":"out", "enabled":true}}, "wsAnnotation":"64,10,8", "kind":"Number", "in2":{"value":0.0, "status":"ok"}, "in1":{"value":0.0, "status":"ok"}, "in4":{"value":0.0, "status":"ok"}, "in3":{"value":0.0, "status":"ok"}, "in6":{"value":0.0, "status":"ok"}, "in5":{"value":0.0, "status":"ok"}, "in8":{"value":0.0, "status":"ok"}, "in7":{"value":0.0, "status":"ok"}, "in11":{"value":0.0, "status":"ok"}, "in9":{"value":0.0, "status":"ok"}, "in10":{"value":0.0, "status":"ok"}, "in13":{"value":0.0, "status":"ok"}, "in12":{"value":0.0, "status":"ok"}, "in15":{"value":0.0, "status":"ok"}, "in14":{"value":0.0, "status":"ok"}, "slotPath":"slot:/AHUSystem/vavs/vav8/damper", "in16":{"value":0.0, "status":"ok"}, "fallback":{"value":76.0, "status":"ok"}}""")
-    verifyEq(JsonWriter.valToStr(rec.units), "{}")
-    verifyEq(rec.spec, Ref.fromStr("cc.niagara.control::NumericWritable"))
+    verifyEq(rec.units, "{}")
+    verifyEq(rec.spec, "cc.niagara.control::NumericWritable")
   }
 
   Void testNestedUnits()
@@ -101,9 +101,9 @@ class DbRecTest : Test
     verifyEq(rec.id, "xyz")
     verifyEq(rec.paths, ["a", "b", "c", "c.d", "c.e", "f", "f.g", "id"])
     verifyEq(rec.pathRefs, PathRef[,])
-    verifyEq(JsonWriter.valToStr(rec.values),
+    verifyEq(rec.values,
       """{"a":1.0, "b":2.0, "c":{"d":3.0, "e":4.0}, "f":{"g":5.0}}""")
-    verifyEq(JsonWriter.valToStr(rec.units), """{"a":"ft\\u00b2", "c":{"d":"m"}}""")
+    verifyEq(rec.units, """{"a":"ft\\u00b2", "c":{"d":"m"}}""")
     verifyNull(rec.spec)
   }
 }

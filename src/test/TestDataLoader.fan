@@ -27,23 +27,12 @@ class TestDataLoader
     td := TestData()
     td.recs.each |r,id|
     {
-      writeRec(DbRec(r))
+      postgres.writeRec(DbRec(r))
       n++
     }
     echo("loaded $n recs")
 
     postgres.close()
-  }
-
-  private Void writeRec(DbRec rec)
-  {
-    postgres.writeRec(
-      rec.id,
-      rec.paths,
-      rec.pathRefs,
-      JsonWriter.valToStr(rec.values),
-      JsonWriter.valToStr(rec.units),
-      rec.spec == null ? null : rec.spec.id)
   }
 
   private PostgresDb postgres := PostgresDb()
