@@ -16,7 +16,7 @@ class Db
 {
   Void open(Str uri, Str? username, Str? password)
   {
-    conn := SqlConn.open(uri, username, password)
+    conn = SqlConn.open(uri, username, password)
 
     insertSpecStmt = conn.sql(
       "insert into spec (qname, inherits_from)
@@ -26,9 +26,9 @@ class Db
   Void close()
   {
     insertSpecStmt.close
-    conn.close
-
     insertSpecStmt = null
+
+    conn.close
     conn = null
   }
 

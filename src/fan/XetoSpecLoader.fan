@@ -48,7 +48,7 @@ class XetoSpecLoader
 
     inherit := [Str:Str][:] /* Set */
     traverseHierarchy(spec, inherit)
-    db.writeSpec(spec.qname, inherit.keys)
+    db.insertSpec(spec.qname, inherit.keys)
     count++
   }
 

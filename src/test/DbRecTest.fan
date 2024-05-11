@@ -12,47 +12,42 @@ class DbRecTest : Test
 {
   Void testAlpha()
   {
-    pathRefs := PathRef[,]
-    DbRec rec := DbRec.fromDict(testData.recs.get(Ref.fromStr("a-0000")), pathRefs)
-    verifyEq(pathRefs, [PathRef("weatherStationRef", "a-07eb")])
-
+    rec := DbRec.fromDict(testData.recs.get(Ref.fromStr("a-0000")))
     verifyEq(rec, DbRec(
-      "a-0000",
+      Ref.fromStr("a-0000"),
       ["id", "area", "dis", "geoAddr", "geoCity", "geoCoord", "geoCountry",
       "geoElevation", "geoPostalCode", "geoState", "geoStreet", "site", "tz",
       "weatherStationRef"],
-"""{"area":151455.0, "geoState":"CO", "geoPostalCode":"80821", "tz":"Denver", "geoCity":"Hugo", "dis":"Alpha", "geoAddr":"123 Prarie St, Hugo, CO 80821", "geoElevation":2956.0, "geoCoord":{"_kind":"coord", "lng":-103.57159, "lat":39.04532}, "geoStreet":"123 Prarie St", "geoCountry":"US"}""",
-      """{"weatherStationRef":{"_kind":"ref", "val":"a-07eb"}}""",
-      """{"area":"ft\\u00b2", "geoElevation":"m"}""",
+JsonReader("""{"area":151455, "geoState":"CO", "geoPostalCode":"80821", "tz":"Denver", "geoCity":"Hugo", "dis":"Alpha", "geoAddr":"123 Prarie St, Hugo, CO 80821", "geoElevation":2956, "geoCoord":{"_kind":"coord", "lng":-103.57159, "lat":39.04532}, "geoStreet":"123 Prarie St", "geoCountry":"US"}""".in).readVal,
+JsonReader("""{"weatherStationRef":{"_kind":"ref", "val":"a-07eb"}}""".in).readVal,
+JsonReader("""{"area":"ft\\u00b2", "geoElevation":"m"}""".in).readVal,
       null))
+    verifyEq(rec.refPaths, Ref:Str[
+      Ref.fromStr("a-07eb"): "weatherStationRef"
+    ])
 
-    pathRefs = PathRef[,]
-    rec = DbRec.fromDict(testData.recs.get(Ref.fromStr("a-0002")), pathRefs)
-    verifyEq(pathRefs, [PathRef("equipRef", "a-0001"), PathRef("siteRef",  "a-0000")])
-
+    rec = DbRec.fromDict(testData.recs.get(Ref.fromStr("a-0002")))
     verifyEq(rec, DbRec(
-      "a-0002",
+      Ref.fromStr("a-0002"),
       ["id", "chilled", "cmd", "cool", "cur", "dis", "equipRef", "his", "kind",
       "point", "siteRef", "tz", "unit", "valve", "water", "custom",
       "custom.description"],
-"""{"unit":"%", "kind":"Number", "tz":"Denver", "custom":{"description":"Clg_Valve_Cmd"}, "dis":"Alpha Airside AHU-2 Chilled Water Valve"}""",
-      """{"siteRef":{"_kind":"ref", "val":"a-0000"}, "equipRef":{"_kind":"ref", "val":"a-0001"}}""",
-      "{}",
+JsonReader("""{"unit":"%", "kind":"Number", "tz":"Denver", "custom":{"description":"Clg_Valve_Cmd"}, "dis":"Alpha Airside AHU-2 Chilled Water Valve"}""".in).readVal,
+JsonReader("""{"siteRef":{"_kind":"ref", "val":"a-0000"}, "equipRef":{"_kind":"ref", "val":"a-0001"}}""".in).readVal,
+JsonReader("{}".in).readVal,
       null))
+
+    verifyEq(rec.refPaths, Ref:Str[
+      Ref.fromStr("a-0000"): "siteRef",
+      Ref.fromStr("a-0001"): "equipRef"
+    ])
   }
 
   Void testNiagara()
   {
-    pathRefs := PathRef[,]
-    DbRec rec := DbRec.fromDict(testData.recs.get(Ref.fromStr("h:2c6")), pathRefs)
-    verifyEq(pathRefs,
-      [PathRef("spec", "cc.niagara.control::NumericWritable"),
-       PathRef("links.in10.fromRef", "h:2c4"),
-       PathRef("meta.wsAnnotation.slotSpec", "cc.niagara.baja::WsAnnotation"),
-       PathRef("parentRef", "h:2bf")])
-
+    DbRec rec := DbRec.fromDict(testData.recs.get(Ref.fromStr("h:2c6")))
     verifyEq(rec, DbRec(
-      "h:2c6",
+      Ref.fromStr("h:2c6"),
       ["compName", "spec", "facets", "facets.min", "facets.max",
       "facets.precision", "facets.units", "dis", "links", "links.in10",
       "links.in10.fromOrd", "links.in10.fromSlot", "links.in10.fromRef",
@@ -71,29 +66,33 @@ class DbRecTest : Test
       "fallback", "fallback.value", "fallback.status", "overrideExpiration",
       "point", "out", "out.value", "out.status", "wsAnnotation", "parentRef",
       "slotPath"],
+JsonReader("""{"compName":"damper", "overrideExpiration":{"_kind":"dateTime", "val":"1969-12-31T19:00:00-05:00", "tz":"New_York"}, "facets":{"min":{"_kind":"number", "val":"-INF"}, "max":{"_kind":"number", "val":"INF"}, "precision":1.0, "units":"null_"}, "dis":"damper", "out":{"value":0.0, "status":"ok"}, "links":{"in10":{"fromOrd":"h:2c4", "fromSlot":"out", "enabled":true}}, "wsAnnotation":"64,10,8", "kind":"Number", "in2":{"value":0.0, "status":"ok"}, "in1":{"value":0.0, "status":"ok"}, "in4":{"value":0.0, "status":"ok"}, "in3":{"value":0.0, "status":"ok"}, "in6":{"value":0.0, "status":"ok"}, "in5":{"value":0.0, "status":"ok"}, "in8":{"value":0.0, "status":"ok"}, "in7":{"value":0.0, "status":"ok"}, "in11":{"value":0.0, "status":"ok"}, "in9":{"value":0.0, "status":"ok"}, "in10":{"value":0.0, "status":"ok"}, "in13":{"value":0.0, "status":"ok"}, "in12":{"value":0.0, "status":"ok"}, "in15":{"value":0.0, "status":"ok"}, "in14":{"value":0.0, "status":"ok"}, "slotPath":"slot:/AHUSystem/vavs/vav8/damper", "in16":{"value":0.0, "status":"ok"}, "fallback":{"value":76.0, "status":"ok"}}""".in).readVal,
+JsonReader("""{"meta":{"wsAnnotation":{"slotSpec":{"_kind":"ref", "val":"cc.niagara.baja::WsAnnotation"}}}, "links":{"in10":{"fromRef":{"_kind":"ref", "val":"h:2c4"}}}, "spec":{"_kind":"ref", "val":"cc.niagara.control::NumericWritable"}, "parentRef":{"_kind":"ref", "val":"h:2bf"}}""".in).readVal,
+    JsonReader("{}".in).readVal,
+    Ref.fromStr("cc.niagara.control::NumericWritable")))
 
-"""{"compName":"damper", "overrideExpiration":{"_kind":"dateTime", "val":"1969-12-31T19:00:00-05:00", "tz":"New_York"}, "facets":{"min":{"_kind":"number", "val":"-INF"}, "max":{"_kind":"number", "val":"INF"}, "precision":1.0, "units":"null_"}, "dis":"damper", "out":{"value":0.0, "status":"ok"}, "links":{"in10":{"fromOrd":"h:2c4", "fromSlot":"out", "enabled":true}}, "wsAnnotation":"64,10,8", "kind":"Number", "in2":{"value":0.0, "status":"ok"}, "in1":{"value":0.0, "status":"ok"}, "in4":{"value":0.0, "status":"ok"}, "in3":{"value":0.0, "status":"ok"}, "in6":{"value":0.0, "status":"ok"}, "in5":{"value":0.0, "status":"ok"}, "in8":{"value":0.0, "status":"ok"}, "in7":{"value":0.0, "status":"ok"}, "in11":{"value":0.0, "status":"ok"}, "in9":{"value":0.0, "status":"ok"}, "in10":{"value":0.0, "status":"ok"}, "in13":{"value":0.0, "status":"ok"}, "in12":{"value":0.0, "status":"ok"}, "in15":{"value":0.0, "status":"ok"}, "in14":{"value":0.0, "status":"ok"}, "slotPath":"slot:/AHUSystem/vavs/vav8/damper", "in16":{"value":0.0, "status":"ok"}, "fallback":{"value":76.0, "status":"ok"}}""",
-
-"""{"meta":{"wsAnnotation":{"slotSpec":{"_kind":"ref", "val":"cc.niagara.baja::WsAnnotation"}}}, "links":{"in10":{"fromRef":{"_kind":"ref", "val":"h:2c4"}}}, "spec":{"_kind":"ref", "val":"cc.niagara.control::NumericWritable"}, "parentRef":{"_kind":"ref", "val":"h:2bf"}}""",
-    "{}",
-    "cc.niagara.control::NumericWritable"))
+    verifyEq(rec.refPaths, Ref:Str[
+      Ref.fromStr("cc.niagara.control::NumericWritable"): "spec",
+      Ref.fromStr("h:2c4"): "links.in10.fromRef",
+      Ref.fromStr("cc.niagara.baja::WsAnnotation"): "meta.wsAnnotation.slotSpec",
+      Ref.fromStr("h:2bf"): "parentRef"
+    ])
   }
 
   Void testNestedUnits()
   {
     json := """ { "id": { "_kind": "ref", "val": "xyz" }, "a":{"_kind":"number", "val":1, "unit":"ft\u00b2"}, "b":{"_kind":"number", "val":2}, "c": { "d":{"_kind":"number", "val":3, "unit":"m"}, "e":{"_kind":"number", "val":4} }, "f": { "g":{"_kind":"number", "val":5} } } """
 
-    pathRefs := PathRef[,]
-    DbRec rec := DbRec.fromDict(JsonReader(json.in).readVal, pathRefs)
-    verifyEq(pathRefs, PathRef[,])
+    DbRec rec := DbRec.fromDict(JsonReader(json.in).readVal)
 
     verifyEq(rec, DbRec(
-      "xyz",
+      Ref.fromStr("xyz"),
       ["a", "b", "c", "c.d", "c.e", "f", "f.g", "id"],
-      """{"a":1.0, "b":2.0, "c":{"d":3.0, "e":4.0}, "f":{"g":5.0}}""",
-      "{}",
-      """{"a":"ft\\u00b2", "c":{"d":"m"}}""",
+      JsonReader("""{"a":1.0, "b":2.0, "c":{"d":3.0, "e":4.0}, "f":{"g":5.0}}""".in).readVal,
+      JsonReader("{}".in).readVal,
+      JsonReader("""{"a":"ft\\u00b2", "c":{"d":"m"}}""".in).readVal,
       null))
+    verifyEq(rec.refPaths, Ref:Str[:])
   }
 
   private TestData testData := TestData()

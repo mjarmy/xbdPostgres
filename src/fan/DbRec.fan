@@ -15,12 +15,12 @@ using haystack
 const class DbRec
 {
   new make(
-    Str id,
+    Ref id,
     Str[] paths,
-    Str values,
-    Str refs,
-    Str units,
-    Str? spec)
+    Dict values,
+    Dict refs,
+    Dict units,
+    Ref? spec)
   {
     this.id     = id
     this.paths  = paths
@@ -30,27 +30,26 @@ const class DbRec
     this.spec   = spec
   }
 
-  static new fromDict(Dict dict, PathRef[] pathRefs)
+  static new fromDict(Dict dict)
   {
     paths := Str[,]
     values := Str:Obj[:]
     refs := Str:Obj[:]
     units := Str:Obj[:]
-    transform(dict, Str[,], paths, values, refs, units, pathRefs)
+    traverseDict(dict, Str[,], paths, values, refs, units)
 
     return DbRec(
-      ((Ref) dict->id)->id,
+      dict.id,
       paths,
-      JsonWriter.valToStr(Etc.makeDict(values)),
-      JsonWriter.valToStr(Etc.makeDict(refs)),
-      JsonWriter.valToStr(Etc.makeDict(units)),
-      dict.has("spec") ? ((Ref)dict->spec).id : null)
+      Etc.makeDict(values),
+      Etc.makeDict(refs),
+      Etc.makeDict(units),
+      dict.get("spec", null))
   }
 
-  private static Void transform(
+  private static Void traverseDict(
       Dict d, Str[] curPath, Str[] paths,
-      Str:Obj values, Str:Obj refs, Str:Obj units,
-      PathRef[] pathRefs)
+      Str:Obj values, Str:Obj refs, Str:Obj units)
   {
     d.each |v,k|
     {
@@ -58,13 +57,13 @@ const class DbRec
       cp := curPath.join(".")
       paths.add(cp)
 
-      // transform nested dict
+      // traverseDict nested dict
       if (v is Dict)
       {
         Str:Obj nvalues := Str:Obj[:]
         Str:Obj nrefs := Str:Obj[:]
         Str:Obj nunits := Str:Obj[:]
-        transform(v, curPath, paths, nvalues, nrefs, nunits, pathRefs)
+        traverseDict(v, curPath, paths, nvalues, nrefs, nunits)
         if (!nvalues.isEmpty)
           values.add(k, Etc.makeDict(nvalues))
         if (!nrefs.isEmpty)
@@ -77,9 +76,7 @@ const class DbRec
       {
         if (k != "id")
         {
-          r := (Ref) v
-          pathRefs.add(PathRef(cp, r.id))
-          refs.add(k, r)
+          refs.add(k, (Ref) v)
         }
       }
       // Number
@@ -87,14 +84,15 @@ const class DbRec
       {
         n := (Number) v
 
-        f := n.toFloat
-        if (f.isNaN || f == Float.posInf || f == Float.negInf)
-          values.add(k, n)
-        else
-          values.add(k, n.toFloat)
-
+        // Strip units
         if (n.unit != null)
+        {
           units.add(k, n.unit.toStr)
+          n = n.isInt ?
+            Number.makeInt(n.toInt) :
+            Number(n.toFloat)
+        }
+        values.add(k, n)
       }
       // remove markers
       else if (!(v is Marker))
@@ -115,48 +113,56 @@ const class DbRec
     return (
       (id == x.id) &&
       (paths == x.paths) &&
-      (values == x.values) &&
-      (refs == x.refs) &&
-      (units == x.units) &&
+      Etc.dictEq(values, x.values) &&
+      Etc.dictEq(refs, x.refs) &&
+      Etc.dictEq(units, x.units) &&
       (spec == x.spec)
     )
   }
 
   override Str toStr() { "DbRec($id)" }
 
+  // Return a Map that has the path to each Ref.
+  Ref:Str refPaths()
+  {
+    refPaths := Ref:Str[:]
+    traverseRefs(refs, Str[,], refPaths)
+    return refPaths
+  }
+
+  private static Void traverseRefs(
+      Dict refs, Str[] curPath, Ref:Str refPaths)
+  {
+    refs.each |v,k|
+    {
+      curPath.add(k)
+      cp := curPath.join(".")
+
+      if (v is Dict)
+      {
+        traverseRefs(v, curPath, refPaths)
+      }
+      else if (v is Ref)
+      {
+        refPaths.add(v, cp)
+      }
+
+      curPath.removeAt(-1)
+    }
+  }
+
   //////////////////////////////////////////////////////////////
   // Fields
   //////////////////////////////////////////////////////////////
 
-  const Str id
+  const Ref id
   const Str[] paths
-  const Str values // hayson
-  const Str refs   // hayson
-  const Str units  // hayson
-  const Str? spec
-}
 
-****************************************************************
-** PathRef
-****************************************************************
+  // This field contains everything but Markers and Refs.
+  // Numbers have been stripped of units.
+  const Dict values
 
-const class PathRef
-{
-  new make(Str path, Str ref)
-  {
-    this.path = path
-    this.ref = ref
-  }
-
-  const Str path
-  const Str ref
-
-  override Int hash() { path.hash.xor(ref.hash) }
-
-  override Bool equals(Obj? that)
-  {
-    x := that as PathRef
-    if (x == null) return false
-    return path == x.path && ref == x.ref
-  }
+  const Dict refs
+  const Dict units
+  const Ref? spec
 }
