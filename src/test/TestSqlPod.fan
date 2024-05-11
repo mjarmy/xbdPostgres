@@ -55,7 +55,6 @@ class TestSqlPod : Test
     filter = conn.sql(
       "select * from foo where (foo.values_ @> @values::jsonb)").prepare
     rows = filter.query(["values":haysonVals])
-    echo(rows)
     verifyEq(rows.size, 1)
     f = rows[0]
     verifyEq(f->id, "abc")
