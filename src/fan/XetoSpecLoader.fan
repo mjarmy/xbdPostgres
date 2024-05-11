@@ -22,7 +22,7 @@ class XetoSpecLoader
   // Build all the specs from every library
   Void buildAll()
   {
-    postgres.open(
+    db.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -35,7 +35,7 @@ class XetoSpecLoader
     }
     echo("loaded $count recs")
 
-    postgres.close()
+    db.close()
   }
 
   // Build a spec and its inheritance hierarchy
@@ -48,7 +48,7 @@ class XetoSpecLoader
 
     inherit := [Str:Str][:] /* Set */
     traverseHierarchy(spec, inherit)
-    postgres.writeSpec(spec.qname, inherit.keys)
+    db.writeSpec(spec.qname, inherit.keys)
     count++
   }
 
@@ -76,6 +76,6 @@ class XetoSpecLoader
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
-  internal PostgresDb postgres := PostgresDb()
+  internal Db db := Db()
   internal Int count := 0
 }
