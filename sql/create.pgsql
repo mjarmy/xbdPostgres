@@ -35,6 +35,18 @@ create table pathref (
 );
 create index pathref_path_ref on pathref (path_, ref_);
 
+--------------------------------------------------------------------------
+
+create table foo (
+  id text primary key,
+  paths text[] not null,
+  values_ jsonb not null
+);
+create index foo_bar on foo using gin (paths);
+create index foo_values_ on foo using gin (values_ jsonb_path_ops);
+
+--------------------------------------------------------------------------
+
 grant select, insert, update, delete on all tables in schema xbd to xbd;
 grant usage, select on all sequences in schema xbd to xbd;
 

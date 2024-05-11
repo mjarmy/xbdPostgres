@@ -27,7 +27,7 @@ const class Query
     return Query(
       ["select * from rec",
        "where",
-       "  ${qb.whereClause}"].join("\n") + ";",
+       "  ${qb.whereClause}"].join("\n"),
       qb.whereParams)
   }
 
