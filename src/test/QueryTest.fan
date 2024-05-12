@@ -26,6 +26,33 @@ class QueryTest : Test
     db.close()
   }
 
+  Void testDottedPaths()
+  {
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("ahu").argA),
+      ["ahu"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("facets->min").argA),
+      ["facets.min"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("chilledWaterRef->chilled").argA),
+      ["chilledWaterRef", "chilled"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("fooOf->barRef").argA),
+      ["fooOf", "barRef"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("links->in4->fromRef->meta->inA->flags->linkTarget").argA),
+      ["links.in4.fromRef", "meta.inA.flags.linkTarget"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("equipRef->siteRef->area").argA),
+      ["equipRef", "siteRef", "area"])
+  }
+
   Void testQuery()
   {
     doTest(

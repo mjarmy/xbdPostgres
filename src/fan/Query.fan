@@ -69,7 +69,7 @@ internal class QueryBuilder {
     visit(f)
   }
 
-  private Void visit(Filter f)
+  internal Void visit(Filter f)
   {
     if      (f.type == FilterType.has) visitHas(f.argA)
     //else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
@@ -77,23 +77,45 @@ internal class QueryBuilder {
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
-  private Void visitHas(FilterPath fp)
+  internal Void visitHas(FilterPath fp)
   {
-    path := dotPath(fp)
+    paths := dottedPaths(fp)
+
+    if (paths.size > 1)
+    {
+      throw UnsupportedErr("TODO")
+    }
+
     n := whereClause.size
-    params.add("p$n", "{\"$path\"}")
+    params.add("p$n", "{\"${paths[0]}\"}")
     whereClause.add("(rec.paths @> @p$n::text[])")
   }
 
-  private static Str dotPath(FilterPath fp)
+  ** make a List of dotted Paths, using BrioRefTags
+  ** to define path boundaries
+  internal static Str[] dottedPaths(FilterPath fp)
   {
-    sb := StrBuf()
+    result := Str[,]
+
+    cur := Str[,]
     for (i := 0; i < fp.size; i++)
     {
-      if (i > 0) sb.add(".")
-      sb.add(fp.get(i))
+      tag := fp.get(i)
+      cur.add(tag)
+
+      // TODO is this really what we want?
+      //if (BrioRefTags.cur.tags.containsKey(tag))
+      if (tag.endsWith("Ref") || tag.endsWith("Of"))
+      {
+        result.add(cur.join("."))
+        cur.clear
+      }
     }
-    return sb.toStr
+
+    if (!cur.isEmpty)
+      result.add(cur.join("."))
+
+    return result
   }
 
   //-----------------------------------------------
