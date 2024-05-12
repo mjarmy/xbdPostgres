@@ -28,29 +28,46 @@ class QueryTest : Test
 
   Void testQuery()
   {
-    f :=  Filter("ahu")
-    expected := testData.filter(f)
-    echo(expected.keys)
+    doTest(
+      Filter("ahu"),
+      Query(
+        "select * from rec
+         where
+           (rec.paths @> @p0::text[])",
+        Str:Obj["p0": "{\"ahu\"}"]))
 
-    q := Query.fromFilter(f)
-    echo(q)
-    verifyEq(q, Query(
-      "select * from rec
-       where
-         (rec.paths @> @p0::text[])",
-      Str:Obj["p0": "{\"ahu\"}"]))
-
-    found := db.select(q)
-    echo(found)
-    verifyQuery(found, expected)
+    doTest(
+      Filter("facets->min"),
+      Query(
+        "select * from rec
+         where
+           (rec.paths @> @p0::text[])",
+        Str:Obj["p0": "{\"facets.min\"}"]))
   }
 
-  private Void verifyQuery(DbRec[] found, Ref:Dict expected)
+  Void doTest(
+    Filter filter,
+    Query expQuery)
   {
-    verifyEq(found.size, expected.size)
+    echo("-----------------------------------")
+    expDicts := testData.filter(filter)
+    echo(expDicts.keys)
+
+    query := Query.fromFilter(filter)
+    echo(query)
+    verifyEq(query, expQuery)
+
+    found := db.select(query)
+    //echo(found)
+    verifyFound(found, expDicts)
+  }
+
+  private Void verifyFound(DbRec[] found, Ref:Dict expDicts)
+  {
+    verifyEq(found.size, expDicts.size)
     found.each |fndRec|
     {
-      expDict := expected.get(fndRec.id)
+      expDict := expDicts.get(fndRec.id)
       expRec := DbRec.fromDict(expDict)
       verifyEq(fndRec, expRec)
 
