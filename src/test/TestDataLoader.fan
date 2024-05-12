@@ -18,24 +18,22 @@ class TestDataLoader
 
   Void load()
   {
-//    postgres.open(
-//      "jdbc:postgresql://localhost/postgres",
-//      "xbd",
-//      "s3crkEt")
-//
-//    n := 0
-//    td := TestData()
-//    td.recs.each |r,id|
-//    {
-//      pathRefs := PathRef[,]
-//      rec := DbRec.fromDict(r, pathRefs)
-//      postgres.writeRec(rec, pathRefs)
-//      n++
-//    }
-//    echo("loaded $n recs")
-//
-//    postgres.close()
+    db.open(
+      "jdbc:postgresql://localhost/postgres",
+      "xbd",
+      "s3crkEt")
+
+    n := 0
+    td := TestData()
+    td.recs.each |r,id|
+    {
+      db.insertRec(DbRec.fromDict(r))
+      n++
+    }
+    echo("loaded $n recs")
+
+    db.close()
   }
 
-//  private PostgresDb postgres := PostgresDb()
+  internal Db db := Db()
 }

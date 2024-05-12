@@ -22,8 +22,8 @@ JsonReader("""{"area":151455, "geoState":"CO", "geoPostalCode":"80821", "tz":"De
 JsonReader("""{"weatherStationRef":{"_kind":"ref", "val":"a-07eb"}}""".in).readVal,
 JsonReader("""{"area":"ft\\u00b2", "geoElevation":"m"}""".in).readVal,
       null))
-    verifyEq(rec.refPaths, Ref:Str[
-      Ref.fromStr("a-07eb"): "weatherStationRef"
+    verifyEq(rec.pathRefs, Str:Ref[
+      "weatherStationRef": Ref.fromStr("a-07eb"),
     ])
 
     rec = DbRec.fromDict(testData.recs.get(Ref.fromStr("a-0002")))
@@ -37,9 +37,9 @@ JsonReader("""{"siteRef":{"_kind":"ref", "val":"a-0000"}, "equipRef":{"_kind":"r
 JsonReader("{}".in).readVal,
       null))
 
-    verifyEq(rec.refPaths, Ref:Str[
-      Ref.fromStr("a-0000"): "siteRef",
-      Ref.fromStr("a-0001"): "equipRef"
+    verifyEq(rec.pathRefs, Str:Ref[
+      "siteRef": Ref.fromStr("a-0000"),
+      "equipRef": Ref.fromStr("a-0001"),
     ])
   }
 
@@ -71,11 +71,11 @@ JsonReader("""{"meta":{"wsAnnotation":{"slotSpec":{"_kind":"ref", "val":"cc.niag
     JsonReader("{}".in).readVal,
     Ref.fromStr("cc.niagara.control::NumericWritable")))
 
-    verifyEq(rec.refPaths, Ref:Str[
-      Ref.fromStr("cc.niagara.control::NumericWritable"): "spec",
-      Ref.fromStr("h:2c4"): "links.in10.fromRef",
-      Ref.fromStr("cc.niagara.baja::WsAnnotation"): "meta.wsAnnotation.slotSpec",
-      Ref.fromStr("h:2bf"): "parentRef"
+    verifyEq(rec.pathRefs, Str:Ref[
+      "spec": Ref.fromStr("cc.niagara.control::NumericWritable"),
+      "links.in10.fromRef": Ref.fromStr("h:2c4"),
+      "meta.wsAnnotation.slotSpec": Ref.fromStr("cc.niagara.baja::WsAnnotation"),
+      "parentRef": Ref.fromStr("h:2bf"),
     ])
   }
 
@@ -92,7 +92,7 @@ JsonReader("""{"meta":{"wsAnnotation":{"slotSpec":{"_kind":"ref", "val":"cc.niag
       JsonReader("{}".in).readVal,
       JsonReader("""{"a":"ft\\u00b2", "c":{"d":"m"}}""".in).readVal,
       null))
-    verifyEq(rec.refPaths, Ref:Str[:])
+    verifyEq(rec.pathRefs, Str:Ref[:])
   }
 
   private TestData testData := TestData()

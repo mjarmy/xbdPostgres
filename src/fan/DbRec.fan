@@ -122,16 +122,16 @@ const class DbRec
 
   override Str toStr() { "DbRec($id)" }
 
-  // Return a Map that has the path to each Ref.
-  Ref:Str refPaths()
+  // Return a Map of the path to each Ref.
+  Str:Ref pathRefs()
   {
-    refPaths := Ref:Str[:]
-    traverseRefs(refs, Str[,], refPaths)
-    return refPaths
+    pathRefs := Str:Ref[:]
+    traverseRefs(refs, Str[,], pathRefs)
+    return pathRefs
   }
 
   private static Void traverseRefs(
-      Dict refs, Str[] curPath, Ref:Str refPaths)
+      Dict refs, Str[] curPath, Str:Ref pathRefs)
   {
     refs.each |v,k|
     {
@@ -140,11 +140,11 @@ const class DbRec
 
       if (v is Dict)
       {
-        traverseRefs(v, curPath, refPaths)
+        traverseRefs(v, curPath, pathRefs)
       }
       else if (v is Ref)
       {
-        refPaths.add(v, cp)
+        pathRefs.add(cp, v)
       }
 
       curPath.removeAt(-1)
