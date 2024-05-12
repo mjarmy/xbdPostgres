@@ -36,6 +36,7 @@ create table pathref (
 create index pathref_path_ref on pathref (path_, ref_);
 
 --------------------------------------------------------------------------
+-- foo is a temporary table to help fix sql.pod when necessary
 
 create table foo (
   id text primary key,

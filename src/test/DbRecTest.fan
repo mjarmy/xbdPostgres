@@ -8,6 +8,9 @@
 
 using haystack
 
+**
+** DbRecTest
+**
 class DbRecTest : Test
 {
   Void testAlpha()
@@ -94,6 +97,10 @@ JsonReader("""{"meta":{"wsAnnotation":{"slotSpec":{"_kind":"ref", "val":"cc.niag
       null))
     verifyEq(rec.pathRefs, Str:Ref[:])
   }
+
+  //-----------------------------------------------
+  // Fields
+  //-----------------------------------------------
 
   private TestData testData := TestData()
 }

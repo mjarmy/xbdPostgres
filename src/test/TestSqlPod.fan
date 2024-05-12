@@ -9,6 +9,9 @@
 using haystack
 using sql
 
+**
+** TestSqlPod is a temporary test to help fix sql.pod when necessary
+**
 class TestSqlPod : Test
 {
   Void testSqlPod()

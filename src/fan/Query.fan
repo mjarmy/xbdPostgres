@@ -8,13 +8,12 @@
 
 using haystack
 
-****************************************************************
-** Query
-****************************************************************
-
+**
+** Query is a haystack Filter translated to SQL
+**
 const class Query
 {
-  new make(Str sql, Str[] params)
+  new make(Str sql, Str:Obj params)
   {
     this.sql = sql
     this.params = params
@@ -28,12 +27,8 @@ const class Query
       ["select * from rec",
        "where",
        "  ${qb.whereClause}"].join("\n"),
-      qb.whereParams)
+      qb.params)
   }
-
-  //////////////////////////////////////////////////////////////
-  // Obj
-  //////////////////////////////////////////////////////////////
 
   override Int hash() { return sql.hash.xor(params.hash) }
 
@@ -46,25 +41,21 @@ const class Query
 
   override Str toStr() { "Query:\n$sql\n$params" }
 
-  //////////////////////////////////////////////////////////////
+  //-----------------------------------------------
   // Fields
-  //////////////////////////////////////////////////////////////
+  //-----------------------------------------------
 
   const Str sql
-  const Str[] params
+  const Str:Obj params
 }
 
-****************************************************************
-** QueryBuilder
-****************************************************************
-
+**
+** QueryBuilder builds a Query from a Filter
+**
 internal class QueryBuilder {
 
   new make(Filter f)
   {
-    this.whereClause = StrBuf()
-    this.whereParams = Str[,]
-
     visit(f)
   }
 
@@ -79,8 +70,9 @@ internal class QueryBuilder {
   private Void visitHas(FilterPath fp)
   {
     path := dotPath(fp)
-    whereClause.add("(rec.paths @> ?::text[])");
-    whereParams.add("{\"$path\"}");
+    n := whereClause.size
+    params.add("p$n", "{\"$path\"}")
+    whereClause.add("(rec.paths @> @p$n::text[])")
   }
 
   private static Str dotPath(FilterPath fp)
@@ -94,12 +86,12 @@ internal class QueryBuilder {
     return sb.toStr
   }
 
-  //////////////////////////////////////////////////////////////
+  //-----------------------------------------------
   // Fields
-  //////////////////////////////////////////////////////////////
+  //-----------------------------------------------
 
-  internal StrBuf whereClause
-  internal Str[] whereParams
+  internal StrBuf whereClause := StrBuf()
+  internal Str:Obj params := Str:Obj[:]
 }
 
 

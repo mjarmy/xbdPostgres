@@ -8,10 +8,9 @@
 
 using haystack
 
-****************************************************************
-** DbRec
-****************************************************************
-
+**
+** DbRec is a record in the postgres 'rec' table
+**
 const class DbRec
 {
   new make(
@@ -151,15 +150,17 @@ const class DbRec
     }
   }
 
-  //////////////////////////////////////////////////////////////
+  //-----------------------------------------------
   // Fields
-  //////////////////////////////////////////////////////////////
+  //-----------------------------------------------
 
   const Ref id
+
+  // Path to every value
   const Str[] paths
 
-  // This field contains everything but Markers and Refs.
-  // Numbers have been stripped of units.
+  // Contains everything but Markers and Refs.
+  // The Number values have been stripped of units.
   const Dict values
 
   const Dict refs

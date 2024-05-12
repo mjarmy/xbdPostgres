@@ -8,6 +8,10 @@
 
 using haystack
 
+**
+** TestData contains the records from the 'Alpha' data set from Project
+** Haystack, and from a Niagara station that Jason helped put together.
+**
 const class TestData
 {
   new make()

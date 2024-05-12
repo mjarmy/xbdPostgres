@@ -8,7 +8,9 @@
 
 using haystack
 
-
+**
+** TestDataLoader insert the TestData into postgres
+**
 class TestDataLoader
 {
   Void main()
@@ -34,6 +36,10 @@ class TestDataLoader
 
     db.close()
   }
+
+  //-----------------------------------------------
+  // Fields
+  //-----------------------------------------------
 
   internal Db db := Db()
 }

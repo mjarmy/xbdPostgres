@@ -8,16 +8,15 @@
 
 using xeto
 
+**
+** XetoSpecLoader loads the xeto specs into Postgres
+**
 class XetoSpecLoader
 {
   Void main()
   {
     XetoSpecLoader().buildAll()
   }
-
-//////////////////////////////////////////////////////////////////////////
-// Methods
-//////////////////////////////////////////////////////////////////////////
 
   // Build all the specs from every library
   Void buildAll()
@@ -72,9 +71,9 @@ class XetoSpecLoader
     }
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Fields
-//////////////////////////////////////////////////////////////////////////
+  //-----------------------------------------------
+  // Fields
+  //-----------------------------------------------
 
   internal Db db := Db()
   internal Int count := 0

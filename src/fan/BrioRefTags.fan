@@ -17,8 +17,6 @@ const class BrioRefTags
   static BrioRefTags cur() { curRef.val }
   private static const AtomicRef curRef := AtomicRef(null)
 
-  const [Str:Str] tags
-
   static
   {
     try
@@ -47,4 +45,10 @@ const class BrioRefTags
   }
 
   private new make(|This| f) { f(this) }
+
+  //-----------------------------------------------
+  // Fields
+  //-----------------------------------------------
+
+  const [Str:Str] tags
 }

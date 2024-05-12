@@ -9,10 +9,9 @@
 using haystack
 using sql
 
-****************************************************************
-** Db
-****************************************************************
-
+**
+** Db handles interaction with the Postgres database
+**
 class Db
 {
   Void open(Str uri, Str? username, Str? password)
@@ -86,6 +85,26 @@ class Db
     }
 
     conn.commit
+  }
+
+  DbRec[] select(Query q)
+  {
+    result := DbRec[,]
+
+    stmt := conn.sql(q.sql).prepare
+    stmt.query(q.params).each |r|
+    {
+      Str? spec := r->spec
+      result.add(DbRec(
+       Ref.fromStr(r->id),
+       r->paths,
+       JsonReader(((Str)r->values_).in).readVal,
+       JsonReader(((Str)r->refs)   .in).readVal,
+       JsonReader(((Str)r->units)  .in).readVal,
+       spec == null ? null : Ref.fromStr(spec)))
+    }
+
+    return result
   }
 
   //-----------------------------------------------
