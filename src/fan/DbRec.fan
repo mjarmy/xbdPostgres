@@ -171,12 +171,12 @@ const class DbRec
 
   **
   ** 'values' contains everything but Markers and Refs.
-  ** Any Numbers have been stripped of their units.
+  ** If there are any Numbers, they have been stripped of their units.
   **
   const Dict values
 
   **
-  ** The records's refs, if any (could be empty).
+  ** The Refs, if there are any (could be empty).
   **
   const Dict refs
 
@@ -186,7 +186,7 @@ const class DbRec
   const Dict units
 
   **
-  ** The records's spec, if it has one.
+  ** The spec, if there is one.
   **
   const Ref? spec
 }
