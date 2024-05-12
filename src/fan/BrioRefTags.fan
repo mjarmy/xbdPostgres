@@ -50,5 +50,8 @@ const class BrioRefTags
   // Fields
   //-----------------------------------------------
 
+  **
+  ** The Set of brio tags that end in "Ref" or "Of"
+  **
   const [Str:Str] tags
 }

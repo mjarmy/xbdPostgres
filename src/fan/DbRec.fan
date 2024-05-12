@@ -9,7 +9,7 @@
 using haystack
 
 **
-** DbRec is a record in the postgres 'rec' table
+** DbRec is a record in the postgres 'rec' table.
 **
 const class DbRec
 {
@@ -29,6 +29,9 @@ const class DbRec
     this.spec   = spec
   }
 
+  **
+  ** Create a DbRec by transforming a Dict
+  **
   static new fromDict(Dict dict)
   {
     paths := Str[,]
@@ -121,7 +124,9 @@ const class DbRec
 
   override Str toStr() { "DbRec($id)" }
 
-  // Return a Map of the path to each Ref.
+  **
+  ** Return a Map of the dotted path to each Ref.
+  **
   Str:Ref pathRefs()
   {
     pathRefs := Str:Ref[:]
@@ -154,16 +159,34 @@ const class DbRec
   // Fields
   //-----------------------------------------------
 
+  **
+  ** Unique identifier
+  **
   const Ref id
 
-  // Path to every value
+  **
+  ** The dotted path to every value.  Markers are stored here implicitly.
+  **
   const Str[] paths
 
-  // Contains everything but Markers and Refs.
-  // The Number values have been stripped of units.
+  **
+  ** 'values' contains everything but Markers and Refs.
+  ** Any Numbers have been stripped of their units.
+  **
   const Dict values
 
+  **
+  ** The records's refs, if any (could be empty).
+  **
   const Dict refs
+
+  **
+  ** Units for any Numbers that have them (could be empty).
+  **
   const Dict units
+
+  **
+  ** The records's spec, if it has one.
+  **
   const Ref? spec
 }

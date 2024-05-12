@@ -41,5 +41,5 @@ class TestDataLoader
   // Fields
   //-----------------------------------------------
 
-  internal Db db := Db()
+  private Db db := Db()
 }

@@ -9,7 +9,7 @@
 using haystack
 
 **
-** Query is a haystack Filter translated to SQL
+** Query is a haystack Filter translated to parameterized SQL
 **
 const class Query
 {
@@ -19,6 +19,9 @@ const class Query
     this.params = params
   }
 
+  **
+  ** Create a Query from a Filter
+  **
   static new fromFilter(Filter f)
   {
     qb := QueryBuilder(f)
@@ -39,22 +42,29 @@ const class Query
     return sql == x.sql && params == x.params
   }
 
-  override Str toStr() { "Query:\n$sql\n$params" }
+  override Str toStr() { "Query:\n$sql\nparams:$params" }
 
   //-----------------------------------------------
   // Fields
   //-----------------------------------------------
 
+  **
+  ** The parameterized SQL
+  **
   const Str sql
+
+  **
+  ** The parameter name-to-value Map.
+  **
   const Str:Obj params
 }
 
 **
-** QueryBuilder builds a Query from a Filter
+** QueryBuilder
 **
 internal class QueryBuilder {
 
-  new make(Filter f)
+  internal new make(Filter f)
   {
     visit(f)
   }

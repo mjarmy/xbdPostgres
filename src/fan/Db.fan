@@ -14,6 +14,9 @@ using sql
 **
 class Db
 {
+  **
+  ** Open the connection to Postgres
+  **
   Void open(Str uri, Str? username, Str? password)
   {
     conn = SqlConn.open(uri, username, password)
@@ -38,8 +41,12 @@ class Db
        values (@recId, @path, @ref)").prepare
   }
 
+  **
+  ** Close the connection to Postgres
+  **
   Void close()
   {
+    // TODO probably don't need this?
     specInsert.close
     specInsert = null
 
@@ -49,10 +56,14 @@ class Db
     pathRefInsert.close
     pathRefInsert = null
 
+    // Close the connection
     conn.close
     conn = null
   }
 
+  **
+  ** Insert a Spec
+  **
   Void insertSpec(Str qname, Str[] inheritsFrom)
   {
     specInsert.execute([
@@ -62,6 +73,9 @@ class Db
     conn.commit
   }
 
+  **
+  ** Insert a Rec
+  **
   Void insertRec(DbRec rec)
   {
     echo("insertRec ${rec.id}")
@@ -87,10 +101,14 @@ class Db
     conn.commit
   }
 
+  **
+  ** Execute a query
+  **
   DbRec[] select(Query q)
   {
     result := DbRec[,]
 
+    // TODO cache these?
     stmt := conn.sql(q.sql).prepare
     stmt.query(q.params).each |r|
     {
@@ -103,6 +121,7 @@ class Db
        JsonReader(((Str)r->units)  .in).readVal,
        spec == null ? null : Ref.fromStr(spec)))
     }
+    stmt.close
 
     return result
   }

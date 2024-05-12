@@ -18,7 +18,7 @@ class XetoSpecLoader
     XetoSpecLoader().buildAll()
   }
 
-  // Build all the specs from every library
+  ** Build all the specs from every library
   Void buildAll()
   {
     db.open(
@@ -37,8 +37,8 @@ class XetoSpecLoader
     db.close()
   }
 
-  // Build a spec and its inheritance hierarchy
-  internal Void buildSpec(Spec spec)
+  ** Build a spec and its inheritance hierarchy
+  private Void buildSpec(Spec spec)
   {
     // Ignore synthetic types like "_0" for now
     if (spec.name.startsWith("_")) return
@@ -51,9 +51,9 @@ class XetoSpecLoader
     count++
   }
 
-  // Recursively traverse the spec's inheritance hierarchy up to the root. If
-  // the spec has multiple inheritance, multiple paths will be generated.
-  internal Void traverseHierarchy(Spec spec, [Str:Str] inherit /* Set */)
+  ** Recursively traverse the spec's inheritance hierarchy up to the root. If
+  ** the spec has multiple inheritance, multiple paths will be generated.
+  private Void traverseHierarchy(Spec spec, [Str:Str] inherit /* Set */)
   {
     // Add to the set of inherited types
     if (!inherit.containsKey(spec.qname))
@@ -75,6 +75,6 @@ class XetoSpecLoader
   // Fields
   //-----------------------------------------------
 
-  internal Db db := Db()
-  internal Int count := 0
+  private Db db := Db()
+  private Int count := 0
 }
