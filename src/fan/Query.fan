@@ -31,10 +31,10 @@ const class Query
     {
       prev := (i == 1) ? "rec" : "r${i-1}"
       ls.add("  inner join pathref p$i on p${i}.rec_id = ${prev}.id")
-      ls.add("  inner join rec     r$i on r${i}.id     = p1.ref_")
+      ls.add("  inner join rec     r$i on r${i}.id     = p${i}.ref_")
     }
     ls.add("where")
-    ls.add("  ${qb.where}")
+    ls.add("${qb.where};")
 
     return Query(ls.join("\n"), qb.params)
   }
@@ -68,19 +68,20 @@ internal class QueryBuilder {
 
   internal new make(Filter f)
   {
-    this.where = visit(f)
+    this.where = visit(f, 1)
   }
 
-  internal Str visit(Filter f)
+  internal Str visit(Filter f, Int indent)
   {
-    if      (f.type == FilterType.has) return visitHas(f.argA)
+    if      (f.type == FilterType.has) return visitHas(f.argA, indent)
     //else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
-    else if (f.type == FilterType.and) return visitAnd(f.argA, f.argB)
+    else if (f.type == FilterType.and) return visitAnd(f.argA, f.argB, indent)
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
-  internal Str visitHas(FilterPath fp)
+  internal Str visitHas(FilterPath fp, Int indent)
   {
+    pad := doIndent(indent)
     paths := dottedPaths(fp)
 
     // no joins
@@ -89,7 +90,7 @@ internal class QueryBuilder {
       // add the param where clause
       n := params.size
       params.add("x$n", "{\"${paths[0]}\"}")
-      return "(rec.paths @> @x$n::text[])"
+      return pad + "(rec.paths @> @x$n::text[])"
     }
     // joins
     else
@@ -113,13 +114,29 @@ internal class QueryBuilder {
       sb.add("(r${joins}.paths @> @x$n::text[])")
 
       sb.add(")")
-      return sb.toStr
+      return pad + sb.toStr
     }
   }
 
-  internal Str visitAnd(Filter a, Filter b)
+  internal Str visitAnd(Filter a, Filter b, Int indent)
   {
-    return "(${visit(a)} and ${visit(b)})"
+    pad := doIndent(indent)
+
+    return [
+      pad + "(",
+      visit(a, indent+1),
+      pad + "  and",
+      visit(b, indent+1),
+      pad + ")",
+    ].join("\n")
+  }
+
+  private static Str doIndent(Int indent)
+  {
+    sb := StrBuf()
+    for (i := 0; i < indent; i++)
+      sb.add("  ")
+    return sb.toStr
   }
 
   ** make a List of dotted Paths

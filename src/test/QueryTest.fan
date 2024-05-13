@@ -62,7 +62,7 @@ class QueryTest : Test
       Query(
         "select rec.* from rec
          where
-           (rec.paths @> @x0::text[])",
+           (rec.paths @> @x0::text[]);",
         Str:Obj["x0": "{\"ahu\"}"]))
 
     doTest(
@@ -70,7 +70,7 @@ class QueryTest : Test
       Query(
         "select rec.* from rec
          where
-           (rec.paths @> @x0::text[])",
+           (rec.paths @> @x0::text[]);",
         Str:Obj["x0": "{\"facets.min\"}"]))
 
     doTest(
@@ -80,8 +80,10 @@ class QueryTest : Test
            inner join pathref p1 on p1.rec_id = rec.id
            inner join rec     r1 on r1.id     = p1.ref_
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))",
-        Str:Obj["x0":"chilledWaterRef", "x1":"{\"chilled\"}"]))
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+        Str:Obj[
+          "x0":"chilledWaterRef",
+          "x1":"{\"chilled\"}"]))
 
     doTest(
       Filter("links->in4->fromRef->meta->inA->flags->linkTarget"),
@@ -90,22 +92,61 @@ class QueryTest : Test
            inner join pathref p1 on p1.rec_id = rec.id
            inner join rec     r1 on r1.id     = p1.ref_
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))",
-        Str:Obj["x0":"links.in4.fromRef", "x1":"{\"meta.inA.flags.linkTarget\"}"]))
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+        Str:Obj[
+          "x0":"links.in4.fromRef",
+          "x1":"{\"meta.inA.flags.linkTarget\"}"]))
 
     doTest(
       Filter("ahu and elec"),
       Query(
         "select rec.* from rec
          where
-           ((rec.paths @> @x0::text[]) and (rec.paths @> @x1::text[]))",
-        Str:Obj["x0":"{\"ahu\"}", "x1":"{\"elec\"}"]))
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.paths @> @x1::text[])
+           );",
+        Str:Obj[
+          "x0":"{\"ahu\"}",
+          "x1":"{\"elec\"}"]))
 
-    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("ahu and elec")
+    doTest(
+      Filter("chilled and pump and sensor and equipRef->siteRef->site"),
+      Query(
+        "select rec.* from rec
+           inner join pathref p1 on p1.rec_id = rec.id
+           inner join rec     r1 on r1.id     = p1.ref_
+           inner join pathref p2 on p2.rec_id = r1.id
+           inner join rec     r2 on r2.id     = p2.ref_
+         where
+           (
+             (
+               (
+                 (rec.paths @> @x0::text[])
+                 and
+                 ((p1.path_ = @x1) and (p2.path_ = @x2) and (r2.paths @> @x3::text[]))
+               )
+               and
+               (rec.paths @> @x4::text[])
+             )
+             and
+             (rec.paths @> @x5::text[])
+           );",
+        Str:Obj[
+          "x0":"{\"chilled\"}",
+          "x1":"equipRef",
+          "x2":"siteRef",
+          "x3":"{\"site\"}",
+          "x4":"{\"pump\"}",
+          "x5":"{\"sensor\"}"]))
+
+    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("chilled and pump and sensor and equipRef->siteRef->site")
     //query := Query(filter)
     //echo(testData.filter(filter).keys)
     //echo(query)
+    //echo(rawSql(query))
     //echo(db.select(query))
 
     echo("==============================================================")
@@ -115,12 +156,13 @@ class QueryTest : Test
     Filter filter,
     Query expQuery)
   {
-    echo("-----------------------------------")
+    echo("--------------------------------------------------------------")
     expDicts := testData.filter(filter)
     echo(expDicts.keys)
 
     query := Query.fromFilter(filter)
     echo(query)
+    echo(rawSql(query))
     verifyEq(query, expQuery)
 
     found := db.select(query)
@@ -139,6 +181,18 @@ class QueryTest : Test
 
       // TODO transform fndRec into a Dict and verify against expDict
     }
+  }
+
+  // This isn't actually reliable, its just a quick and dirty approach for
+  // debugging purposes
+  private Str rawSql(Query query)
+  {
+    Str s := query.sql
+    query.params.each |v,k|
+    {
+      s = s.replace("@" + k, "'$v'")
+    }
+    return "explain analyze\n" + s
   }
 
   private TestData testData := TestData()
