@@ -75,16 +75,10 @@ internal class QueryBuilder {
   {
     if      (f.type == FilterType.has) return visitHas(f.argA)
     //else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
-    //else if (f.type == FilterType.and) visitAnd(f.argA, f.argB)
+    else if (f.type == FilterType.and) return visitAnd(f.argA, f.argB)
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
-//select * from rec
-//  inner join pathref p1 on p1.rec_id = rec.id
-//  inner join rec     r1 on r1.id     = p1.ref_
-//where
-//  (p1.path_ = 'chilledWaterRef') and
-//  (r1.paths @> '{"chilled"}'::text[]);
   internal Str visitHas(FilterPath fp)
   {
     paths := dottedPaths(fp)
@@ -121,6 +115,11 @@ internal class QueryBuilder {
       sb.add(")")
       return sb.toStr
     }
+  }
+
+  internal Str visitAnd(Filter a, Filter b)
+  {
+    return "(${visit(a)} and ${visit(b)})"
   }
 
   ** make a List of dotted Paths

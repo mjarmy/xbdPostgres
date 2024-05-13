@@ -93,7 +93,16 @@ class QueryTest : Test
            ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))",
         Str:Obj["x0":"links.in4.fromRef", "x1":"{\"meta.inA.flags.linkTarget\"}"]))
 
-    //filter := Filter("chilledWaterRef->chilled")
+    doTest(
+      Filter("ahu and elec"),
+      Query(
+        "select rec.* from rec
+         where
+           ((rec.paths @> @x0::text[]) and (rec.paths @> @x1::text[]))",
+        Str:Obj["x0":"{\"ahu\"}", "x1":"{\"elec\"}"]))
+
+    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("ahu and elec")
     //query := Query(filter)
     //echo(testData.filter(filter).keys)
     //echo(query)
