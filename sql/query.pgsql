@@ -73,37 +73,6 @@ where
   (p2.path_ = 'siteRef') and
   (r2.paths @> '{"site"}'::text[]);
 
--- chilled and equipRef->siteRef->site
-explain analyze
-select rec.id from rec
-  inner join pathref p1 on p1.rec_id = rec.id
-  inner join rec     r1 on r1.id     = p1.ref_
-  inner join pathref p2 on p2.rec_id = r1.id
-  inner join rec     r2 on r2.id     = p2.ref_
-where
-  (
-    (rec.paths @> '{"sensor"}'::text[])
-    and
-    (
-      (rec.paths @> '{"pump"}'::text[])
-      and
-      (
-        (rec.paths @> '{"chilled"}'::text[])
-        and
-        (
-  (p1.path_ = 'equipRef') and
-  (p2.path_ = 'siteRef') and
-          r2.paths @> '{"site"}'::text[])
-      )
-    )
-  );
-
--- compName == 'Services'
-explain analyze
-select * from rec
-where
-  (rec.values_ @> '{"compName":"Services"}'::jsonb);
-
 -- dis == 'Alpha Airside AHU-4'
 explain analyze
 select * from rec
@@ -111,7 +80,10 @@ where
   (rec.values_ @> '{"dis":"Alpha Airside AHU-4"}'::jsonb);
 
 -- area == 151455
--- TODO
+explain analyze
+select * from rec
+where
+  (rec.values_ @> '{"area":151455}'::jsonb);
 
 -- facets->min == -INF
 explain analyze

@@ -73,13 +73,35 @@ internal class QueryBuilder {
 
   internal Str visit(Filter f, Int indent)
   {
-    if      (f.type == FilterType.has) return visitHas(f.argA, indent)
+    if (f.type == FilterType.has)
+      return visitLeaf(
+        f.argA,
+        null /*ignored*/,
+        |Str[] paths, Obj? arg->Str| { hasParams(paths, arg) },
+        indent)
+
     //else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
-    else if (f.type == FilterType.and) return visitAnd(f.argA, f.argB, indent)
+
+    else if (f.type == FilterType.and)
+      return visitAnd(f.argA, f.argB, indent)
+
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
-  internal Str visitHas(FilterPath fp, Int indent)
+  ** add the parameters for a 'has' Filter
+  private Str hasParams(Str[] paths, Obj? arg /* ignored */)
+  {
+    alias := (paths.size == 1) ? "rec" : "r${joins}"
+    n := params.size
+    params.add("x$n", "{\"${paths[-1]}\"}")
+    return "(${alias}.paths @> @x$n::text[])"
+  }
+
+  internal Str visitLeaf(
+    FilterPath fp,
+    Obj? arg,
+    |Str[] paths, Obj? arg -> Str| paramFunc,
+    Int indent)
   {
     pad := doIndent(indent)
     paths := dottedPaths(fp)
@@ -87,10 +109,8 @@ internal class QueryBuilder {
     // no joins
     if (paths.size == 1)
     {
-      // add the param where clause
-      n := params.size
-      params.add("x$n", "{\"${paths[0]}\"}")
-      return pad + "(rec.paths @> @x$n::text[])"
+      // add the parameter clause
+      return pad + paramFunc(paths, arg)
     }
     // joins
     else
@@ -108,10 +128,8 @@ internal class QueryBuilder {
         sb.add("(p${joins}.path_ = @x$n) and ")
       }
 
-      // add the param where clause
-      n := params.size
-      params.add("x$n", "{\"${paths[last]}\"}")
-      sb.add("(r${joins}.paths @> @x$n::text[])")
+      // add the parameter clause
+      sb.add(paramFunc(paths, arg))
 
       sb.add(")")
       return pad + sb.toStr
