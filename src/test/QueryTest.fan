@@ -141,13 +141,38 @@ class QueryTest : Test
           "x4":"{\"pump\"}",
           "x5":"{\"sensor\"}"]))
 
+    doTest(
+      Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath"),
+      Query(
+        "select rec.* from rec
+           inner join pathref p1 on p1.rec_id = rec.id
+           inner join rec     r1 on r1.id     = p1.ref_
+           inner join pathref p2 on p2.rec_id = r1.id
+           inner join rec     r2 on r2.id     = p2.ref_
+           inner join pathref p3 on p3.rec_id = r2.id
+           inner join rec     r3 on r3.id     = p3.ref_
+         where
+           (
+             ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
+             and
+             ((p2.path_ = @x2) and (p3.path_ = @x3) and (r3.paths @> @x4::text[]))
+           );",
+        Str:Obj[
+          "x0":"links.in4.fromRef",
+          "x1":"{\"meta.inA.flags.linkTarget\"}",
+          "x2":"parentRef",
+          "x3":"parentRef",
+          "x4":"{\"slotPath\"}"]))
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("chilled and pump and sensor and equipRef->siteRef->site")
-    //query := Query(filter)
+    //filter := Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath")
     //echo(testData.filter(filter).keys)
+    //query := Query(filter)
     //echo(query)
     //echo(rawSql(query))
     //echo(db.select(query))
+
+    // TODO "slotPath": "slot:/AHUSystem/vavs/"
 
     echo("==============================================================")
   }

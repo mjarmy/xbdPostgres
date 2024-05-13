@@ -44,7 +44,7 @@ where
 
 -- links->in4->fromRef->meta->inA->flags->linkTarget
 explain analyze
-select * from rec
+select rec.* from rec
   inner join pathref p1 on p1.rec_id = rec.id
   inner join rec     r1 on r1.id     = p1.ref_
 where
