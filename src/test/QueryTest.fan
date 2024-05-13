@@ -55,21 +55,41 @@ class QueryTest : Test
 
   Void testQuery()
   {
+    echo("==============================================================")
+
     doTest(
       Filter("ahu"),
       Query(
-        "select * from rec
+        "select rec.* from rec
          where
-           (rec.paths @> @p0::text[])",
-        Str:Obj["p0": "{\"ahu\"}"]))
+           (rec.paths @> @x0::text[])",
+        Str:Obj["x0": "{\"ahu\"}"]))
 
     doTest(
       Filter("facets->min"),
       Query(
-        "select * from rec
+        "select rec.* from rec
          where
-           (rec.paths @> @p0::text[])",
-        Str:Obj["p0": "{\"facets.min\"}"]))
+           (rec.paths @> @x0::text[])",
+        Str:Obj["x0": "{\"facets.min\"}"]))
+
+    doTest(
+      Filter("chilledWaterRef->chilled"),
+      Query(
+        "select rec.* from rec
+           inner join pathref p1 on p1.rec_id = rec.id
+           inner join rec     r1 on r1.id     = p1.ref_
+         where
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))",
+        Str:Obj["x0":"chilledWaterRef", "x1":"{\"chilled\"}"]))
+
+    //filter := Filter("chilledWaterRef->chilled")
+    //query := Query(filter)
+    //echo(testData.filter(filter).keys)
+    //echo(query)
+    //echo(db.select(query))
+
+    echo("==============================================================")
   }
 
   Void doTest(
@@ -101,10 +121,6 @@ class QueryTest : Test
       // TODO transform fndRec into a Dict and verify against expDict
     }
   }
-
-  //-----------------------------------------------
-  // Fields
-  //-----------------------------------------------
 
   private TestData testData := TestData()
   private Db db := Db()

@@ -98,10 +98,6 @@ JsonReader("""{"meta":{"wsAnnotation":{"slotSpec":{"_kind":"ref", "val":"cc.niag
     verifyEq(rec.pathRefs, Str:Ref[:])
   }
 
-  //-----------------------------------------------
-  // Fields
-  //-----------------------------------------------
-
   private TestData testData := TestData()
 }
 

@@ -78,8 +78,6 @@ class Db
   **
   Void insertRec(DbRec rec)
   {
-    echo("insertRec ${rec.id}")
-
     recInsert.execute([
       "id":     rec.id.id,
       "paths":  rec.paths,
@@ -125,10 +123,6 @@ class Db
 
     return result
   }
-
-  //-----------------------------------------------
-  // Fields
-  //-----------------------------------------------
 
   private SqlConn? conn
   private Statement? specInsert

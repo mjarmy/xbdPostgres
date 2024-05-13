@@ -46,10 +46,6 @@ const class BrioRefTags
 
   private new make(|This| f) { f(this) }
 
-  //-----------------------------------------------
-  // Fields
-  //-----------------------------------------------
-
   **
   ** The Set of brio tags that end in "Ref" or "Of"
   **

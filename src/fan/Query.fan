@@ -9,7 +9,7 @@
 using haystack
 
 **
-** Query is a haystack Filter translated to parameterized SQL
+** Query translates a haystack Filter to parameterized SQL
 **
 const class Query
 {
@@ -26,11 +26,17 @@ const class Query
   {
     qb := QueryBuilder(f)
 
-    return Query(
-      ["select * from rec",
-       "where",
-       "  ${qb.whereClause}"].join("\n"),
-      qb.params)
+    ls := ["select rec.* from rec"]
+    for (i := 1; i <= qb.joins; i++)
+    {
+      prev := (i == 1) ? "rec" : "r${i-1}"
+      ls.add("  inner join pathref p$i on p${i}.rec_id = ${prev}.id")
+      ls.add("  inner join rec     r$i on r${i}.id     = p1.ref_")
+    }
+    ls.add("where")
+    ls.add("  ${qb.where}")
+
+    return Query(ls.join("\n"), qb.params)
   }
 
   override Int hash() { return sql.hash.xor(params.hash) }
@@ -42,11 +48,7 @@ const class Query
     return sql == x.sql && params == x.params
   }
 
-  override Str toStr() { "Query:\n$sql\nparams:$params" }
-
-  //-----------------------------------------------
-  // Fields
-  //-----------------------------------------------
+  override Str toStr() { "Query:\n$sql\nparams:$params\n" }
 
   **
   ** The parameterized SQL
@@ -66,33 +68,62 @@ internal class QueryBuilder {
 
   internal new make(Filter f)
   {
-    visit(f)
+    this.where = visit(f)
   }
 
-  internal Void visit(Filter f)
+  internal Str visit(Filter f)
   {
-    if      (f.type == FilterType.has) visitHas(f.argA)
+    if      (f.type == FilterType.has) return visitHas(f.argA)
     //else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
     //else if (f.type == FilterType.and) visitAnd(f.argA, f.argB)
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
-  internal Void visitHas(FilterPath fp)
+//select * from rec
+//  inner join pathref p1 on p1.rec_id = rec.id
+//  inner join rec     r1 on r1.id     = p1.ref_
+//where
+//  (p1.path_ = 'chilledWaterRef') and
+//  (r1.paths @> '{"chilled"}'::text[]);
+  internal Str visitHas(FilterPath fp)
   {
     paths := dottedPaths(fp)
 
-    if (paths.size > 1)
+    // no joins
+    if (paths.size == 1)
     {
-      throw UnsupportedErr("TODO")
+      // add the param where clause
+      n := params.size
+      params.add("x$n", "{\"${paths[0]}\"}")
+      return "(rec.paths @> @x$n::text[])"
     }
+    // joins
+    else
+    {
+      sb := StrBuf()
+      sb.add("(")
 
-    n := whereClause.size
-    params.add("p$n", "{\"${paths[0]}\"}")
-    whereClause.add("(rec.paths @> @p$n::text[])")
+      // add the join where clauses
+      last := paths.size-1
+      for (i := 0; i < last; i++)
+      {
+        joins++
+        n := params.size
+        params.add("x$n", paths[i])
+        sb.add("(p${joins}.path_ = @x$n) and ")
+      }
+
+      // add the param where clause
+      n := params.size
+      params.add("x$n", "{\"${paths[last]}\"}")
+      sb.add("(r${joins}.paths @> @x$n::text[])")
+
+      sb.add(")")
+      return sb.toStr
+    }
   }
 
-  ** make a List of dotted Paths, using BrioRefTags
-  ** to define path boundaries
+  ** make a List of dotted Paths
   internal static Str[] dottedPaths(FilterPath fp)
   {
     result := Str[,]
@@ -118,12 +149,9 @@ internal class QueryBuilder {
     return result
   }
 
-  //-----------------------------------------------
-  // Fields
-  //-----------------------------------------------
-
-  internal StrBuf whereClause := StrBuf()
+  internal Str where
   internal Str:Obj params := Str:Obj[:]
+  internal Int joins := 0
 }
 
 
