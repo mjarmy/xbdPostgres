@@ -197,15 +197,15 @@ class QueryTest : Test
           "x1":"parentRef",
           "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
 
-    // TODO this works in the database but not the test data, because
-    // the numbers in alpha.json are not queryable unless they are transformed.
-    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    filter := Filter("area == 151455")
-    echo(testData.filter(filter).keys)
-    query := Query(filter)
-    echo(query)
-    echo(rawSql(query))
-    echo(db.select(query))
+    //// TODO this works in the database but not the test data, because
+    //// the numbers in alpha.json are not queryable unless they are transformed.
+    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("area == 151455")
+    //echo(testData.filter(filter).keys)
+    //query := Query(filter)
+    //echo(query)
+    //echo(rawSql(query))
+    //echo(db.select(query))
 
     echo("==============================================================")
   }
@@ -216,11 +216,11 @@ class QueryTest : Test
   {
     echo("--------------------------------------------------------------")
     expDicts := testData.filter(filter)
-    echo(expDicts.keys)
+    //echo(expDicts.keys)
 
     query := Query.fromFilter(filter)
     echo(query)
-    echo(rawSql(query))
+    //echo(rawSql(query))
     verifyEq(query, expQuery)
 
     found := db.select(query)
