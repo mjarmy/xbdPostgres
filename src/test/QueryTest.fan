@@ -15,7 +15,7 @@ class QueryTest : Test
 {
   override Void setup()
   {
-    db.open(
+    storeHouse.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -23,7 +23,7 @@ class QueryTest : Test
 
   override Void teardown()
   {
-    db.close()
+    storeHouse.close()
   }
 
   Void testQuery()
@@ -194,7 +194,7 @@ class QueryTest : Test
     //query := Query(filter)
     //echo(query)
     ////echo(rawSql(query))
-    ////echo(db.select(query))
+    ////echo(storeHouse.select(query))
 
     echo("==============================================================")
   }
@@ -209,10 +209,15 @@ class QueryTest : Test
 
     query := Query.fromFilter(filter)
     echo(query)
+
     //echo(rawSql(query))
+    exp := storeHouse.explain(rawSql(query))
+    //exp.each |s| { echo(s) }
+    verifyFalse(isSeqScan(exp))
+
     verifyEq(query, expQuery)
 
-    found := db.select(query)
+    found := storeHouse.select(query)
     //echo(found)
     verifyFound(found, expDicts)
   }
@@ -239,7 +244,7 @@ class QueryTest : Test
     {
       s = s.replace("@" + k, "'$v'")
     }
-    return "explain analyze\n" + s
+    return s
   }
 
   Void testDottedPaths()
@@ -269,24 +274,24 @@ class QueryTest : Test
       ["equipRef", "siteRef", "area"])
   }
 
-//  // TODO why doesn't explain work?  it blows up on the second query
-//  // TODO hook this to doTest()
-//  Void testExplain()
-//  {
-//    exp := db.explain("select * from rec")
-//    exp.each |s| { echo(s) }
-//    verifyTrue(isSeqScan(exp))
-//
-//    exp = db.explain(
-//      "select * from rec
-//         inner join pathref p1 on p1.rec_id = rec.id
-//         inner join rec     r1 on r1.id     = p1.ref_
-//       where
-//         (p1.path_ = 'chilledWaterRef') and
-//         (r1.paths @> '{\"chilled\"}'::text[])")
-//    exp.each |s| { echo(s) }
-//    verifyFalse(isSeqScan(exp))
-//  }
+  // TODO why doesn't explain work?  it blows up on the second query
+  // TODO hook this to doTest()
+  Void testExplain()
+  {
+    exp := storeHouse.explain("select * from rec")
+    //exp.each |s| { echo(s) }
+    verifyTrue(isSeqScan(exp))
+
+    exp = storeHouse.explain(
+      "select * from rec
+         inner join pathref p1 on p1.rec_id = rec.id
+         inner join rec     r1 on r1.id     = p1.ref_
+       where
+         (p1.path_ = 'chilledWaterRef') and
+         (r1.paths @> '{\"chilled\"}'::text[])")
+    //exp.each |s| { echo(s) }
+    verifyFalse(isSeqScan(exp))
+  }
 
   static Bool isSeqScan(Str[] explain)
   {
@@ -299,5 +304,5 @@ class QueryTest : Test
   }
 
   private TestData testData := TestData()
-  private Db db := Db()
+  private Storehouse storeHouse := Storehouse()
 }

@@ -10,9 +10,9 @@ using haystack
 using sql
 
 **
-** Db handles interaction with the Postgres database
+** Storehouse handles interaction with the Postgres database
 **
-class Db
+class Storehouse
 {
   **
   ** Open the connection to Postgres
@@ -124,25 +124,25 @@ class Db
     return result
   }
 
-//  **
-//  ** Explain a select
-//  **
-//  Str[] explain(Str rawSql)
-//  {
-//    result := Str[,]
-//
-//    params := Str:Obj[:]
-//    stmt := conn.sql(
-//        "explain (analyze true, verbose true, buffers true) " + rawSql).prepare
-//    stmt.query(params).each |row|
-//    {
-//      col := row.col("QUERY PLAN")
-//      result.add(row[col])
-//    }
-//    stmt.close
-//
-//    return result
-//  }
+  **
+  ** Explain a select
+  **
+  Str[] explain(Str rawSql)
+  {
+    result := Str[,]
+
+    stmt := conn.sql(
+        "explain (analyze true, verbose true, buffers true) " +
+        rawSql)
+    stmt.query().each |row|
+    {
+      col := row.col("QUERY PLAN")
+      result.add(row[col])
+    }
+    stmt.close
+
+    return result
+  }
 
   private SqlConn? conn
   private Statement? specInsert

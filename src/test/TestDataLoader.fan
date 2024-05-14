@@ -20,7 +20,7 @@ class TestDataLoader
 
   Void load()
   {
-    db.open(
+    storeHouse.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -29,13 +29,13 @@ class TestDataLoader
     td := TestData()
     td.recs.each |r,id|
     {
-      db.insertRec(DbRec.fromDict(r))
+      storeHouse.insertRec(DbRec.fromDict(r))
       n++
     }
     echo("loaded $n recs")
 
-    db.close()
+    storeHouse.close()
   }
 
-  private Db db := Db()
+  private Storehouse storeHouse := Storehouse()
 }
