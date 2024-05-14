@@ -164,15 +164,48 @@ class QueryTest : Test
           "x3":"parentRef",
           "x4":"{\"slotPath\"}"]))
 
-    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath")
-    //echo(testData.filter(filter).keys)
-    //query := Query(filter)
-    //echo(query)
-    //echo(rawSql(query))
-    //echo(db.select(query))
+    doTest(
+      Filter("custom->description == \"Clg_Valve_Cmd\""),
+      Query(
+        "select rec.* from rec
+         where
+           (rec.values_ @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"custom\":{\"description\":\"Clg_Valve_Cmd\"}}"]))
 
-    // TODO "slotPath": "slot:/AHUSystem/vavs/"
+    doTest(
+      Filter("dis == \"Alpha Airside AHU-4\""),
+      Query(
+        "select rec.* from rec
+         where
+           (rec.values_ @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"dis\":\"Alpha Airside AHU-4\"}"]))
+
+    doTest(
+      Filter("parentRef->parentRef->slotPath == \"slot:/AHUSystem/vavs\""),
+      Query(
+        "select rec.* from rec
+           inner join pathref p1 on p1.rec_id = rec.id
+           inner join rec     r1 on r1.id     = p1.ref_
+           inner join pathref p2 on p2.rec_id = r1.id
+           inner join rec     r2 on r2.id     = p2.ref_
+         where
+           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.values_ @> @x2::jsonb));",
+        Str:Obj[
+          "x0":"parentRef",
+          "x1":"parentRef",
+          "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
+
+    // TODO this works in the database but not the test data, because
+    // the numbers in alpha.json are not queryable unless they are transformed.
+    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    filter := Filter("area == 151455")
+    echo(testData.filter(filter).keys)
+    query := Query(filter)
+    echo(query)
+    echo(rawSql(query))
+    echo(db.select(query))
 
     echo("==============================================================")
   }

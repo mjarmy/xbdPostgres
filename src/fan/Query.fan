@@ -77,10 +77,15 @@ internal class QueryBuilder {
       return visitLeaf(
         f.argA,
         null /*ignored*/,
-        |Str[] paths, Obj? arg->Str| { hasParams(paths, arg) },
+        |Str alias, Str path, Obj? arg->Str| { hasParams(alias, path, arg) },
         indent)
 
-    //else if (f.type == FilterType.eq)  visitEq(f.argA, f.argB)
+    else if (f.type == FilterType.eq)
+      return visitLeaf(
+        f.argA,
+        f.argB,
+        |Str alias, Str path, Obj? arg->Str| { eqParams(alias, path, arg) },
+        indent)
 
     else if (f.type == FilterType.and)
       return visitAnd(f.argA, f.argB, indent)
@@ -88,19 +93,10 @@ internal class QueryBuilder {
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
-  ** add the parameters for a 'has' Filter
-  private Str hasParams(Str[] paths, Obj? arg /* ignored */)
-  {
-    alias := (paths.size == 1) ? "rec" : "r${joins}"
-    n := params.size
-    params.add("x$n", "{\"${paths[-1]}\"}")
-    return "(${alias}.paths @> @x$n::text[])"
-  }
-
   internal Str visitLeaf(
     FilterPath fp,
     Obj? arg,
-    |Str[] paths, Obj? arg -> Str| paramFunc,
+    |Str alias, Str path, Obj? arg -> Str| paramFunc,
     Int indent)
   {
     pad := doIndent(indent)
@@ -110,7 +106,7 @@ internal class QueryBuilder {
     if (paths.size == 1)
     {
       // add the parameter clause
-      return pad + paramFunc(paths, arg)
+      return pad + paramFunc("rec", paths[0], arg)
     }
     // joins
     else
@@ -129,11 +125,33 @@ internal class QueryBuilder {
       }
 
       // add the parameter clause
-      sb.add(paramFunc(paths, arg))
+      sb.add(paramFunc("r${joins}", paths[-1], arg))
 
       sb.add(")")
       return pad + sb.toStr
     }
+  }
+
+  ** add the parameters for a 'has' Filter
+  private Str hasParams(Str alias, Str path, Obj? arg /* ignored */)
+  {
+    n := params.size
+    params.add("x$n", "{\"$path\"}")
+    return "(${alias}.paths @> @x$n::text[])"
+  }
+
+  ** add the parameters for an 'eq' Filter
+  private Str eqParams(Str alias, Str path, Obj? arg)
+  {
+    // Build up the containment dict by walking the keys backwards
+    Str[] keys := path.split('.')
+    dict := Etc.dict1(keys[-1], arg)
+    for (i := keys.size - 2; i >= 0; i--)
+      dict = Etc.dict1(keys[i], dict)
+
+    n := params.size
+    params.add("x$n", JsonWriter.valToStr(dict))
+    return "(${alias}.values_ @> @x$n::jsonb)"
   }
 
   internal Str visitAnd(Filter a, Filter b, Int indent)

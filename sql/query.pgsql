@@ -79,6 +79,12 @@ select * from rec
 where
   (rec.values_ @> '{"dis":"Alpha Airside AHU-4"}'::jsonb);
 
+-- custom->description == 'Clg_Valve_Cmd'
+explain analyze
+select * from rec
+where
+  (rec.values_ @> '{"custom": {"description":"Clg_Valve_Cmd"}}'::jsonb);
+
 -- area == 151455
 explain analyze
 select * from rec
@@ -86,10 +92,10 @@ where
   (rec.values_ @> '{"area":151455}'::jsonb);
 
 -- facets->min == -INF
-explain analyze
-select * from rec
-where
-  (rec.values_ @> '{"facets.min":{"val": "-INF", "_kind": "number"}}'::jsonb);
+--explain analyze
+--select * from rec
+--where
+--  (rec.values_ @> '{"facets": {"min":{"val": "-INF", "_kind": "number"}}}'::jsonb);
 
 -- chilled and pump and sensor and equipRef->siteRef->area == 151455
 explain analyze
