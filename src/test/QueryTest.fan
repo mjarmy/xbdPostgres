@@ -26,33 +26,6 @@ class QueryTest : Test
     db.close()
   }
 
-  Void testDottedPaths()
-  {
-    verifyEq(
-      QueryBuilder.dottedPaths(Filter("ahu").argA),
-      ["ahu"])
-
-    verifyEq(
-      QueryBuilder.dottedPaths(Filter("facets->min").argA),
-      ["facets.min"])
-
-    verifyEq(
-      QueryBuilder.dottedPaths(Filter("chilledWaterRef->chilled").argA),
-      ["chilledWaterRef", "chilled"])
-
-    verifyEq(
-      QueryBuilder.dottedPaths(Filter("fooOf->barRef").argA),
-      ["fooOf", "barRef"])
-
-    verifyEq(
-      QueryBuilder.dottedPaths(Filter("links->in4->fromRef->meta->inA->flags->linkTarget").argA),
-      ["links.in4.fromRef", "meta.inA.flags.linkTarget"])
-
-    verifyEq(
-      QueryBuilder.dottedPaths(Filter("equipRef->siteRef->area").argA),
-      ["equipRef", "siteRef", "area"])
-  }
-
   Void testQuery()
   {
     echo("==============================================================")
@@ -267,6 +240,62 @@ class QueryTest : Test
       s = s.replace("@" + k, "'$v'")
     }
     return "explain analyze\n" + s
+  }
+
+  Void testDottedPaths()
+  {
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("ahu").argA),
+      ["ahu"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("facets->min").argA),
+      ["facets.min"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("chilledWaterRef->chilled").argA),
+      ["chilledWaterRef", "chilled"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("fooOf->barRef").argA),
+      ["fooOf", "barRef"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("links->in4->fromRef->meta->inA->flags->linkTarget").argA),
+      ["links.in4.fromRef", "meta.inA.flags.linkTarget"])
+
+    verifyEq(
+      QueryBuilder.dottedPaths(Filter("equipRef->siteRef->area").argA),
+      ["equipRef", "siteRef", "area"])
+  }
+
+//  // TODO why doesn't explain work?  it blows up on the second query
+//  // TODO hook this to doTest()
+//  Void testExplain()
+//  {
+//    exp := db.explain("select * from rec")
+//    exp.each |s| { echo(s) }
+//    verifyTrue(isSeqScan(exp))
+//
+//    exp = db.explain(
+//      "select * from rec
+//         inner join pathref p1 on p1.rec_id = rec.id
+//         inner join rec     r1 on r1.id     = p1.ref_
+//       where
+//         (p1.path_ = 'chilledWaterRef') and
+//         (r1.paths @> '{\"chilled\"}'::text[])")
+//    exp.each |s| { echo(s) }
+//    verifyFalse(isSeqScan(exp))
+//  }
+
+  static Bool isSeqScan(Str[] explain)
+  {
+    res := false
+    explain.each |s| {
+      if (s.contains("Seq Scan"))
+        res = true;
+    }
+    return res;
   }
 
   private TestData testData := TestData()

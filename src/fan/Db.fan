@@ -124,6 +124,26 @@ class Db
     return result
   }
 
+//  **
+//  ** Explain a select
+//  **
+//  Str[] explain(Str rawSql)
+//  {
+//    result := Str[,]
+//
+//    params := Str:Obj[:]
+//    stmt := conn.sql(
+//        "explain (analyze true, verbose true, buffers true) " + rawSql).prepare
+//    stmt.query(params).each |row|
+//    {
+//      col := row.col("QUERY PLAN")
+//      result.add(row[col])
+//    }
+//    stmt.close
+//
+//    return result
+//  }
+
   private SqlConn? conn
   private Statement? specInsert
   private Statement? recInsert
