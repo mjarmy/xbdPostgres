@@ -197,15 +197,31 @@ class QueryTest : Test
           "x1":"parentRef",
           "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
 
-    //// TODO this works in the database but not the test data, because
-    //// the numbers in alpha.json are not queryable unless they are transformed.
+    doTest(
+      Filter("area == 151455"),
+      Query(
+        "select rec.* from rec
+         where
+           (rec.values_ @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"area\":151455}"]))
+
+    doTest(
+      Filter("facets->precision == 1"),
+      Query(
+        "select rec.* from rec
+         where
+           (rec.values_ @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"facets\":{\"precision\":1}}"]))
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("area == 151455")
+    //filter := Filter("facets->precision == 1")
     //echo(testData.filter(filter).keys)
     //query := Query(filter)
     //echo(query)
-    //echo(rawSql(query))
-    //echo(db.select(query))
+    ////echo(rawSql(query))
+    ////echo(db.select(query))
 
     echo("==============================================================")
   }

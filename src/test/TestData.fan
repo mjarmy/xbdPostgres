@@ -39,6 +39,11 @@ const class TestData
     }
 
     this.recs = recs
+
+    // make the records queryable
+    queryable := Ref:Dict[:]
+    recs.each |v,k| { queryable.add(k, makeQueryable(v)) }
+    this.queryable = queryable
   }
 
   Ref:Dict filter(Filter f)
@@ -48,13 +53,49 @@ const class TestData
     pather := |Ref r->Dict?| { recs.get(r) }
     recs.each |rec, id|
     {
-      if (f.matches(rec, PatherContext(pather)))
+      q := queryable.get(id)
+      if (f.matches(q, PatherContext(pather)))
         result.add(id, rec)
     }
 
     return result
   }
 
+  // Make a rec "queryable" by stripping the units from numbers
+  private static Dict makeQueryable(Dict d)
+  {
+    values := Str:Obj[:]
+    d.each |v,k|
+    {
+      // traverseDict nested dict
+      if (v is Dict)
+      {
+        values.add(k, makeQueryable(v))
+      }
+      // Number
+      else if (v is Number)
+      {
+        n := (Number) v
+
+        // Strip units
+        if (n.unit != null)
+        {
+          n = n.isInt ?
+            Number.makeInt(n.toInt) :
+            Number(n.toFloat)
+        }
+        values.add(k, n)
+      }
+      // anything else
+      else
+      {
+        values.add(k, v)
+      }
+    }
+    return Etc.makeDict(values)
+  }
+
   const Ref:Dict recs
+  private const Ref:Dict queryable
 }
 
