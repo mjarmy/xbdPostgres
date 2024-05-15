@@ -80,6 +80,13 @@ internal class QueryBuilder {
         |Str alias, Str path, Obj? arg->Str| { hasParams(alias, path, arg) },
         indent)
 
+    else if (f.type == FilterType.missing)
+      return visitLeaf(
+        f.argA,
+        null /*ignored*/,
+        |Str alias, Str path, Obj? arg->Str| { missingParams(alias, path, arg) },
+        indent)
+
     else if (f.type == FilterType.eq)
       return visitLeaf(
         f.argA,
@@ -138,6 +145,14 @@ internal class QueryBuilder {
     n := params.size
     params.add("x$n", "{\"$path\"}")
     return "(${alias}.paths @> @x$n::text[])"
+  }
+
+  ** add the parameters for a 'missing' Filter
+  private Str missingParams(Str alias, Str path, Obj? arg /* ignored */)
+  {
+    n := params.size
+    params.add("x$n", "{\"$path\"}")
+    return "(not (${alias}.paths @> @x$n::text[]))"
   }
 
   ** add the parameters for an 'eq' Filter

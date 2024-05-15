@@ -209,21 +209,33 @@ class QueryTest : Test
           "x0":"id",
           "x1":"{\"area\"}"]))
 
+    doTest(
+      Filter("not point"),
+      Query(
+        "select rec.brio from rec
+         where
+           (not (rec.paths @> @x0::text[]));",
+        Str:Obj[
+          "x0":"{\"point\"}"]),
+        true)
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("id->area")
+    //filter := Filter("not point")
     //expected := testData.filter(filter)
-    //echo(expected.map |Dict v->Ref| { v.id })
+    //echo("${expected.size} rows")
     //query := Query(filter)
     //echo(query)
+    //echo("explain (analyze true, verbose true, buffers true) ")
     //echo(rawSql(query))
-    ////echo(haven.select(query))
+    //echo(haven.select(query))
 
     echo("==============================================================")
   }
 
   Void doTest(
     Filter filter,
-    Query expectedQuery)
+    Query expectedQuery,
+    Bool allowSequential := false)
   {
     echo("--------------------------------------------------------------")
     echo(filter)
@@ -243,11 +255,14 @@ class QueryTest : Test
     explained := haven.explain(rawSql(query))
     //echo("explain (analyze true, verbose true, buffers true) ")
     //echo(rawSql(query))
+    seq := isSeqScan(explained)
+    if (seq) echo("************ SEQUENTIAL ************")
+    if (!allowSequential)
+      verifyFalse(seq)
     explained.each |s| {
       if (s.startsWith("Execution Time:"))
         echo(s)
     }
-    verifyFalse(isSeqScan(explained))
 
     // Perfom the query in the database
     found := haven.select(query)

@@ -10,7 +10,7 @@ using haystack
 using sql
 
 **
-** Haven handles interaction with the Postgres database
+** Haven stores and queries Dicts in a Postgres database
 **
 class Haven
 {
@@ -79,7 +79,6 @@ class Haven
   Void insertRec(Dict dict)
   {
     rec := Rec.fromDict(dict)
-    echo("insertRec: ${rec.id}")
 
     recInsert.execute([
       "id":     rec.id.id,
