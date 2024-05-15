@@ -123,13 +123,14 @@ internal const class Rec
   internal const Ref id
 
   **
-  ** The dotted path to every value.  Markers are stored here implicitly.
+  ** 'paths' containts the dotted path to every value.  Markers are stored here
+  ** implicitly.
   **
   internal const Str[] paths
 
   **
-  ** 'values' contains everything but Markers .
-  ** If there are any Numbers, they have been stripped of their units.
+  ** 'values' contains everything but Markers. If there are any Numbers, they
+  ** have been stripped of their units.
   **
   internal const Dict values
 
