@@ -186,9 +186,8 @@ internal class QueryBuilder {
       tag := fp.get(i)
       cur.add(tag)
 
-      // TODO is this really what we want?
-      //if (BrioRefTags.cur.tags.containsKey(tag))
-      if (tag.endsWith("Ref") || tag.endsWith("Of"))
+      // TODO whitelist
+      if ((tag == "id") || tag.endsWith("Ref") || tag.endsWith("Of"))
       {
         result.add(cur.join("."))
         cur.clear

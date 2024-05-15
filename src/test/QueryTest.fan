@@ -188,13 +188,35 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"facets\":{\"precision\":1}}"]))
 
-//    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-//    //filter := Filter("facets->precision == 1")
-//    //echo(testData.filter(filter).keys)
-//    //query := Query(filter)
-//    //echo(query)
-//    ////echo(rawSql(query))
-//    ////echo(haven.select(query))
+    doTest(
+      Filter("equipRef == @a-0001"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.hayson @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"equipRef\":{\"_kind\":\"ref\", \"val\":\"a-0001\"}}"]))
+
+    doTest(
+      Filter("id->area"),
+      Query(
+        "select rec.brio from rec
+           inner join pathref p1 on p1.source = rec.id
+           inner join rec     r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+        Str:Obj[
+          "x0":"id",
+          "x1":"{\"area\"}"]))
+
+    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("id->area")
+    //expected := testData.filter(filter)
+    //echo(expected.map |Dict v->Ref| { v.id })
+    //query := Query(filter)
+    //echo(query)
+    //echo(rawSql(query))
+    ////echo(haven.select(query))
 
     echo("==============================================================")
   }
