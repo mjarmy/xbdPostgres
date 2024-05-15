@@ -17,7 +17,7 @@ create index spec_inherits_from on spec using gin (inherits_from);
 -- Recs
 create table rec (
   id text primary key,
-  brio bytea,
+  brio bytea,            -- the brio encoding of the dict
   paths text[] not null, -- the path to every key
   hayson jsonb not null, -- no markers, numbers have units stripped
   spec text -- nullable, no foreign key to spec(id), since it could be dangling

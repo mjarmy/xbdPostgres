@@ -18,16 +18,14 @@ internal const class Rec
   **
   internal new make(
     Ref id,
-    Buf brio,
     Str[] paths,
-    Dict values,
+    Dict hayson,
     Str:Ref pathRefs,
     Ref? spec)
   {
     this.id       = id
-    this.brio     = brio
     this.paths    = paths
-    this.values   = values
+    this.hayson   = hayson
     this.pathRefs = pathRefs
     this.spec     = spec
   }
@@ -38,23 +36,22 @@ internal const class Rec
   internal static new fromDict(Dict dict)
   {
     paths := Str[,]
-    values := Str:Obj[:]
+    hayson := Str:Obj[:]
     pathRefs := Str:Ref[:]
 
-    traverseDict(dict, Str[,], paths, values, pathRefs)
+    traverseDict(dict, Str[,], paths, hayson, pathRefs)
 
     return Rec(
       dict.id,
-      BrioWriter.valToBuf(dict),
       paths,
-      Etc.makeDict(values),
+      Etc.makeDict(hayson),
       pathRefs,
       dict.get("spec", null))
   }
 
   private static Void traverseDict(
       Dict d, Str[] curPath, Str[] paths,
-      Str:Obj values, Str:Ref pathRefs)
+      Str:Obj hayson, Str:Ref pathRefs)
   {
     d.each |v,k|
     {
@@ -68,13 +65,13 @@ internal const class Rec
         Str:Obj nvalues := Str:Obj[:]
         traverseDict(v, curPath, paths, nvalues, pathRefs)
         if (!nvalues.isEmpty)
-          values.add(k, Etc.makeDict(nvalues))
+          hayson.add(k, Etc.makeDict(nvalues))
       }
       // Ref
       else if (v is Ref)
       {
         pathRefs.add(cp, v)
-        values.add(k, v)
+        hayson.add(k, v)
       }
       // Number
       else if (v is Number)
@@ -88,12 +85,12 @@ internal const class Rec
             Number.makeInt(n.toInt) :
             Number(n.toFloat)
         }
-        values.add(k, n)
+        hayson.add(k, n)
       }
       // remove markers
       else if (!(v is Marker))
       {
-        values.add(k, v)
+        hayson.add(k, v)
       }
 
       curPath.removeAt(-1)
@@ -114,9 +111,8 @@ internal const class Rec
     if (x == null) return false
     return (
       (id == x.id) &&
-      //brio.bytesEqual(x.brio) &&    -- not needed for unit tests
       (paths == x.paths) &&
-      Etc.dictEq(values, x.values) &&
+      Etc.dictEq(hayson, x.hayson) &&
       (pathRefs == x.pathRefs) &&
       (spec == x.spec)
     )
@@ -130,21 +126,16 @@ internal const class Rec
   internal const Ref id
 
   **
-  ** Brio encoding
-  **
-  internal const Buf brio
-
-  **
   ** 'paths' contains the dotted path to every value.  Markers are stored here
   ** implicitly.
   **
   internal const Str[] paths
 
   **
-  ** 'values' contains everything but Markers. If there are any Numbers, they
+  ** 'hayson' contains everything but Markers. If there are any Numbers, they
   ** have been stripped of their units.
   **
-  internal const Dict values
+  internal const Dict hayson
 
   **
   ** The Path to each Ref, if there are any (could be empty).

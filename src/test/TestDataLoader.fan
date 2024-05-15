@@ -27,13 +27,13 @@ class TestDataLoader
 
     n := 0
     td := TestData()
-//    td.recs.each |r,id|
-//    {
-//      haven.insertRec(DbRec.fromDict(r))
-//      n++
-//    }
-//    echo("loaded $n recs")
-//
+    td.recs.each |dict,id|
+    {
+      haven.insertRec(dict)
+      n++
+    }
+    echo("loaded $n recs")
+
     haven.close()
   }
 

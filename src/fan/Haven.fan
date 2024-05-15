@@ -32,7 +32,7 @@ class Haven
       "insert into rec (
          id, brio, paths, hayson, spec)
        values (
-         @id, @brio, @paths, @values::jsonb, @spec)").prepare
+         @id, @brio, @paths, @hayson::jsonb, @spec)").prepare
 
     pathRefInsert = conn.sql(
       "insert into pathRef
@@ -73,45 +73,47 @@ class Haven
     conn.commit
   }
 
-//  **
-//  ** Insert a Rec
-//  **
-//  Void insertRec(DbRec rec)
-//  {
-//    recInsert.execute([
-//      "id":     rec.id.id,
-//      "paths":  rec.paths,
-//      "values": JsonWriter.valToStr(rec.values),
-//      "refs":   JsonWriter.valToStr(rec.refs),
-//      "units":  JsonWriter.valToStr(rec.units),
-//      "spec":   rec.spec == null ? null : rec.spec.id,
-//    ])
-//
-//    rec.pathRefs.each |r, p|
-//    {
-//      pathRefInsert.execute([
-//        "recId": rec.id.id,
-//        "path":  p,
-//        "ref":   r.id
-//      ])
-//    }
-//
-//    conn.commit
-//  }
-//
+  **
+  ** Insert a Rec
+  **
+  Void insertRec(Dict dict)
+  {
+    rec := Rec.fromDict(dict)
+    echo("insertRec: ${rec.id}")
+
+    recInsert.execute([
+      "id":     rec.id.id,
+      "brio":   BrioWriter.valToBuf(dict),
+      "paths":  rec.paths,
+      "hayson": JsonWriter.valToStr(rec.hayson),
+      "spec":   rec.spec == null ? null : rec.spec.id,
+    ])
+
+    rec.pathRefs.each |target, path|
+    {
+      pathRefInsert.execute([
+        "source": rec.id.id,
+        "path":   path,
+        "target": target.id
+      ])
+    }
+
+    conn.commit
+  }
+
 //  **
 //  ** Execute a query
 //  **
-//  DbRec[] select(Query q)
+//  Dict[] select(Query q)
 //  {
-//    result := DbRec[,]
+//    result := Dict[,]
 //
 //    // TODO cache these?
 //    stmt := conn.sql(q.sql).prepare
 //    stmt.query(q.params).each |r|
 //    {
 //      Str? spec := r->spec
-//      result.add(DbRec(
+//      result.add(Rec(
 //       Ref.fromStr(r->id),
 //       r->paths,
 //       JsonReader(((Str)r->values_).in).readVal,

@@ -18,7 +18,6 @@ class RecTest : Test
     rec := Rec.fromDict(testData.recs.get(Ref.fromStr("a-0000")))
     expect := Rec(
       Ref.fromStr("a-0000"),
-      Buf(), // placeholder, not needed for this test
       ["id", "area", "dis", "geoAddr", "geoCity", "geoCoord", "geoCountry",
        "geoElevation", "geoPostalCode", "geoState", "geoStreet", "site", "tz",
        "weatherStationRef"],
@@ -58,7 +57,6 @@ class RecTest : Test
     rec = Rec.fromDict(testData.recs.get(Ref.fromStr("a-0002")))
     expect = Rec(
       Ref.fromStr("a-0002"),
-      Buf(), // placeholder, not needed for this test
       ["id", "chilled", "cmd", "cool", "cur", "dis", "equipRef", "his", "kind",
         "point", "siteRef", "tz", "unit", "valve", "water", "custom",
         "custom.description"],
@@ -98,7 +96,6 @@ class RecTest : Test
     Rec rec := Rec.fromDict(testData.recs.get(Ref.fromStr("h:2c6")))
     expect := Rec(
       Ref.fromStr("h:2c6"),
-      Buf(), // placeholder, not needed for this test
       ["compName", "spec", "facets", "facets.min", "facets.max",
       "facets.precision", "facets.units", "dis", "links", "links.in10",
       "links.in10.fromOrd", "links.in10.fromSlot", "links.in10.fromRef",
@@ -295,7 +292,6 @@ class RecTest : Test
     Rec rec := Rec.fromDict(JsonReader(json.in).readVal)
     expect := Rec(
       Ref.fromStr("xyz"),
-      Buf(), // placeholder, not needed for this test
       ["a", "b", "c", "c.d", "c.e", "f", "f.g", "id"],
       JsonReader(
         """{
