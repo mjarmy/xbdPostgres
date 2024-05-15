@@ -94,6 +94,13 @@ internal class QueryBuilder {
         |Str alias, Str path, Obj? arg->Str| { eqParams(alias, path, arg) },
         indent)
 
+    else if (f.type == FilterType.ne)
+      return visitLeaf(
+        f.argA,
+        f.argB,
+        |Str alias, Str path, Obj? arg->Str| { neParams(alias, path, arg) },
+        indent)
+
     else if (f.type == FilterType.and)
       return visitAnd(f.argA, f.argB, indent)
 
@@ -167,6 +174,20 @@ internal class QueryBuilder {
     n := params.size
     params.add("x$n", JsonWriter.valToStr(dict))
     return "(${alias}.hayson @> @x$n::jsonb)"
+  }
+
+  ** add the parameters for a 'ne' Filter
+  private Str neParams(Str alias, Str path, Obj? arg)
+  {
+    // Build up the containment dict by walking the keys backwards
+    Str[] keys := path.split('.')
+    dict := Etc.dict1(keys[-1], arg)
+    for (i := keys.size - 2; i >= 0; i--)
+      dict = Etc.dict1(keys[i], dict)
+
+    n := params.size
+    params.add("x$n", JsonWriter.valToStr(dict))
+    return "(not (${alias}.hayson @> @x$n::jsonb))"
   }
 
   internal Str visitAnd(Filter a, Filter b, Int indent)

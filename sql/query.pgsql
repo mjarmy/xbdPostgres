@@ -112,3 +112,34 @@ where
   (p2.path_ = 'siteRef') and
   (r2.values_ @> '{"area":151455}'::jsonb);
 
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+
+-- origin query, 22, which is probably correct
+select count(*) from rec
+where
+  (
+    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb)
+    and
+    (not (rec.hayson @> '{"airRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb))
+  );
+
+-- 112 equipRef
+select count(*) from rec
+where
+    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb);
+
+-- 90 equipRef and airRef
+select count(*) from rec
+where
+    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb)
+    and
+    (rec.hayson @> '{"airRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb);
+
+-- 22 equipRef and not airRef
+select count(*) from rec
+where
+    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb)
+    and
+    (not (rec.hayson @> '{"airRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb));

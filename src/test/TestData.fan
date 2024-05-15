@@ -50,12 +50,12 @@ const class TestData
   {
     result := Dict[,]
 
-    pather := |Ref r->Dict?| { recs.get(r) }
-    recs.each |rec, id|
+    pather := |Ref r->Dict?| { queryable.get(r) }
+    queryable.each |rec, id|
     {
       q := queryable.get(id)
       if (f.matches(q, PatherContext(pather)))
-        result.add(rec)
+        result.add(recs.get(id))
     }
 
     return result
@@ -96,6 +96,6 @@ const class TestData
   }
 
   const Ref:Dict recs
-  private const Ref:Dict queryable
+  const Ref:Dict queryable
 }
 
