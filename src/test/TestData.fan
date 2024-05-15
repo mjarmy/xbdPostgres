@@ -46,16 +46,16 @@ const class TestData
     this.queryable = queryable
   }
 
-  Ref:Dict filter(Filter f)
+  Dict[] filter(Filter f)
   {
-    result := Ref:Dict[:]
+    result := Dict[,]
 
     pather := |Ref r->Dict?| { recs.get(r) }
     recs.each |rec, id|
     {
       q := queryable.get(id)
       if (f.matches(q, PatherContext(pather)))
-        result.add(id, rec)
+        result.add(rec)
     }
 
     return result

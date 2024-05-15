@@ -26,12 +26,12 @@ const class Query
   {
     qb := QueryBuilder(f)
 
-    ls := ["select rec.* from rec"]
+    ls := ["select rec.brio from rec"]
     for (i := 1; i <= qb.joins; i++)
     {
       prev := (i == 1) ? "rec" : "r${i-1}"
-      ls.add("  inner join pathref p$i on p${i}.rec_id = ${prev}.id")
-      ls.add("  inner join rec     r$i on r${i}.id     = p${i}.ref_")
+      ls.add("  inner join pathref p$i on p${i}.source = ${prev}.id")
+      ls.add("  inner join rec     r$i on r${i}.id     = p${i}.target")
     }
     ls.add("where")
     ls.add("${qb.where};")
@@ -151,7 +151,7 @@ internal class QueryBuilder {
 
     n := params.size
     params.add("x$n", JsonWriter.valToStr(dict))
-    return "(${alias}.values_ @> @x$n::jsonb)"
+    return "(${alias}.hayson @> @x$n::jsonb)"
   }
 
   internal Str visitAnd(Filter a, Filter b, Int indent)

@@ -101,30 +101,23 @@ class Haven
     conn.commit
   }
 
-//  **
-//  ** Execute a query
-//  **
-//  Dict[] select(Query q)
-//  {
-//    result := Dict[,]
-//
-//    // TODO cache these?
-//    stmt := conn.sql(q.sql).prepare
-//    stmt.query(q.params).each |r|
-//    {
-//      Str? spec := r->spec
-//      result.add(Rec(
-//       Ref.fromStr(r->id),
-//       r->paths,
-//       JsonReader(((Str)r->values_).in).readVal,
-//       JsonReader(((Str)r->refs)   .in).readVal,
-//       JsonReader(((Str)r->units)  .in).readVal,
-//       spec == null ? null : Ref.fromStr(spec)))
-//    }
-//    stmt.close
-//
-//    return result
-//  }
+  **
+  ** Execute a query
+  **
+  Dict[] select(Query q)
+  {
+    result := Dict[,]
+
+    // TODO cache these?
+    stmt := conn.sql(q.sql).prepare
+    stmt.query(q.params).each |r|
+    {
+      result.add(BrioReader(((Buf)r->brio).in).readDict)
+    }
+    stmt.close
+
+    return result
+  }
 
   **
   ** Explain a select
