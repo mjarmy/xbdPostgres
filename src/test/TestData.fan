@@ -46,6 +46,7 @@ const class TestData
     this.queryable = queryable
   }
 
+  // Run a filter against the queryable recs
   Dict[] filter(Filter f)
   {
     result := Dict[,]
