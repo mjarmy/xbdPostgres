@@ -10,9 +10,9 @@ using haystack
 using sql
 
 **
-** Storehouse handles interaction with the Postgres database
+** Haven handles interaction with the Postgres database
 **
-class Storehouse
+class Haven
 {
   **
   ** Open the connection to Postgres

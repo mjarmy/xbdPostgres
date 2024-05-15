@@ -15,7 +15,7 @@
 //{
 //  override Void setup()
 //  {
-//    storeHouse.open(
+//    haven.open(
 //      "jdbc:postgresql://localhost/postgres",
 //      "xbd",
 //      "s3crkEt")
@@ -23,7 +23,7 @@
 //
 //  override Void teardown()
 //  {
-//    storeHouse.close()
+//    haven.close()
 //  }
 //
 //  Void testQuery()
@@ -194,7 +194,7 @@
 //    //query := Query(filter)
 //    //echo(query)
 //    ////echo(rawSql(query))
-//    ////echo(storeHouse.select(query))
+//    ////echo(haven.select(query))
 //
 //    echo("==============================================================")
 //  }
@@ -211,13 +211,13 @@
 //    echo(query)
 //
 //    //echo(rawSql(query))
-//    exp := storeHouse.explain(rawSql(query))
+//    exp := haven.explain(rawSql(query))
 //    //exp.each |s| { echo(s) }
 //    verifyFalse(isSeqScan(exp))
 //
 //    verifyEq(query, expQuery)
 //
-//    found := storeHouse.select(query)
+//    found := haven.select(query)
 //    //echo(found)
 //    verifyFound(found, expDicts)
 //  }
@@ -278,11 +278,11 @@
 //  // TODO hook this to doTest()
 //  Void testExplain()
 //  {
-//    exp := storeHouse.explain("select * from rec")
+//    exp := haven.explain("select * from rec")
 //    //exp.each |s| { echo(s) }
 //    verifyTrue(isSeqScan(exp))
 //
-//    exp = storeHouse.explain(
+//    exp = haven.explain(
 //      "select * from rec
 //         inner join pathref p1 on p1.rec_id = rec.id
 //         inner join rec     r1 on r1.id     = p1.ref_
@@ -304,5 +304,5 @@
 //  }
 //
 //  private TestData testData := TestData()
-//  private Storehouse storeHouse := Storehouse()
+//  private Haven haven := Haven()
 //}

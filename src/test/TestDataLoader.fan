@@ -20,7 +20,7 @@ class TestDataLoader
 
   Void load()
   {
-    storeHouse.open(
+    haven.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -29,15 +29,15 @@ class TestDataLoader
     td := TestData()
 //    td.recs.each |r,id|
 //    {
-//      storeHouse.insertRec(DbRec.fromDict(r))
+//      haven.insertRec(DbRec.fromDict(r))
 //      n++
 //    }
 //    echo("loaded $n recs")
 //
-    storeHouse.close()
+    haven.close()
   }
 
-  private Storehouse storeHouse := Storehouse()
+  private Haven haven := Haven()
 }
 
 ////
@@ -63,7 +63,7 @@ class TestDataLoader
 //  ** Build all the specs from every library
 //  Void buildAll()
 //  {
-//    storeHouse.open(
+//    haven.open(
 //      "jdbc:postgresql://localhost/postgres",
 //      "xbd",
 //      "s3crkEt")
@@ -76,7 +76,7 @@ class TestDataLoader
 //    }
 //    echo("loaded $count recs")
 //
-//    storeHouse.close()
+//    haven.close()
 //  }
 //
 //  ** Build a spec and its inheritance hierarchy
@@ -89,7 +89,7 @@ class TestDataLoader
 //
 //    inherit := [Str:Str][:] /* Set */
 //    traverseHierarchy(spec, inherit)
-//    storeHouse.insertSpec(spec.qname, inherit.keys)
+//    haven.insertSpec(spec.qname, inherit.keys)
 //    count++
 //  }
 //
@@ -113,6 +113,6 @@ class TestDataLoader
 //    }
 //  }
 //
-//  private Storehouse storeHouse := Storehouse()
+//  private Haven haven := Haven()
 //  private Int count := 0
 //}
