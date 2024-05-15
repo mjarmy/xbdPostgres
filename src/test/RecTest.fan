@@ -18,6 +18,7 @@ class RecTest : Test
     rec := Rec.fromDict(testData.recs.get(Ref.fromStr("a-0000")))
     expect := Rec(
       Ref.fromStr("a-0000"),
+      Buf(), // placeholder, not needed for this test
       ["id", "area", "dis", "geoAddr", "geoCity", "geoCoord", "geoCountry",
        "geoElevation", "geoPostalCode", "geoState", "geoStreet", "site", "tz",
        "weatherStationRef"],
@@ -47,13 +48,17 @@ class RecTest : Test
              "val": "a-07eb"
            }
          }""".in).readVal,
-      Str:Ref[ "weatherStationRef": Ref.fromStr("a-07eb")],
+      Str:Ref[
+        "id": Ref.fromStr("a-0000"),
+        "weatherStationRef": Ref.fromStr("a-07eb")
+        ],
       null)
     verifyEq(expect, rec)
 
     rec = Rec.fromDict(testData.recs.get(Ref.fromStr("a-0002")))
     expect = Rec(
       Ref.fromStr("a-0002"),
+      Buf(), // placeholder, not needed for this test
       ["id", "chilled", "cmd", "cool", "cur", "dis", "equipRef", "his", "kind",
         "point", "siteRef", "tz", "unit", "valve", "water", "custom",
         "custom.description"],
@@ -80,6 +85,7 @@ class RecTest : Test
            }
          }""".in).readVal,
       Str:Ref[
+        "id": Ref.fromStr("a-0002"),
         "siteRef": Ref.fromStr("a-0000"),
         "equipRef": Ref.fromStr("a-0001"),
       ],
@@ -92,6 +98,7 @@ class RecTest : Test
     Rec rec := Rec.fromDict(testData.recs.get(Ref.fromStr("h:2c6")))
     expect := Rec(
       Ref.fromStr("h:2c6"),
+      Buf(), // placeholder, not needed for this test
       ["compName", "spec", "facets", "facets.min", "facets.max",
       "facets.precision", "facets.units", "dis", "links", "links.in10",
       "links.in10.fromOrd", "links.in10.fromSlot", "links.in10.fromRef",
@@ -239,6 +246,7 @@ class RecTest : Test
            }
          }""".in).readVal,
     Str:Ref[
+      "id": Ref.fromStr("h:2c6"),
       "spec": Ref.fromStr("cc.niagara.control::NumericWritable"),
       "links.in10.fromRef": Ref.fromStr("h:2c4"),
       "meta.wsAnnotation.slotSpec": Ref.fromStr("cc.niagara.baja::WsAnnotation"),
@@ -287,6 +295,7 @@ class RecTest : Test
     Rec rec := Rec.fromDict(JsonReader(json.in).readVal)
     expect := Rec(
       Ref.fromStr("xyz"),
+      Buf(), // placeholder, not needed for this test
       ["a", "b", "c", "c.d", "c.e", "f", "f.g", "id"],
       JsonReader(
         """{
@@ -304,7 +313,9 @@ class RecTest : Test
                "g": 5
              }
            }""".in).readVal,
-      Str:Ref[:],
+      Str:Ref[
+        "id": Ref.fromStr("xyz")
+      ],
       null)
     verifyEq(expect, rec)
   }

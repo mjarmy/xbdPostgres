@@ -14,16 +14,18 @@ using haystack
 internal const class Rec
 {
   **
-  ** Only used for testing
+  ** Only used for unit tests
   **
   internal new make(
     Ref id,
+    Buf brio,
     Str[] paths,
     Dict values,
     Str:Ref pathRefs,
     Ref? spec)
   {
     this.id       = id
+    this.brio     = brio
     this.paths    = paths
     this.values   = values
     this.pathRefs = pathRefs
@@ -43,6 +45,7 @@ internal const class Rec
 
     return Rec(
       dict.id,
+      BrioWriter.valToBuf(dict),
       paths,
       Etc.makeDict(values),
       pathRefs,
@@ -70,10 +73,7 @@ internal const class Rec
       // Ref
       else if (v is Ref)
       {
-        if (k != "id")
-        {
-          pathRefs.add(cp, v)
-        }
+        pathRefs.add(cp, v)
         values.add(k, v)
       }
       // Number
@@ -100,14 +100,21 @@ internal const class Rec
     }
   }
 
+  **
+  ** Only used for unit tests
+  **
   override Int hash() { id.hash }
 
+  **
+  ** Only used for unit tests
+  **
   override Bool equals(Obj? that)
   {
     x := that as Rec
     if (x == null) return false
     return (
       (id == x.id) &&
+      //brio.bytesEqual(x.brio) &&    -- not needed for unit tests
       (paths == x.paths) &&
       Etc.dictEq(values, x.values) &&
       (pathRefs == x.pathRefs) &&
@@ -123,7 +130,12 @@ internal const class Rec
   internal const Ref id
 
   **
-  ** 'paths' containts the dotted path to every value.  Markers are stored here
+  ** Brio encoding
+  **
+  internal const Buf brio
+
+  **
+  ** 'paths' contains the dotted path to every value.  Markers are stored here
   ** implicitly.
   **
   internal const Str[] paths
