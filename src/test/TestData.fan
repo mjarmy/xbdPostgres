@@ -61,7 +61,7 @@ const class TestData
     return result
   }
 
-  // Make a rec "queryable" by stripping the units from numbers
+  // Make a rec queryable by stripping the units from numbers
   private static Dict makeQueryable(Dict d)
   {
     values := Str:Obj[:]

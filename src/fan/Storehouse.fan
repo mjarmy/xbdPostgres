@@ -23,22 +23,22 @@ class Storehouse
     conn.autoCommit = false
 
     specInsert = conn.sql(
-      "insert into spec (qname, inherits_from)
-       values (@qname, @inheritsFrom)").prepare
+      "insert into spec
+         (qname, inherits_from)
+       values
+         (@qname, @inheritsFrom)").prepare
 
     recInsert = conn.sql(
       "insert into rec (
-         id, paths,
-         values_, refs, units,
-         spec)
+         id, brio, paths, hayson, spec)
        values (
-         @id, @paths,
-         @values::jsonb, @refs::jsonb, @units::jsonb,
-         @spec)").prepare
+         @id, @brio, @paths, @values::jsonb, @spec)").prepare
 
     pathRefInsert = conn.sql(
-      "insert into pathRef (rec_id, path_, ref_)
-       values (@recId, @path, @ref)").prepare
+      "insert into pathRef
+         (source, path_, target)
+       values
+         (@source, @path, @target)").prepare
   }
 
   **
@@ -73,56 +73,56 @@ class Storehouse
     conn.commit
   }
 
-  **
-  ** Insert a Rec
-  **
-  Void insertRec(DbRec rec)
-  {
-    recInsert.execute([
-      "id":     rec.id.id,
-      "paths":  rec.paths,
-      "values": JsonWriter.valToStr(rec.values),
-      "refs":   JsonWriter.valToStr(rec.refs),
-      "units":  JsonWriter.valToStr(rec.units),
-      "spec":   rec.spec == null ? null : rec.spec.id,
-    ])
-
-    rec.pathRefs.each |r, p|
-    {
-      pathRefInsert.execute([
-        "recId": rec.id.id,
-        "path":  p,
-        "ref":   r.id
-      ])
-    }
-
-    conn.commit
-  }
-
-  **
-  ** Execute a query
-  **
-  DbRec[] select(Query q)
-  {
-    result := DbRec[,]
-
-    // TODO cache these?
-    stmt := conn.sql(q.sql).prepare
-    stmt.query(q.params).each |r|
-    {
-      Str? spec := r->spec
-      result.add(DbRec(
-       Ref.fromStr(r->id),
-       r->paths,
-       JsonReader(((Str)r->values_).in).readVal,
-       JsonReader(((Str)r->refs)   .in).readVal,
-       JsonReader(((Str)r->units)  .in).readVal,
-       spec == null ? null : Ref.fromStr(spec)))
-    }
-    stmt.close
-
-    return result
-  }
+//  **
+//  ** Insert a Rec
+//  **
+//  Void insertRec(DbRec rec)
+//  {
+//    recInsert.execute([
+//      "id":     rec.id.id,
+//      "paths":  rec.paths,
+//      "values": JsonWriter.valToStr(rec.values),
+//      "refs":   JsonWriter.valToStr(rec.refs),
+//      "units":  JsonWriter.valToStr(rec.units),
+//      "spec":   rec.spec == null ? null : rec.spec.id,
+//    ])
+//
+//    rec.pathRefs.each |r, p|
+//    {
+//      pathRefInsert.execute([
+//        "recId": rec.id.id,
+//        "path":  p,
+//        "ref":   r.id
+//      ])
+//    }
+//
+//    conn.commit
+//  }
+//
+//  **
+//  ** Execute a query
+//  **
+//  DbRec[] select(Query q)
+//  {
+//    result := DbRec[,]
+//
+//    // TODO cache these?
+//    stmt := conn.sql(q.sql).prepare
+//    stmt.query(q.params).each |r|
+//    {
+//      Str? spec := r->spec
+//      result.add(DbRec(
+//       Ref.fromStr(r->id),
+//       r->paths,
+//       JsonReader(((Str)r->values_).in).readVal,
+//       JsonReader(((Str)r->refs)   .in).readVal,
+//       JsonReader(((Str)r->units)  .in).readVal,
+//       spec == null ? null : Ref.fromStr(spec)))
+//    }
+//    stmt.close
+//
+//    return result
+//  }
 
   **
   ** Explain a select
@@ -149,3 +149,4 @@ class Storehouse
   private Statement? recInsert
   private Statement? pathRefInsert
 }
+
