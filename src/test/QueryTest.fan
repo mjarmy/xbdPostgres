@@ -226,21 +226,27 @@ class QueryTest : Test
     Query expectedQuery)
   {
     echo("--------------------------------------------------------------")
+    echo(filter)
 
     // Fetch the expected test data
     expected := testData.filter(filter)
+    echo("${expected.size} rows")
     expected.sort |Dict a, Dict b->Int| { return a.id.id <=> b.id.id }
     //echo(expected.map |Dict v->Ref| { v.id })
 
     // Construct the Query and make sure it matches the expected query
     query := Query.fromFilter(filter)
-    echo(query)
+    //echo(query)
     verifyEq(query, expectedQuery)
 
     // Explain the Query's raw sql to make sure its not a sequential scan
     explained := haven.explain(rawSql(query))
+    //echo("explain (analyze true, verbose true, buffers true) ")
     //echo(rawSql(query))
-    //explained.each |s| { echo(s) }
+    explained.each |s| {
+      if (s.startsWith("Execution Time:"))
+        echo(s)
+    }
     verifyFalse(isSeqScan(explained))
 
     // Perfom the query in the database
