@@ -219,75 +219,29 @@ class QueryTest : Test
           "x0":"{\"point\"}"]),
         true)
 
-    //doTest(
-    //  Filter("equipRef == @a-0001 and airRef != @a-0001"),
-    //  Query(
-    //    "select rec.brio from rec
-    //     where
-    //       (
-    //         (rec.hayson @> @x0::jsonb)
-    //         and
-    //         (not (rec.hayson @> @x1::jsonb))
-    //       );",
-    //    Str:Obj[
-    //      "x0":"{\"equipRef\":{\"_kind\":\"ref\", \"val\":\"a-0001\"}}",
-    //      "x1":"{\"airRef\":{\"_kind\":\"ref\", \"val\":\"a-0001\"}}",
-    //    ]))
+    doTest(
+      Filter("b != 1"),
+      Query(
+        "select rec.brio from rec
+         where
+           ((rec.paths @> @x0::text[]) and (not (rec.hayson @> @x1::jsonb)));",
+        Str:Obj[
+          "x0":"{\"b\"}",
+          "x1":"{\"b\":1}"]))
 
-    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("equipRef == @a-0001")
+    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("b != 1")
     //expected := testData.filter(filter)
-    //echo("${expected.size} rows")
+    //echo("expected ${expected.size} rows")
     ////echo(expected.map |Dict v->Ref| { v.id })
     //query := Query(filter)
     //echo(query)
     //echo("explain (analyze true, verbose true, buffers true) ")
     //echo(rawSql(query))
-    ////echo(haven.select(query))
+    //found := haven.select(query)
+    //echo("found ${found.size} rows")
 
     echo("==============================================================")
-  }
-
-  Void testWeird()
-  {
-    filter := Filter("equipRef == @a-0001")
-    expected := testData.filter(filter)
-    echo("${expected.size} rows")
-
-    filter = Filter("equipRef == @a-0001 and airRef == @a-0001")
-    expected = testData.filter(filter)
-    echo("${expected.size} rows")
-
-    filter = Filter("equipRef == @a-0001 and airRef != @a-0001")
-    expected = testData.filter(filter)
-    echo("${expected.size} rows")
-
-    //Int equipRef := 0
-    //Int airRef := 0
-    //Int NOT_airRef := 0
-    //Int found := 0
-
-    //pather := |Ref r->Dict?| { testData.queryable.get(r) }
-    //ref := Ref.fromStr("a-0001")
-    //testData.queryable.each |rec, id|
-    //{
-    //  if (rec.get("equipRef") == ref)
-    //  {
-    //    equipRef++
-
-    //    if (rec.get("airRef") == ref)
-    //      airRef++
-    //    else
-    //      NOT_airRef++
-    //  }
-
-    //  if (filter.matches(rec, PatherContext(pather)))
-    //    found++;
-    //}
-    //echo("empirical equipRef $equipRef rows")
-    //echo("empirical airRef $airRef rows")
-    //echo("empirical NOT_airRef $NOT_airRef rows")
-    //echo("empirical found $found rows")
   }
 
   Void doTest(

@@ -38,6 +38,20 @@ const class TestData
       recs.add(d->id, d)
     }
 
+    // extra
+    extra := Dict[
+      Etc.makeDict3("id", Ref.fromStr("x0"), "a", Number.makeInt(1), "b", Number.makeInt(1)),
+      Etc.makeDict3("id", Ref.fromStr("x1"), "a", Number.makeInt(2), "b", Number.makeInt(2)),
+      Etc.makeDict3("id", Ref.fromStr("x2"), "a", Number.makeInt(3), "b", Number.makeInt(3)),
+      Etc.makeDict3("id", Ref.fromStr("x3"), "a", Number.makeInt(4), "b", Number.makeInt(4)),
+      Etc.makeDict3("id", Ref.fromStr("x4"), "a", Number.makeInt(5), "c", Number.makeInt(1)),
+      Etc.makeDict3("id", Ref.fromStr("x5"), "a", Number.makeInt(6), "c", Number.makeInt(2)),
+      Etc.makeDict3("id", Ref.fromStr("x6"), "a", Number.makeInt(7), "c", Number.makeInt(3)),
+      Etc.makeDict3("id", Ref.fromStr("x7"), "a", Number.makeInt(8), "c", Number.makeInt(4))
+    ]
+    extra.each |d| { recs.add(d->id, d) }
+
+    // done
     this.recs = recs
 
     // make the records queryable

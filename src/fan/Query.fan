@@ -186,8 +186,14 @@ internal class QueryBuilder {
       dict = Etc.dict1(keys[i], dict)
 
     n := params.size
+    params.add("x$n", "{\"$path\"}")
+    hasClause := "(${alias}.paths @> @x$n::text[])"
+
+    n = params.size
     params.add("x$n", JsonWriter.valToStr(dict))
-    return "(not (${alias}.hayson @> @x$n::jsonb))"
+    eqClause := "(${alias}.hayson @> @x$n::jsonb)"
+
+    return "($hasClause and (not $eqClause))"
   }
 
   internal Str visitAnd(Filter a, Filter b, Int indent)
