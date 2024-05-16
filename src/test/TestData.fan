@@ -87,7 +87,7 @@ const class TestData
     return result
   }
 
-  // Make a rec queryable by stripping the units from numbers
+  // Make a rec queryable
   private static Dict makeQueryable(Dict d)
   {
     values := Str:Obj[:]
@@ -111,6 +111,14 @@ const class TestData
             Number(n.toFloat)
         }
         values.add(k, n)
+      }
+      // DateTime
+      else if (v is DateTime)
+      {
+        dt := (DateTime) v
+
+        // use ticks
+        values.add(k, Etc.dict2("_kind", "dateTime", "val", dt.ticks))
       }
       // anything else
       else

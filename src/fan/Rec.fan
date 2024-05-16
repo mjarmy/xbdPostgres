@@ -87,6 +87,14 @@ internal const class Rec
         }
         hayson.add(k, n)
       }
+      // DateTime
+      else if (v is DateTime)
+      {
+        dt := (DateTime) v
+
+        // use ticks
+        hayson.add(k, Etc.dict2("_kind", "dateTime", "val", dt.ticks))
+      }
       // remove markers
       else if (!(v is Marker))
       {
