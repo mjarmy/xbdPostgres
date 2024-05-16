@@ -39,16 +39,27 @@ const class TestData
     }
 
     // extra
-    extra := Dict[
-      Etc.makeDict3("id", Ref.fromStr("x0"), "a", Number.makeInt(1), "b", Number.makeInt(1)),
-      Etc.makeDict3("id", Ref.fromStr("x1"), "a", Number.makeInt(2), "b", Number.makeInt(2)),
-      Etc.makeDict3("id", Ref.fromStr("x2"), "a", Number.makeInt(3), "b", Number.makeInt(3)),
-      Etc.makeDict3("id", Ref.fromStr("x3"), "a", Number.makeInt(4), "b", Number.makeInt(4)),
-      Etc.makeDict3("id", Ref.fromStr("x4"), "a", Number.makeInt(5), "c", Number.makeInt(1)),
-      Etc.makeDict3("id", Ref.fromStr("x5"), "a", Number.makeInt(6), "c", Number.makeInt(2)),
-      Etc.makeDict3("id", Ref.fromStr("x6"), "a", Number.makeInt(7), "c", Number.makeInt(3)),
-      Etc.makeDict3("id", Ref.fromStr("x7"), "a", Number.makeInt(8), "c", Number.makeInt(4))
-    ]
+    n := 0
+    Dict[] extra := JsonReader(
+      """[
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 1, "b": 1 },
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 2, "b": 2 },
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 3, "b": 3 },
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 4, "b": 4 },
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 5, "c": { "d": 1 }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 6, "c": { "d": 2 }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 7, "c": { "d": 3 }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 8, "c": { "d": 4 }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "e": true},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "f": { "_kind": "uri", "val": "https://project-haystack.org" }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "g": { "_kind": "coord", "lat": 50.979603, "lng": 10.318789 }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "h": { "_kind": "date", "val": "2021-03-22" }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "h": { "_kind": "date", "val": "2021-03-23" }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "i": { "_kind": "time", "val": "17:19:23" }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "i": { "_kind": "time", "val": "17:19:24" }},
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "j": { "_kind": "dateTime", "val": "2021-03-22T13:57:00.381-04:00", "tz": "New_York" } },
+         { "id": { "_kind": "ref", "val": "x${n++}" }, "j": { "_kind": "dateTime", "val": "2021-03-22T13:57:00.382-04:00", "tz": "New_York" } }
+         ]""".in).readVal
     extra.each |d| { recs.add(d->id, d) }
 
     // done

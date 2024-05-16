@@ -116,30 +116,13 @@ where
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 
--- origin query, 22, which is probably correct
-select count(*) from rec
+-- b < 2
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
 where
-  (
-    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb)
-    and
-    (not (rec.hayson @> '{"airRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb))
-  );
+  ((rec.paths @> '{"b"}'::text[]) and ((rec.hayson #> '{b}')::int > 2));
 
--- 112 equipRef
-select count(*) from rec
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
 where
-    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb);
-
--- 90 equipRef and airRef
-select count(*) from rec
-where
-    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb)
-    and
-    (rec.hayson @> '{"airRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb);
-
--- 22 equipRef and not airRef
-select count(*) from rec
-where
-    (rec.hayson @> '{"equipRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb)
-    and
-    (not (rec.hayson @> '{"airRef":{"_kind":"ref", "val":"a-0001"}}'::jsonb));
+  ((rec.paths @> '{"c.d"}'::text[]) and ((rec.hayson #> '{c,d}')::int > 2));

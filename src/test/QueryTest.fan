@@ -230,7 +230,17 @@ class QueryTest : Test
           "x1":"{\"b\":1}"]))
 
     doTest(
-      Filter("a == 1 or c == 1"),
+      Filter("c->d != 1"),
+      Query(
+        "select rec.brio from rec
+         where
+           ((rec.paths @> @x0::text[]) and (not (rec.hayson @> @x1::jsonb)));",
+        Str:Obj[
+          "x0":"{\"c.d\"}",
+          "x1":"{\"c\":{\"d\":1}}"]))
+
+    doTest(
+      Filter("a == 1 or b == 2"),
       Query(
         "select rec.brio from rec
          where
@@ -241,19 +251,19 @@ class QueryTest : Test
            );",
         Str:Obj[
           "x0":"{\"a\":1}",
-          "x1":"{\"c\":1}"]))
+          "x1":"{\"b\":2}"]))
 
-    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    filter := Filter("a == 1 or c == 1")
-    expected := testData.filter(filter)
-    echo("expected ${expected.size} rows")
-    //echo(expected.map |Dict v->Ref| { v.id })
-    query := Query(filter)
-    echo(query)
-    echo("explain (analyze true, verbose true, buffers true) ")
-    echo(rawSql(query))
-    found := haven.select(query)
-    echo("found ${found.size} rows")
+    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("a == 1 or c == 1")
+    //expected := testData.filter(filter)
+    //echo("expected ${expected.size} rows")
+    ////echo(expected.map |Dict v->Ref| { v.id })
+    //query := Query(filter)
+    //echo(query)
+    //echo("explain (analyze true, verbose true, buffers true) ")
+    //echo(rawSql(query))
+    //found := haven.select(query)
+    //echo("found ${found.size} rows")
 
     echo("==============================================================")
   }
@@ -279,8 +289,8 @@ class QueryTest : Test
 
     // Explain the Query's raw sql to make sure its not a sequential scan
     explained := haven.explain(rawSql(query))
-    //echo("explain (analyze true, verbose true, buffers true) ")
-    //echo(rawSql(query))
+    echo("explain (analyze true, verbose true, buffers true) ")
+    echo(rawSql(query))
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
     if (!allowSequential)
@@ -345,6 +355,18 @@ class QueryTest : Test
          (r1.paths @> '{\"chilled\"}'::text[])")
     //exp.each |s| { echo(s) }
     verifyFalse(isSeqScan(exp))
+  }
+
+  Void testDateTime()
+  {
+    a := DateTime.nowUtc
+    b := DateTime.makeTicks(a.ticks)
+
+    ja := JsonWriter.valToStr(a)
+    jb := JsonWriter.valToStr(b)
+
+    verifyTrue(a.ticks == b.ticks)
+    verifyFalse(ja == jb)
   }
 
   // This isn't actually reliable, its just a quick and dirty approach for
