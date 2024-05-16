@@ -92,8 +92,10 @@ internal const class Rec
       {
         dt := (DateTime) v
 
-        // use ticks
-        hayson.add(k, Etc.dict2("_kind", "dateTime", "val", dt.ticks))
+        // use "fantom epoch millis"
+        hayson.add(k, Etc.dict2(
+          "_kind", "dateTime",
+          "millis", Duration(dt.ticks).toMillis))
       }
       // remove markers
       else if (!(v is Marker))

@@ -117,8 +117,10 @@ const class TestData
       {
         dt := (DateTime) v
 
-        // use ticks
-        values.add(k, Etc.dict2("_kind", "dateTime", "val", dt.ticks))
+        // use "fantom epoch millis"
+        values.add(k, Etc.dict2(
+          "_kind", "dateTime",
+          "millis", Duration(dt.ticks).toMillis))
       }
       // anything else
       else
