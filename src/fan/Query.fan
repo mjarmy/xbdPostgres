@@ -104,6 +104,9 @@ internal class QueryBuilder {
     else if (f.type == FilterType.and)
       return visitAnd(f.argA, f.argB, indent)
 
+    else if (f.type == FilterType.or)
+      return visitOr(f.argA, f.argB, indent)
+
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
@@ -204,6 +207,19 @@ internal class QueryBuilder {
       pad + "(",
       visit(a, indent+1),
       pad + "  and",
+      visit(b, indent+1),
+      pad + ")",
+    ].join("\n")
+  }
+
+  internal Str visitOr(Filter a, Filter b, Int indent)
+  {
+    pad := doIndent(indent)
+
+    return [
+      pad + "(",
+      visit(a, indent+1),
+      pad + "  or",
       visit(b, indent+1),
       pad + ")",
     ].join("\n")

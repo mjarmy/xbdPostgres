@@ -229,17 +229,31 @@ class QueryTest : Test
           "x0":"{\"b\"}",
           "x1":"{\"b\":1}"]))
 
+    doTest(
+      Filter("a == 1 or c == 1"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.hayson @> @x0::jsonb)
+             or
+             (rec.hayson @> @x1::jsonb)
+           );",
+        Str:Obj[
+          "x0":"{\"a\":1}",
+          "x1":"{\"c\":1}"]))
+
     echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("b != 1")
-    //expected := testData.filter(filter)
-    //echo("expected ${expected.size} rows")
-    ////echo(expected.map |Dict v->Ref| { v.id })
-    //query := Query(filter)
-    //echo(query)
-    //echo("explain (analyze true, verbose true, buffers true) ")
-    //echo(rawSql(query))
-    //found := haven.select(query)
-    //echo("found ${found.size} rows")
+    filter := Filter("a == 1 or c == 1")
+    expected := testData.filter(filter)
+    echo("expected ${expected.size} rows")
+    //echo(expected.map |Dict v->Ref| { v.id })
+    query := Query(filter)
+    echo(query)
+    echo("explain (analyze true, verbose true, buffers true) ")
+    echo(rawSql(query))
+    found := haven.select(query)
+    echo("found ${found.size} rows")
 
     echo("==============================================================")
   }
