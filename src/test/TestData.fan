@@ -38,27 +38,39 @@ const class TestData
       recs.add(d->id, d)
     }
 
+    //dt1 := DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
+    //dt2 := dt1.plus(Duration.fromStr("1ms"))
+    //hs1 := JsonWriter.valToStr(dt1)
+    //hs2 := JsonWriter.valToStr(dt2)
+    //echo(hs1)
+    //echo(hs2)
+
     // extra
     n := 0
     Dict[] extra := JsonReader(
       """[
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 1, "b": 1 },
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 2, "b": 2 },
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 3, "b": 3 },
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 4, "b": 4 },
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 5, "c": { "d": 1 }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 6, "c": { "d": 2 }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 7, "c": { "d": 3 }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "a": 8, "c": { "d": 4 }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "e": true},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "f": { "_kind": "uri", "val": "https://project-haystack.org" }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "g": { "_kind": "coord", "lat": 50.979603, "lng": 10.318789 }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "h": { "_kind": "date", "val": "2021-03-22" }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "h": { "_kind": "date", "val": "2021-03-23" }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "i": { "_kind": "time", "val": "17:19:23" }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "i": { "_kind": "time", "val": "17:19:24" }},
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "j": { "_kind": "dateTime", "val": "2021-03-22T13:57:00.381-04:00", "tz": "New_York" } },
-         { "id": { "_kind": "ref", "val": "x${n++}" }, "j": { "_kind": "dateTime", "val": "2021-03-22T13:57:00.382-04:00", "tz": "New_York" } }
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 1, "b": 1 },
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 2, "b": 2 },
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 3, "b": 3 },
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 4, "b": 4 },
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 5, "c": { "d": 1 }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 6, "c": { "d": 2 }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 7, "c": { "d": 3 }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "a": 8, "c": { "d": 4 }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "e": true},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "f": { "_kind": "uri", "val": "https://project-haystack.org" }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "x": { "_kind": "date", "val": "2021-03-22" }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "x": { "_kind": "date", "val": "2021-03-23" }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "y": { "_kind": "time", "val": "17:19:23" }},
+         { "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" }, "y": { "_kind": "time", "val": "17:19:24" }},
+         {
+           "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" },
+           "z": {"_kind":"dateTime", "val":"2021-03-22T13:57:00.381-04:00", "tz":"GMT+4"}
+         },
+         {
+           "id": { "_kind": "ref", "val": "z${n++}" }, "extra": { "_kind": "marker" },
+           "z": {"_kind":"dateTime", "val":"2021-03-22T13:57:00.382-04:00", "tz":"GMT+4"}
+         }
          ]""".in).readVal
     extra.each |d| { recs.add(d->id, d) }
 
@@ -116,11 +128,7 @@ const class TestData
       else if (v is DateTime)
       {
         dt := (DateTime) v
-
-        // use "fantom epoch millis"
-        values.add(k, Etc.dict2(
-          "_kind", "dateTime",
-          "millis", Duration(dt.ticks).toMillis))
+        values.add(k, Rec.convertDateTime(dt))
       }
       // anything else
       else

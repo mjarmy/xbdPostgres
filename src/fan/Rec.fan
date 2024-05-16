@@ -91,11 +91,7 @@ internal const class Rec
       else if (v is DateTime)
       {
         dt := (DateTime) v
-
-        // use "fantom epoch millis"
-        hayson.add(k, Etc.dict2(
-          "_kind", "dateTime",
-          "millis", Duration(dt.ticks).toMillis))
+        hayson.add(k, convertDateTime(dt))
       }
       // remove markers
       else if (!(v is Marker))
@@ -105,6 +101,17 @@ internal const class Rec
 
       curPath.removeAt(-1)
     }
+  }
+
+  **
+  ** Convert a DateTime into the Dict that we use for querying
+  **
+  internal static Dict convertDateTime(DateTime dt)
+  {
+    // use "fantom epoch millis"
+    return Etc.dict2(
+      "_kind", "dateTime",
+      "millis", Duration(dt.ticks).toMillis)
   }
 
   **

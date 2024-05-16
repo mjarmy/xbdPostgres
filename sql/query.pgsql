@@ -126,3 +126,9 @@ explain (analyze true, verbose true, buffers true)
 select rec.id from rec
 where
   ((rec.paths @> '{"c.d"}'::text[]) and ((rec.hayson #> '{c,d}')::int > 2));
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+
+select id, paths, hayson from rec
+where (paths @> '{"extra"}'::text[]);

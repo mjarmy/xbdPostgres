@@ -168,6 +168,10 @@ internal class QueryBuilder {
   ** add the parameters for an 'eq' Filter
   private Str eqParams(Str alias, Str path, Obj? arg)
   {
+    // convert DateTime to query format
+    if (arg is DateTime)
+      arg = Rec.convertDateTime(arg)
+
     // Build up the containment dict by walking the keys backwards
     Str[] keys := path.split('.')
     dict := Etc.dict1(keys[-1], arg)
@@ -182,6 +186,10 @@ internal class QueryBuilder {
   ** add the parameters for a 'ne' Filter
   private Str neParams(Str alias, Str path, Obj? arg)
   {
+    // convert DateTime to query format
+    if (arg is DateTime)
+      arg = Rec.convertDateTime(arg)
+
     // Build up the containment dict by walking the keys backwards
     Str[] keys := path.split('.')
     dict := Etc.dict1(keys[-1], arg)

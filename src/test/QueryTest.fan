@@ -253,6 +253,73 @@ class QueryTest : Test
           "x0":"{\"a\":1}",
           "x1":"{\"b\":2}"]))
 
+    doTest(
+      Filter("e == true"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.hayson @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"e\":true}"]))
+
+    doTest(
+      Filter("e != true"),
+      Query(
+        "select rec.brio from rec
+         where
+           ((rec.paths @> @x0::text[]) and (not (rec.hayson @> @x1::jsonb)));",
+        Str:Obj[
+          "x0":"{\"e\"}",
+          "x1":"{\"e\":true}"]))
+
+    doTest(
+      Filter("f == `https://project-haystack.org`"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.hayson @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"f\":{\"_kind\":\"uri\", \"val\":\"https://project-haystack.org/\"}}"]))
+
+    doTest(
+      Filter("f != `https://project-haystack.org`"),
+      Query(
+        "select rec.brio from rec
+         where
+           ((rec.paths @> @x0::text[]) and (not (rec.hayson @> @x1::jsonb)));",
+        Str:Obj[
+          "x0":"{\"f\"}",
+          "x1":"{\"f\":{\"_kind\":\"uri\", \"val\":\"https://project-haystack.org/\"}}"]))
+
+    doTest(
+      Filter("x == 2021-03-22"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.hayson @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"x\":{\"_kind\":\"date\", \"val\":\"2021-03-22\"}}"]))
+
+    doTest(
+      Filter("y == 17:19:23"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.hayson @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"y\":{\"_kind\":\"time\", \"val\":\"17:19:23\"}}"]))
+
+    dt := DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
+    millis := Duration(dt.ticks).toMillis
+    doTest(
+      Filter.eq("z", dt),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.hayson @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"z\":{\"_kind\":\"dateTime\", \"millis\":$millis}}"]))
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
     //filter := Filter("a == 1 or c == 1")
     //expected := testData.filter(filter)
@@ -278,19 +345,19 @@ class QueryTest : Test
 
     // Fetch the expected test data
     expected := testData.filter(filter)
-    echo("${expected.size} rows")
+    echo("expected ${expected.size} rows")
     expected.sort |Dict a, Dict b->Int| { return a.id.id <=> b.id.id }
     //echo(expected.map |Dict v->Ref| { v.id })
 
     // Construct the Query and make sure it matches the expected query
     query := Query.fromFilter(filter)
-    //echo(query)
+    echo(query)
     verifyEq(query, expectedQuery)
 
     // Explain the Query's raw sql to make sure its not a sequential scan
     explained := haven.explain(rawSql(query))
-    echo("explain (analyze true, verbose true, buffers true) ")
-    echo(rawSql(query))
+    //echo("explain (analyze true, verbose true, buffers true) ")
+    //echo(rawSql(query))
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
     if (!allowSequential)
@@ -302,6 +369,7 @@ class QueryTest : Test
 
     // Perfom the query in the database
     found := haven.select(query)
+    echo("found ${found.size} rows")
     found.sort |Dict a, Dict b->Int| { return a.id.id <=> b.id.id }
     //echo(found.map |Dict v->Ref| { v.id })
 
