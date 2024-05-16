@@ -320,6 +320,16 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"z\":{\"_kind\":\"dateTime\", \"millis\":$millis}}"]))
 
+    doTest(
+      Filter.ne("z", dt),
+      Query(
+        "select rec.brio from rec
+         where
+           ((rec.paths @> @x0::text[]) and (not (rec.hayson @> @x1::jsonb)));",
+        Str:Obj[
+          "x0":"{\"z\"}",
+          "x1":"{\"z\":{\"_kind\":\"dateTime\", \"millis\":$millis}}"]))
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
     //filter := Filter("a == 1 or c == 1")
     //expected := testData.filter(filter)
