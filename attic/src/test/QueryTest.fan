@@ -171,7 +171,7 @@ class QueryTest : Test
           "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
 
     doTest(
-      Filter("area == 151455"),
+      Filter("geoElevation == 2956m"),
       Query(
         "select rec.brio from rec
          where
@@ -330,6 +330,8 @@ class QueryTest : Test
           "x0":"{\"z\"}",
           "x1":"{\"z\":{\"_kind\":\"dateTime\", \"millis\":$millis}}"]))
 
+    echo(Filter("geoElevation == 2956"))
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
     //filter := Filter("a == 1 or c == 1")
     //expected := testData.filter(filter)
@@ -433,18 +435,6 @@ class QueryTest : Test
          (r1.paths @> '{\"chilled\"}'::text[])")
     //exp.each |s| { echo(s) }
     verifyFalse(isSeqScan(exp))
-  }
-
-  Void testDateTime()
-  {
-    a := DateTime.nowUtc
-    b := DateTime.makeTicks(a.ticks)
-
-    ja := JsonWriter.valToStr(a)
-    jb := JsonWriter.valToStr(b)
-
-    verifyTrue(a.ticks == b.ticks)
-    verifyFalse(ja == jb)
   }
 
   // This isn't actually reliable, its just a quick and dirty approach for

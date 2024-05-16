@@ -22,10 +22,11 @@ class Build : BuildPod
                "org.uri":      "https://xetobase.com/",
                "license.name": "Commercial"]
     depends = ["sys @{fan.depend}",
+               "concurrent @{fan.depend}",
                "sql @{fan.depend}",
                "util @{fan.depend}",
-               "haystack @{hx.depend}",
                "xeto @{hx.depend}",
+               "haystack @{hx.depend}",
               ]
     srcDirs = [`fan/`, `test/`]
   }
