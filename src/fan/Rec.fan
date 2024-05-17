@@ -19,11 +19,13 @@ internal const class Rec
   internal new make(
     Str id,
     Str[] paths,
-    Str:Str refs)
+    Str:Str refs,
+    Str:Str strs)
   {
-    this.id       = id
-    this.paths    = paths
-    this.refs     = refs
+    this.id    = id
+    this.paths = paths
+    this.refs  = refs
+    this.strs  = strs
   }
 
   **
@@ -33,24 +35,28 @@ internal const class Rec
   {
     paths := Str[,]
     refs := Str:Str[:]
+    strs := Str:Str[:]
 
     traverseDict(
       dict,
       Str[,],
       paths,
-      refs)
+      refs,
+      strs)
 
     return Rec(
       dict.id.id,
       paths,
-      refs)
+      refs,
+      strs)
   }
 
   private static Void traverseDict(
       Dict d,
       Str[] curPath,
       Str[] paths,
-      Str:Str refs)
+      Str:Str refs,
+      Str:Str strs)
   {
     d.each |v,k|
     {
@@ -61,12 +67,17 @@ internal const class Rec
       // dict
       if (v is Dict)
       {
-        traverseDict(v, curPath, paths, refs)
+        traverseDict(v, curPath, paths, refs, strs)
       }
       // Ref
       else if (v is Ref)
       {
         refs.add(dotted, makeQueryable(v))
+      }
+      // Str
+      else if (v is Str)
+      {
+        strs.add(dotted, makeQueryable(v))
       }
 
       curPath.removeAt(-1)
@@ -78,6 +89,10 @@ internal const class Rec
     if (val is Ref)
     {
       return ((Ref) val).id
+    }
+    else if (val is Str)
+    {
+      return val
     }
     else throw Err("Unrecognized scalar: $val (${val.typeof})")
   }
@@ -101,7 +116,8 @@ internal const class Rec
     return (
       (id == x.id) &&
       (paths == x.paths) &&
-      (refs == x.refs)
+      (refs == x.refs) &&
+      (strs == x.strs)
     )
   }
 
@@ -113,5 +129,7 @@ internal const class Rec
 
   internal const Str id
   internal const Str[] paths
+
   internal const Str:Str refs
+  internal const Str:Str strs
 }
