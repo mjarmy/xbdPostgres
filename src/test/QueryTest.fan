@@ -67,7 +67,7 @@ class QueryTest : Test
       ])
   }
 
-  Void testSelect()
+  Void testSelectExtra()
   {
     echo("==============================================================")
 
@@ -110,6 +110,34 @@ class QueryTest : Test
           "x0":"{\"haven\"}",
           "x1":"{\"e\"}"
         ]))
+
+    doSelect(
+      Filter("haven and id != @z0"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and (not (rec.refs @> @x2::jsonb)))
+           );",
+        Str:Obj[
+          "x0":"""{"haven"}""",
+          "x1":"""{"id"}""",
+          "x2":"""{"id":"z0"}""",
+        ]))
+
+    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("haven and id != @z0")
+    //query := Query(filter)
+    //echo(filter)
+    //echo(query)
+    ////echo("explain (analyze true, verbose true, buffers true) ")
+    //echo()
+    //echo("Raw:")
+    //raw := rawSql(query)
+    //raw = raw.replace("rec.brio", "rec.id")
+    //echo(raw)
 
     echo("==============================================================")
   }
