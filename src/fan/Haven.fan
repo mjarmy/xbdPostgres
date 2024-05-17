@@ -113,22 +113,57 @@ class Haven
     }
   }
 
+  **
+  ** select by list of ids
+  **
+  Dict[] selectByIds(Ref[] ids)
+  {
+    res := Dict[,]
+    if (ids.isEmpty)
+      return res
+
+    sql := StrBuf()
+    sql.add("select brio from rec where id in (")
+    names := Str[,]
+    params := Str:Obj?[:]
+    ids.each |id, i|
+    {
+      if (i > 0)
+        sql.add(", ")
+      sql.add("@x$i")
+      params.add("x$i", id.id)
+    }
+    sql.add(");")
+
+    echo("selectByIds: $sql")
+
+    stmt := conn.sql(sql.toStr).prepare
+    stmt.query(params).each |r|
+    {
+      Buf brio := r->brio
+      res.add(BrioReader(brio.in).readDict)
+    }
+    stmt.close
+
+    return res
+  }
+
 //  **
 //  ** Execute a query
 //  **
 //  Dict[] select(Query q)
 //  {
-//    result := Dict[,]
+//    res := Dict[,]
 //
 //    // TODO cache these?
 //    stmt := conn.sql(q.sql).prepare
 //    stmt.query(q.params).each |r|
 //    {
-//      result.add(BrioReader(((Buf)r->brio).in).readDict)
+//      res.add(BrioReader(((Buf)r->brio).in).readDict)
 //    }
 //    stmt.close
 //
-//    return result
+//    return res
 //  }
 //
 //  **
@@ -136,7 +171,7 @@ class Haven
 //  **
 //  Str[] explain(Str rawSql)
 //  {
-//    result := Str[,]
+//    res := Str[,]
 //
 //    stmt := conn.sql(
 //        "explain (analyze true, verbose true, buffers true) " +
@@ -144,11 +179,11 @@ class Haven
 //    stmt.query().each |row|
 //    {
 //      col := row.col("QUERY PLAN")
-//      result.add(row[col])
+//      res.add(row[col])
 //    }
 //    stmt.close
 //
-//    return result
+//    return res
 //  }
 
   private SqlConn? conn

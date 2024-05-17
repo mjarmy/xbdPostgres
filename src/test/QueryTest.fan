@@ -37,6 +37,49 @@ class QueryTest : Test
     verifyTrue(haven.selectById(ref("bogus")) == null)
   }
 
+  Void testSelectByIds()
+  {
+    verifyDictsEq(
+      haven.selectByIds(Ref[,]),
+      Dict[,])
+
+    verifyDictsEq(
+      haven.selectByIds(Ref[
+        ref("bogus"),
+        ref("z0")
+      ]),
+      Dict[
+        testData.recs[ref("z0")]
+      ])
+
+    verifyDictsEq(
+      haven.selectByIds(Ref[
+        ref("z0"),
+        ref("z1"),
+        ref("z2"),
+        ref("z3")
+      ]),
+      Dict[
+        testData.recs[ref("z0")],
+        testData.recs[ref("z1")],
+        testData.recs[ref("z2")],
+        testData.recs[ref("z3")]
+      ])
+  }
+
+  private Void verifyDictsEq(Dict[] a, Dict[] b)
+  {
+    verifyEq(a.size, a.size)
+
+    a.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+    b.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+
+    a.each |dict, i|
+    {
+      verifyTrue(Etc.dictEq(a[i], b[i]))
+    }
+  }
+
 //  Void testDottedPaths()
 //  {
 //    verifyEq(
