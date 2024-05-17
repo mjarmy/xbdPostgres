@@ -35,11 +35,11 @@ class Haven
          @bools::jsonb, @uris::jsonb,
          @dates::jsonb, @times::jsonb, @dateTimes::jsonb)").prepare
 
-//    pathRefInsert = conn.sql(
-//      "insert into pathRef
-//         (source, path_, target)
-//       values
-//         (@source, @path, @target)").prepare
+    pathRefInsert = conn.sql(
+      "insert into path_ref
+         (source, path_, target)
+       values
+         (@source, @path, @target)").prepare
   }
 
   **
@@ -80,14 +80,14 @@ class Haven
       "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes)
     ])
 
-//    rec.pathRefs.each |target, path|
-//    {
-//      pathRefInsert.execute([
-//        "source": rec.id.id,
-//        "path":   path,
-//        "target": target.id
-//      ])
-//    }
+    rec.refs.each |target, path|
+    {
+      pathRefInsert.execute([
+        "source": rec.id,
+        "path":   path,
+        "target": target
+      ])
+    }
 
     conn.commit
   }
@@ -132,6 +132,6 @@ class Haven
 
   private SqlConn? conn
   private Statement? recInsert
-  //private Statement? pathRefInsert
+  private Statement? pathRefInsert
 }
 
