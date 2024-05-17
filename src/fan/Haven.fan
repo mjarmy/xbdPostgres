@@ -124,7 +124,6 @@ class Haven
 
     sql := StrBuf()
     sql.add("select brio from rec where id in (")
-    names := Str[,]
     params := Str:Obj?[:]
     ids.each |id, i|
     {
