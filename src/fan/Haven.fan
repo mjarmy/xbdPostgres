@@ -33,13 +33,19 @@ class Haven
          @id, @brio, @paths,
          @refs::jsonb, @strs::jsonb, @nums::jsonb, @units::jsonb,
          @bools::jsonb, @uris::jsonb,
-         @dates::jsonb, @times::jsonb, @dateTimes::jsonb)").prepare
+         @dates::jsonb, @times::jsonb, @dateTimes::jsonb)"
+     ).prepare
 
     pathRefInsert = conn.sql(
       "insert into path_ref
          (source, path_, target)
        values
-         (@source, @path, @target)").prepare
+         (@source, @path, @target)"
+     ).prepare
+
+    byIdSelect = conn.sql(
+      "select brio from rec where id = @id"
+    ).prepare;
   }
 
   **
@@ -48,12 +54,9 @@ class Haven
   Void close()
   {
     recInsert.close
-    //pathRefInsert.close
+    pathRefInsert.close
+    byIdSelect.close
 
-    recInsert = null
-    //pathRefInsert = null
-
-    // Close the connection
     conn.close
     conn = null
   }
@@ -90,6 +93,24 @@ class Haven
     }
 
     conn.commit
+  }
+
+  **
+  ** select by id
+  **
+  Dict? selectById(Ref id)
+  {
+    rows := byIdSelect.query(["id": id.id])
+
+    if (rows.isEmpty)
+    {
+      return null;
+    }
+    else
+    {
+      Buf brio := rows[0]->brio
+      return BrioReader(brio.in).readDict
+    }
   }
 
 //  **
@@ -133,5 +154,6 @@ class Haven
   private SqlConn? conn
   private Statement? recInsert
   private Statement? pathRefInsert
+  private Statement? byIdSelect
 }
 
