@@ -26,17 +26,19 @@ const class Query
   {
     qb := QueryBuilder(f)
 
-    ls := ["select rec.brio from rec"]
+    sql := StrBuf()
+    sql.add("select rec.brio from rec\n")
     for (i := 1; i <= qb.joins; i++)
     {
       prev := (i == 1) ? "rec" : "r${i-1}"
-      ls.add("  inner join pathref p$i on p${i}.source = ${prev}.id")
-      ls.add("  inner join rec     r$i on r${i}.id     = p${i}.target")
+      sql.add("  inner join path_ref p$i on p${i}.source = ${prev}.id\n")
+      sql.add("  inner join rec      r$i on r${i}.id     = p${i}.target\n")
     }
-    ls.add("where")
-    ls.add("${qb.where};")
+    sql.add("where\n")
+    sql.add(qb.where)
+    sql.add(";")
 
-    return Query(ls.join("\n"), qb.params)
+    return Query(sql.toStr, qb.params)
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -52,7 +54,7 @@ const class Query
     return sql == x.sql && params == x.params
   }
 
-  override Str toStr() { "Query:\n$sql\nparams:$params\n" }
+  override Str toStr() { "Query:\n$sql\nparams:$params" }
 
 //////////////////////////////////////////////////////////////////////////
 // Fields

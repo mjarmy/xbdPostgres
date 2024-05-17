@@ -145,49 +145,31 @@ class Haven
     return res
   }
 
-//  **
-//  ** Execute a query
-//  **
-//  Dict[] select(Query q)
-//  {
-//    res := Dict[,]
-//
-//    // TODO cache these?
-//    stmt := conn.sql(q.sql).prepare
-//    stmt.query(q.params).each |r|
-//    {
-//      res.add(BrioReader(((Buf)r->brio).in).readDict)
-//    }
-//    stmt.close
-//
-//    return res
-//  }
-//
-//  **
-//  ** Explain a select
-//  **
-//  Str[] explain(Str rawSql)
-//  {
-//    res := Str[,]
-//
-//    stmt := conn.sql(
-//        "explain (analyze true, verbose true, buffers true) " +
-//        rawSql)
-//    stmt.query().each |row|
-//    {
-//      col := row.col("QUERY PLAN")
-//      res.add(row[col])
-//    }
-//    stmt.close
-//
-//    return res
-//  }
+  **
+  ** Execute a query
+  **
+  Dict[] select(Query q)
+  {
+    res := Dict[,]
+
+    // TODO cache these?
+    stmt := conn.sql(q.sql).prepare
+    stmt.query(q.params).each |r|
+    {
+      res.add(BrioReader(((Buf)r->brio).in).readDict)
+    }
+    stmt.close
+
+    return res
+  }
 
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
-  private SqlConn? conn
+  // N.B. we use the connection internally in the test suite
+  internal SqlConn? conn
+
   private Statement? recInsert
   private Statement? pathRefInsert
   private Statement? byIdSelect

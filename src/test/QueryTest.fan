@@ -67,17 +67,93 @@ class QueryTest : Test
       ])
   }
 
-  private Void verifyDictsEq(Dict[] a, Dict[] b)
+  Void testSelect()
   {
-    verifyEq(a.size, a.size)
+    echo("==============================================================")
 
-    a.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
-    b.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+    doSelect(
+      Filter("haven"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.paths @> @x0::text[]);",
+        Str:Obj[
+          "x0": "{\"haven\"}"
+        ]))
 
-    a.each |dict, i|
-    {
-      verifyTrue(Etc.dictEq(a[i], b[i]))
-    }
+    doSelect(
+      Filter("haven and e"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.paths @> @x1::text[])
+           );",
+        Str:Obj[
+          "x0":"{\"e\"}",
+          "x1":"{\"haven\"}"
+        ]))
+
+    doSelect(
+      Filter("haven and not e"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (not (rec.paths @> @x1::text[]))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"e\"}"
+        ]))
+
+    echo("==============================================================")
+  }
+
+  private Void doSelect(
+    Filter filter,
+    Query expectedQuery,
+    Bool allowSequential := false)
+  {
+    echo("--------------------------------------------------------------")
+    echo(filter)
+
+    // Fetch the expected test data
+    expected := testData.filter(filter)
+    //echo("expected ${expected.size} rows")
+    //echo(expected.map |Dict v->Ref| { v.id })
+
+    // Construct the Query and make sure it matches the expected query
+    query := Query.fromFilter(filter)
+    echo()
+    echo(query)
+    echo("--------------")
+    verifyEq(query, expectedQuery)
+
+//    // Explain the Query's raw sql to make sure its not a sequential scan
+//    explained := explain(rawSql(query))
+//    //echo("explain (analyze true, verbose true, buffers true) ")
+//    //echo(rawSql(query))
+//    seq := isSeqScan(explained)
+//    if (seq) echo("************ SEQUENTIAL ************")
+//    if (!allowSequential)
+//      verifyFalse(seq)
+//    explained.each |s| {
+//      if (s.startsWith("Execution Time:"))
+//        echo(s)
+//    }
+
+    // Perfom the query in the database
+    found := haven.select(query)
+    echo("found ${found.size} rows")
+    echo(found.map |Dict v->Ref| { v.id })
+
+    // Make sure the results match the test data
+    verifyDictsEq(expected, found)
   }
 
   Void testDottedPaths()
@@ -107,7 +183,83 @@ class QueryTest : Test
       ["equipRef", "siteRef", "area"])
   }
 
+//  Void testExplain()
+//  {
+//    exp := haven.explain("select * from rec")
+//    //exp.each |s| { echo(s) }
+//    verifyTrue(isSeqScan(exp))
+//
+//    exp = haven.explain(
+//      "select * from rec
+//         inner join path_ref p1 on p1.source = rec.id
+//         inner join rec     r1 on r1.id     = p1.target
+//       where
+//         (p1.path_ = 'chilledWaterRef') and
+//         (r1.paths @> '{\"chilled\"}'::text[])")
+//    //exp.each |s| { echo(s) }
+//    verifyFalse(isSeqScan(exp))
+//  }
+
+  **
+  ** Explain a select
+  **
+  Str[] explain(Str rawSql)
+  {
+    res := Str[,]
+
+    stmt := haven.conn.sql(
+        "explain (analyze true, verbose true, buffers true) " +
+        rawSql)
+    stmt.query().each |row|
+    {
+      col := row.col("QUERY PLAN")
+      res.add(row[col])
+    }
+    stmt.close
+
+    return res
+  }
+
+  // This isn't actually reliable, its just a quick and dirty approach for
+  // debugging purposes
+  private static Str rawSql(Query query)
+  {
+    Str s := query.sql
+    query.params.each |v,k|
+    {
+      s = s.replace("@" + k, "'$v'")
+    }
+    return s
+  }
+
+  private static Bool isSeqScan(Str[] explain)
+  {
+    res := false
+    explain.each |s| {
+      if (s.contains("Seq Scan"))
+        res = true;
+    }
+    return res;
+  }
+
+  private Void verifyDictsEq(Dict[] a, Dict[] b)
+  {
+    verifyEq(a.size, a.size)
+
+    a.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+    b.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+
+    a.each |dict, i|
+    {
+      verifyTrue(Etc.dictEq(a[i], b[i]))
+    }
+  }
+
   private static Ref ref(Str str) { Ref.fromStr(str) }
+
+//////////////////////////////////////////////////////////////////////////
+// Fields
+//////////////////////////////////////////////////////////////////////////
 
   private TestData testData := TestData()
   private Haven haven := Haven()
