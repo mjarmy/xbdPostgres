@@ -17,14 +17,16 @@ internal const class Rec
   ** Only used for unit tests
   **
   internal new make(
-    Str id,
-    Str[] paths,
-    Str:Str refs,
-    Str:Str strs,
+    Str       id,
+    Str[]     paths,
+    Str:Str   refs,
+    Str:Str   strs,
     Str:Float nums,
-    Str:Str units,
-    Str:Bool bools,
-    Str:Str uris)
+    Str:Str   units,
+    Str:Bool  bools,
+    Str:Str   uris,
+    Str:Str   dates,
+    Str:Str   times)
   {
     this.id    = id
     this.paths = paths
@@ -32,8 +34,10 @@ internal const class Rec
     this.strs  = strs
     this.nums  = nums
     this.units = units
-    this.bools  = bools
-    this.uris = uris
+    this.bools = bools
+    this.uris  = uris
+    this.dates = dates
+    this.times = times
   }
 
   **
@@ -42,20 +46,24 @@ internal const class Rec
   internal static new fromDict(Dict dict)
   {
     paths := Str[,]
-    refs := Str:Str[:]
-    strs := Str:Str[:]
-    nums := Str:Float[:]
+    refs  := Str:Str[:]
+    strs  := Str:Str[:]
+    nums  := Str:Float[:]
     units := Str:Str[:]
     bools := Str:Bool[:]
-    uris := Str:Str[:]
+    uris  := Str:Str[:]
+    dates := Str:Str[:]
+    times := Str:Str[:]
 
     traverseDict(
       dict, Str[,], paths,
-      refs, strs, nums, units, bools, uris)
+      refs, strs, nums, units, bools, uris,
+      dates, times)
 
     return Rec(
       dict.id.id, paths,
-      refs, strs, nums, units, bools, uris)
+      refs, strs, nums, units, bools, uris,
+      dates, times)
   }
 
   private static Void traverseDict(
@@ -67,7 +75,9 @@ internal const class Rec
       Str:Float nums,
       Str:Str units,
       Str:Bool bools,
-      Str:Str uris)
+      Str:Str uris,
+      Str:Str dates,
+      Str:Str times)
   {
     d.each |val, key|
     {
@@ -80,7 +90,7 @@ internal const class Rec
       {
         traverseDict(
           val, curPath, paths,
-          refs, strs, nums, units, bools, uris)
+          refs, strs, nums, units, bools, uris, dates, times)
       }
       // Ref
       else if (val is Ref)
@@ -108,6 +118,16 @@ internal const class Rec
       else if (val is Uri)
       {
         uris.add(dotted, ((Uri) val).toStr)
+      }
+      // Date
+      else if (val is Date)
+      {
+        dates.add(dotted, ((Date) val).toStr)
+      }
+      // Time
+      else if (val is Time)
+      {
+        times.add(dotted, ((Time) val).toStr)
       }
 
       curPath.removeAt(-1)
@@ -138,7 +158,9 @@ internal const class Rec
       (nums  == x.nums)  &&
       (units == x.units) &&
       (bools == x.bools) &&
-      (uris  == x.uris)
+      (uris  == x.uris)  &&
+      (dates == x.dates) &&
+      (times == x.times)
     )
   }
 
@@ -157,4 +179,6 @@ internal const class Rec
   internal const Str:Str   units
   internal const Str:Bool  bools
   internal const Str:Str   uris
+  internal const Str:Str   dates
+  internal const Str:Str   times
 }

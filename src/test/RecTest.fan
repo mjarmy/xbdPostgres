@@ -28,6 +28,8 @@ class RecTest : Test
         Str:Float[:],
         Str:Str[:],
         Str:Bool[:],
+        Str:Str[:],
+        Str:Str[:],
         Str:Str[:]
       ))
 
@@ -57,6 +59,8 @@ class RecTest : Test
         Str:Float[:],
         Str:Str[:],
         Str:Bool[:],
+        Str:Str[:],
+        Str:Str[:],
         Str:Str[:]
       )
     )
@@ -81,27 +85,33 @@ class RecTest : Test
         Str:Float["a":1.0f, "b.c":2.0f, "b.d":3.0f, "b.e":4.0f],
         Str:Str["a":"_", "b.c":"m", "b.d":"_", "b.e":"F"],
         Str:Bool[:],
+        Str:Str[:],
+        Str:Str[:],
         Str:Str[:]
       )
     )
 
     verifyEq(
       Rec.fromDict(
-        Etc.dict3(
+        Etc.dict5(
           "id", ref("z0"),
           "a", true,
-          "b", `https://project-haystack.org/`
+          "b", `https://project-haystack.org/`,
+          "c", Date.fromStr("2021-03-22"),
+          "d", Time.fromStr("17:19:23")
         )
       ),
       Rec(
         "z0",
-        Str["id", "a", "b"],
+        Str["id", "a", "b", "c", "d"],
         Str:Str["id":"z0"],
         Str:Str[:],
         Str:Float[:],
         Str:Str[:],
         Str:Bool["a":true],
-        Str:Str["b":"https://project-haystack.org/"]
+        Str:Str["b":"https://project-haystack.org/"],
+        Str:Str["c":"2021-03-22"],
+        Str:Str["d":"17:19:23"]
       )
     )
   }
