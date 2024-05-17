@@ -24,6 +24,8 @@ class RecTest : Test
         "z0",
         Str["id"],
         Str:Str["id":"z0"],
+        Str:Str[:],
+        Str:Float[:],
         Str:Str[:]
       ))
 
@@ -44,13 +46,41 @@ class RecTest : Test
         "z0",
         Str["id", "a", "b", "b.c", "b.d", "b.e", "f"],
         Str:Str["id":"z0", "b.d":"z1"],
-        Str:Str["a":"x", "b.c":"y"]
+        Str:Str["a":"x", "b.c":"y"],
+        Str:Float[:],
+        Str:Str[:]
+      )
+    )
+
+    verifyEq(
+      Rec.fromDict(
+        Etc.dict3(
+          "id", ref("z0"),
+          "a", n(1.0f),
+          "b", Etc.dict3(
+            "c", n(2.0f, "m"),
+            "d", n(3),
+            "e", n(4, "F")
+          )
+        )
+      ),
+      Rec(
+        "z0",
+        Str["id", "a", "b", "b.c", "b.d", "b.e"],
+        Str:Str["id":"z0"],
+        Str:Str[:],
+        Str:Float["a":1.0f, "b.c":2.0f, "b.d":3.0f, "b.e":4.0f],
+        Str:Str["a":"_", "b.c":"m", "b.d":"_", "b.e":"F"]
       )
     )
   }
 
-  private static Ref ref(Str str) { Ref.fromStr(str) }
   private static Marker M() { Marker.val }
+  private static Ref ref(Str str) { Ref.fromStr(str) }
+  private static Number n(Num val, Str? unit := null)
+  {
+    Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))
+  }
 
   private TestData testData := TestData()
 }

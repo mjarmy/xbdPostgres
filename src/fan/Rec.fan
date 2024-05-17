@@ -20,12 +20,16 @@ internal const class Rec
     Str id,
     Str[] paths,
     Str:Str refs,
-    Str:Str strs)
+    Str:Str strs,
+    Str:Float nums,
+    Str:Str units)
   {
     this.id    = id
     this.paths = paths
     this.refs  = refs
     this.strs  = strs
+    this.nums  = nums
+    this.units = units
   }
 
   **
@@ -36,19 +40,16 @@ internal const class Rec
     paths := Str[,]
     refs := Str:Str[:]
     strs := Str:Str[:]
+    nums := Str:Float[:]
+    units := Str:Str[:]
 
     traverseDict(
-      dict,
-      Str[,],
-      paths,
-      refs,
-      strs)
+      dict, Str[,], paths,
+      refs, strs, nums, units)
 
     return Rec(
-      dict.id.id,
-      paths,
-      refs,
-      strs)
+      dict.id.id, paths,
+      refs, strs, nums, units)
   }
 
   private static Void traverseDict(
@@ -56,45 +57,43 @@ internal const class Rec
       Str[] curPath,
       Str[] paths,
       Str:Str refs,
-      Str:Str strs)
+      Str:Str strs,
+      Str:Float nums,
+      Str:Str units)
   {
-    d.each |v,k|
+    d.each |val, key|
     {
-      curPath.add(k)
+      curPath.add(key)
       dotted := curPath.join(".")
       paths.add(dotted)
 
       // dict
-      if (v is Dict)
+      if (val is Dict)
       {
-        traverseDict(v, curPath, paths, refs, strs)
+        traverseDict(
+          val, curPath, paths,
+          refs, strs, nums, units)
       }
       // Ref
-      else if (v is Ref)
+      else if (val is Ref)
       {
-        refs.add(dotted, makeQueryable(v))
+        refs.add(dotted, ((Ref) val).id)
       }
       // Str
-      else if (v is Str)
+      else if (val is Str)
       {
-        strs.add(dotted, makeQueryable(v))
+        strs.add(dotted, val)
+      }
+      // Number
+      else if (val is Number)
+      {
+        Number n := (Number) val
+        nums.add(dotted, n.toFloat)
+        units.add(dotted, n.unit == null ? "_" : n.unit.toStr)
       }
 
       curPath.removeAt(-1)
     }
-  }
-
-  internal static Obj makeQueryable(Obj val)
-  {
-    if (val is Ref)
-    {
-      return ((Ref) val).id
-    }
-    else if (val is Str)
-    {
-      return val
-    }
-    else throw Err("Unrecognized scalar: $val (${val.typeof})")
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -114,10 +113,12 @@ internal const class Rec
     x := that as Rec
     if (x == null) return false
     return (
-      (id == x.id) &&
+      (id    == x.id) &&
       (paths == x.paths) &&
-      (refs == x.refs) &&
-      (strs == x.strs)
+      (refs  == x.refs) &&
+      (strs  == x.strs) &&
+      (nums  == x.nums) &&
+      (units == x.units)
     )
   }
 
@@ -130,6 +131,8 @@ internal const class Rec
   internal const Str id
   internal const Str[] paths
 
-  internal const Str:Str refs
-  internal const Str:Str strs
+  internal const Str:Str   refs
+  internal const Str:Str   strs
+  internal const Str:Float nums
+  internal const Str:Str   units
 }
