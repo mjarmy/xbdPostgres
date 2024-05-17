@@ -19,7 +19,7 @@ class RecTest : Test
       Rec.fromDict(testData.recs[ref("z0")]),
       Rec(
         "z0",
-        Str["id"],
+        Str["id", "haven"],
         Str:Str["id":"z0"],
         Str:Str[:],
         Str:Float[:],
@@ -35,7 +35,7 @@ class RecTest : Test
       Rec.fromDict(testData.recs[ref("z1")]),
       Rec(
         "z1",
-        Str["id", "a", "b", "b.c", "b.d", "b.e", "f", "g", "g.h", "g.h.i", "g.h.j"],
+        Str["id", "haven", "a", "b", "b.c", "b.d", "b.e", "f", "g", "g.h", "g.h.i", "g.h.j"],
         Str:Str["id":"z1", "b.d":"z1"],
         Str:Str["a":"x", "b.c":"y", "g.h.j":"z"],
         Str:Float[:],
@@ -52,7 +52,7 @@ class RecTest : Test
       Rec.fromDict(testData.recs[ref("z2")]),
       Rec(
         "z2",
-        Str["id", "a", "b", "b.c", "b.d", "b.e"],
+        Str["id", "haven", "a", "b", "b.c", "b.d", "b.e"],
         Str:Str["id":"z2"],
         Str:Str[:],
         Str:Float["a":1.0f, "b.c":2.0f, "b.d":3.0f, "b.e":4.0f],
@@ -69,7 +69,7 @@ class RecTest : Test
       Rec.fromDict(testData.recs[ref("z3")]),
       Rec(
         "z3",
-        Str["id", "a", "b", "c", "d", "e", "e.date", "e.time"],
+        Str["id", "haven", "a", "b", "c", "d", "e", "e.date", "e.time"],
         Str:Str["id":"z3"],
         Str:Str[:],
         Str:Float[:],

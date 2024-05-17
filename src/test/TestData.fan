@@ -19,11 +19,13 @@ const class TestData
 
     // extra
     extra := Dict[
-      Etc.dict1(
-        "id", ref("z0")
+      Etc.dict2(
+        "id", ref("z0"),
+        "haven", M
       ),
-      Etc.dict5(
+      Etc.dict6(
         "id", ref("z1"),
+        "haven", M,
         "a", "x",
         "b", Etc.dict3(
           "c", "y",
@@ -38,8 +40,9 @@ const class TestData
           )
         )
       ),
-      Etc.dict3(
+      Etc.dict4(
         "id", ref("z2"),
+        "haven", M,
         "a", n(1.0f),
         "b", Etc.dict3(
           "c", n(2.0f, "m"),
@@ -47,14 +50,15 @@ const class TestData
           "e", n(4, "F")
         )
       ),
-      Etc.dict6(
-        "id", ref("z3"),
-        "a", true,
-        "b", `https://project-haystack.org/`,
-        "c", Date.fromStr("2021-03-22"),
-        "d", Time.fromStr("17:19:23"),
-        "e", DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
-      ),
+      Etc.dictFromMap([
+        "id": ref("z3"),
+        "haven": M,
+        "a": true,
+        "b": `https://project-haystack.org/`,
+        "c": Date.fromStr("2021-03-22"),
+        "d": Time.fromStr("17:19:23"),
+        "e": DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
+      ]),
     ]
     extra.each |d| { recs.add(d->id, d) }
 

@@ -172,7 +172,8 @@ internal const class Rec
     if (x == null) return false
     return (
       (id    == x.id)    &&
-      (paths == x.paths) &&
+      // path can come out in different order
+      (paths.dup.sort == x.paths.dup.sort) &&
       (refs  == x.refs)  &&
       (strs  == x.strs)  &&
       (nums  == x.nums)  &&
@@ -185,7 +186,21 @@ internal const class Rec
     )
   }
 
-  override Str toStr() { "Rec($id)" }
+  override Str toStr() {
+    return Str[
+      "Rec:",
+      "    paths:     $paths",
+      "    refs:      $refs",
+      "    strs:      $strs",
+      "    nums:      $nums",
+      "    units:     $units",
+      "    bools:     $bools",
+      "    uris:      $uris",
+      "    dates:     $dates",
+      "    times:     $times",
+      "    dateTimes: $dateTimes",
+    ].join("\n")
+  }
 
 //////////////////////////////////////////////////////////////////////////
 // Fields
