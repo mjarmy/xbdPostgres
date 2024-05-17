@@ -33,6 +33,8 @@ class QueryTest : Test
         haven.selectById(ref("z0")),
         testData.recs[ref("z0")]
       ))
+
+    verifyTrue(haven.selectById(ref("bogus")) == null)
   }
 
 //  Void testDottedPaths()
