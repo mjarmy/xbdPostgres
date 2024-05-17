@@ -22,7 +22,9 @@ internal const class Rec
     Str:Str refs,
     Str:Str strs,
     Str:Float nums,
-    Str:Str units)
+    Str:Str units,
+    Str:Bool bools,
+    Str:Str uris)
   {
     this.id    = id
     this.paths = paths
@@ -30,6 +32,8 @@ internal const class Rec
     this.strs  = strs
     this.nums  = nums
     this.units = units
+    this.bools  = bools
+    this.uris = uris
   }
 
   **
@@ -42,14 +46,16 @@ internal const class Rec
     strs := Str:Str[:]
     nums := Str:Float[:]
     units := Str:Str[:]
+    bools := Str:Bool[:]
+    uris := Str:Str[:]
 
     traverseDict(
       dict, Str[,], paths,
-      refs, strs, nums, units)
+      refs, strs, nums, units, bools, uris)
 
     return Rec(
       dict.id.id, paths,
-      refs, strs, nums, units)
+      refs, strs, nums, units, bools, uris)
   }
 
   private static Void traverseDict(
@@ -59,7 +65,9 @@ internal const class Rec
       Str:Str refs,
       Str:Str strs,
       Str:Float nums,
-      Str:Str units)
+      Str:Str units,
+      Str:Bool bools,
+      Str:Str uris)
   {
     d.each |val, key|
     {
@@ -72,7 +80,7 @@ internal const class Rec
       {
         traverseDict(
           val, curPath, paths,
-          refs, strs, nums, units)
+          refs, strs, nums, units, bools, uris)
       }
       // Ref
       else if (val is Ref)
@@ -90,6 +98,16 @@ internal const class Rec
         Number n := (Number) val
         nums.add(dotted, n.toFloat)
         units.add(dotted, n.unit == null ? "_" : n.unit.toStr)
+      }
+      // Bool
+      else if (val is Bool)
+      {
+        bools.add(dotted, val)
+      }
+      // Uri
+      else if (val is Uri)
+      {
+        uris.add(dotted, ((Uri) val).toStr)
       }
 
       curPath.removeAt(-1)
@@ -113,12 +131,14 @@ internal const class Rec
     x := that as Rec
     if (x == null) return false
     return (
-      (id    == x.id) &&
+      (id    == x.id)    &&
       (paths == x.paths) &&
-      (refs  == x.refs) &&
-      (strs  == x.strs) &&
-      (nums  == x.nums) &&
-      (units == x.units)
+      (refs  == x.refs)  &&
+      (strs  == x.strs)  &&
+      (nums  == x.nums)  &&
+      (units == x.units) &&
+      (bools == x.bools) &&
+      (uris  == x.uris)
     )
   }
 
@@ -135,4 +155,6 @@ internal const class Rec
   internal const Str:Str   strs
   internal const Str:Float nums
   internal const Str:Str   units
+  internal const Str:Bool  bools
+  internal const Str:Str   uris
 }

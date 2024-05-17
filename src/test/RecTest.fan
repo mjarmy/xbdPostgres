@@ -26,6 +26,8 @@ class RecTest : Test
         Str:Str["id":"z0"],
         Str:Str[:],
         Str:Float[:],
+        Str:Str[:],
+        Str:Bool[:],
         Str:Str[:]
       ))
 
@@ -48,6 +50,8 @@ class RecTest : Test
         Str:Str["id":"z0", "b.d":"z1"],
         Str:Str["a":"x", "b.c":"y"],
         Str:Float[:],
+        Str:Str[:],
+        Str:Bool[:],
         Str:Str[:]
       )
     )
@@ -70,7 +74,29 @@ class RecTest : Test
         Str:Str["id":"z0"],
         Str:Str[:],
         Str:Float["a":1.0f, "b.c":2.0f, "b.d":3.0f, "b.e":4.0f],
-        Str:Str["a":"_", "b.c":"m", "b.d":"_", "b.e":"F"]
+        Str:Str["a":"_", "b.c":"m", "b.d":"_", "b.e":"F"],
+        Str:Bool[:],
+        Str:Str[:]
+      )
+    )
+
+    verifyEq(
+      Rec.fromDict(
+        Etc.dict3(
+          "id", ref("z0"),
+          "a", true,
+          "b", `https://project-haystack.org/`
+        )
+      ),
+      Rec(
+        "z0",
+        Str["id", "a", "b"],
+        Str:Str["id":"z0"],
+        Str:Str[:],
+        Str:Float[:],
+        Str:Str[:],
+        Str:Bool["a":true],
+        Str:Str["b":"https://project-haystack.org/"]
       )
     )
   }
