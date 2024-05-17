@@ -25,9 +25,15 @@ class Haven
 
     recInsert = conn.sql(
       "insert into rec (
-         id, brio, paths, refs)
+         id, brio, paths,
+         refs, strs, nums, units,
+         bools, uris,
+         dates, times, dateTimes)
        values (
-         @id, @brio, @paths, @refs::jsonb)").prepare
+         @id, @brio, @paths,
+         @refs::jsonb, @strs::jsonb, @nums::jsonb, @units::jsonb,
+         @bools::jsonb, @uris::jsonb,
+         @dates::jsonb, @times::jsonb, @dateTimes::jsonb)").prepare
 
 //    pathRefInsert = conn.sql(
 //      "insert into pathRef
@@ -60,10 +66,18 @@ class Haven
     rec := Rec.fromDict(dict)
 
     recInsert.execute([
-      "id":     rec.id,
-      "brio":   BrioWriter.valToBuf(dict),
-      "paths":  rec.paths,
-      "refs":   JsonOutStream.writeJsonToStr(rec.refs),
+      "id":        rec.id,
+      "brio":      BrioWriter.valToBuf(dict),
+      "paths":     rec.paths,
+      "refs":      JsonOutStream.writeJsonToStr(rec.refs),
+      "strs":      (rec.strs      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.strs),
+      "nums":      (rec.nums      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.nums),
+      "units":     (rec.units     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.units),
+      "bools":     (rec.bools     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.bools),
+      "uris":      (rec.uris      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.uris),
+      "dates":     (rec.dates     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dates),
+      "times":     (rec.times     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.times),
+      "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes)
     ])
 
 //    rec.pathRefs.each |target, path|
