@@ -26,7 +26,8 @@ internal const class Rec
     Str:Bool  bools,
     Str:Str   uris,
     Str:Str   dates,
-    Str:Str   times)
+    Str:Str   times,
+    Str:Int   dateTimes)
   {
     this.id    = id
     this.paths = paths
@@ -38,6 +39,7 @@ internal const class Rec
     this.uris  = uris
     this.dates = dates
     this.times = times
+    this.dateTimes = dateTimes
   }
 
   **
@@ -54,16 +56,17 @@ internal const class Rec
     uris  := Str:Str[:]
     dates := Str:Str[:]
     times := Str:Str[:]
+    dateTimes := Str:Int[:]
 
     traverseDict(
       dict, Str[,], paths,
       refs, strs, nums, units, bools, uris,
-      dates, times)
+      dates, times, dateTimes)
 
     return Rec(
       dict.id.id, paths,
       refs, strs, nums, units, bools, uris,
-      dates, times)
+      dates, times, dateTimes)
   }
 
   private static Void traverseDict(
@@ -77,7 +80,8 @@ internal const class Rec
       Str:Bool bools,
       Str:Str uris,
       Str:Str dates,
-      Str:Str times)
+      Str:Str times,
+      Str:Int dateTimes)
   {
     d.each |val, key|
     {
@@ -90,7 +94,8 @@ internal const class Rec
       {
         traverseDict(
           val, curPath, paths,
-          refs, strs, nums, units, bools, uris, dates, times)
+          refs, strs, nums, units, bools, uris,
+          dates, times, dateTimes)
       }
       // Ref
       else if (val is Ref)
@@ -129,6 +134,21 @@ internal const class Rec
       {
         times.add(dotted, ((Time) val).toStr)
       }
+      // DateTime
+      else if (val is DateTime)
+      {
+        DateTime ts := (DateTime) val
+
+        dateTimes.add(dotted, Duration(ts.ticks).toMillis)
+
+        // for ->date and ->time
+        datePath := dotted + ".date"
+        timePath := dotted + ".time"
+        paths.add(datePath)
+        paths.add(timePath)
+        dates.add(datePath, ts.date.toStr)
+        times.add(timePath, ts.time.toStr)
+      }
 
       curPath.removeAt(-1)
     }
@@ -160,7 +180,8 @@ internal const class Rec
       (bools == x.bools) &&
       (uris  == x.uris)  &&
       (dates == x.dates) &&
-      (times == x.times)
+      (times == x.times) &&
+      (dateTimes == x.dateTimes)
     )
   }
 
@@ -181,4 +202,5 @@ internal const class Rec
   internal const Str:Str   uris
   internal const Str:Str   dates
   internal const Str:Str   times
+  internal const Str:Int   dateTimes
 }

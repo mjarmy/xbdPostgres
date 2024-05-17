@@ -30,7 +30,8 @@ class RecTest : Test
         Str:Bool[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Str[:]
+        Str:Str[:],
+        Str:Int[:]
       ))
 
     verifyEq(
@@ -62,7 +63,8 @@ class RecTest : Test
         Str:Bool[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Str[:]
+        Str:Str[:],
+        Str:Int[:]
       )
     )
 
@@ -88,31 +90,34 @@ class RecTest : Test
         Str:Bool[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Str[:]
+        Str:Str[:],
+        Str:Int[:]
       )
     )
 
     verifyEq(
       Rec.fromDict(
-        Etc.dict5(
+        Etc.dict6(
           "id", ref("z0"),
           "a", true,
           "b", `https://project-haystack.org/`,
           "c", Date.fromStr("2021-03-22"),
-          "d", Time.fromStr("17:19:23")
+          "d", Time.fromStr("17:19:23"),
+          "e", DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
         )
       ),
       Rec(
         "z0",
-        Str["id", "a", "b", "c", "d"],
+        Str["id", "a", "b", "c", "d", "e", "e.date", "e.time"],
         Str:Str["id":"z0"],
         Str:Str[:],
         Str:Float[:],
         Str:Str[:],
         Str:Bool["a":true],
         Str:Str["b":"https://project-haystack.org/"],
-        Str:Str["c":"2021-03-22"],
-        Str:Str["d":"17:19:23"]
+        Str:Str["c":"2021-03-22", "e.date":"2021-03-22"],
+        Str:Str["d":"17:19:23","e.time":"13:57:00.381"],
+        Str:Int["e":669751020381]
       )
     )
   }
