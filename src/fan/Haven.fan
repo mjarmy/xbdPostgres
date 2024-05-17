@@ -135,8 +135,6 @@ class Haven
     }
     sql.add(");")
 
-    echo("selectByIds: $sql")
-
     stmt := conn.sql(sql.toStr).prepare
     stmt.query(params).each |r|
     {
