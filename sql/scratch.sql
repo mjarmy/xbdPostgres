@@ -60,3 +60,33 @@ where
     and
     ((rec.paths @> '{"nest.bar"}'::text[]) and ((rec.nums->>'nest.bar')::real < 2))
   );
+
+-- str eq
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+    (rec.strs @> '{"links.inA.fromSlot":"out"}'::jsonb);
+
+-- str le
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+    (rec.paths @> '{"links.inA.fromSlot"}'::text[]) 
+    and 
+    ((rec.strs->>'links.inA.fromSlot')::text < 'out');
+
+-----------------------------------
+
+-- num eq
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+    (rec.nums @> '{"inA.value":68.0}'::jsonb);
+
+-- str le
+explain (analyze true, verbose true, buffers true)
+select rec.id, rec.nums from rec
+where
+    (rec.paths @> '{"inA.value"}'::text[]) 
+    and 
+    ((rec.nums->>'inA.value')::real < 67.0);
