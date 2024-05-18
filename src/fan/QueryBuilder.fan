@@ -122,6 +122,12 @@ internal class QueryBuilder {
       param := addValParam(path, ((Ref) val).id)
       return "(${alias}.refs @> @$param::jsonb)"
     }
+    // Str
+    else if (val is Str)
+    {
+      param := addValParam(path, (Str) val)
+      return "(${alias}.strs @> @$param::jsonb)"
+    }
 
     // val type cannot be used for this node
     else

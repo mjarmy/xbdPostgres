@@ -59,6 +59,14 @@ const class TestData
         "d": Time.fromStr("17:19:23"),
         "e": DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
       ]),
+
+      Etc.dict4("id", ref("str-1"), "haven", M, "str", "x", "nest", Etc.dict1("bar", "x")),
+      Etc.dict4("id", ref("str-2"), "haven", M, "str", "y", "nest", Etc.dict1("bar", "y")),
+      Etc.dict4("id", ref("str-3"), "haven", M, "str", "z", "nest", Etc.dict1("bar", "z")),
+
+      Etc.dict4("id", ref("num-1"), "haven", M, "num", n(1), "nest", Etc.dict1("bar", n(1))),
+      Etc.dict4("id", ref("num-2"), "haven", M, "num", n(2), "nest", Etc.dict1("bar", n(2))),
+      Etc.dict4("id", ref("num-3"), "haven", M, "num", n(3), "nest", Etc.dict1("bar", n(3))),
     ]
     extra.each |d| { recs.add(d->id, d) }
 
