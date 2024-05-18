@@ -17,6 +17,27 @@ const class TestData
   {
     recs := Ref:Dict[:]
 
+    // alpha
+    Grid alpha := JsonReader(File(`test_data/alpha.json`).in).readVal
+    alpha.each |d, i|
+    {
+      if (recs.containsKey(d->id))
+        throw Err("oops ${d->id}")
+      recs.add(d->id, d)
+    }
+
+    // TODO sys::IOErr: Unsupported JSON float literal: 'INF'
+    // niagara
+    f := File(`test_data/jason.txt`)
+    f.eachLine |line|
+    {
+      Dict d := JsonReader(line.in).readVal
+
+      if (recs.containsKey(d->id))
+        throw Err("oops ${d->id}")
+      recs.add(d->id, d)
+    }
+
     // extra
     extra := Dict[
       Etc.dict2(

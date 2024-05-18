@@ -45,10 +45,18 @@ from rec
 where
     (rec.paths @> '{"nest.bar"}'::text[]);
 
-select rec.id from rec
+select rec.id, rec.strs from rec
 where
   (
     (rec.paths @> '{"haven"}'::text[])
     and
     ((rec.paths @> '{"nest.bar"}'::text[]) and ((rec.strs->>'nest.bar')::text < 'y'))
+  );
+
+select rec.id, rec.nums from rec
+where
+  (
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    ((rec.paths @> '{"nest.bar"}'::text[]) and ((rec.nums->>'nest.bar')::real < 2))
   );
