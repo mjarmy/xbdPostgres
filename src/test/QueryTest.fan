@@ -305,7 +305,7 @@ class QueryTest : Test
         ]))
 
     //-----------------
-    // Strs
+    // Numbers
 
     doSelect(
       Filter("haven and num == 2"),

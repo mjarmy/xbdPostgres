@@ -194,26 +194,12 @@ internal class QueryBuilder {
   ** add the parameters for a 'ne' Filter
   private Str ne(Str alias, Str path, Obj? val)
   {
-    //if (val is Number)
-    //{
-    //  hasClause := has(alias, path)
-
-    //  Number n := (Number) val
-    //  xn := eqParam(path, n.toFloat)
-    //  xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
-    //  neClause := "((not (${alias}.nums @> @$xn::jsonb)) and (${alias}.units @> @$xu::jsonb))"
-
-    //  return "($hasClause and $neClause)"
-    //}
-    //else
-    //{
-      hasClause := has(alias, path)
-      eqClause := eq(alias, path, val)
-      return "($hasClause and (not $eqClause))"
-    //}
+    hasClause := has(alias, path)
+    eqClause := eq(alias, path, val)
+    return "($hasClause and (not $eqClause))"
   }
 
-  ** 'cmp' AST node -- >,>=,<,<=
+  ** 'cmp' AST node >,>=,<,<=
   private Str cmp(Str alias, Str path, Obj? val, Str op)
   {
     // Str
