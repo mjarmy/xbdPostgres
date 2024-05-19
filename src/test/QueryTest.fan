@@ -406,22 +406,6 @@ class QueryTest : Test
           "x3":"{\"num\":\"F\"}",
         ]))
 
-//    doSelect(
-//      Filter("haven and str != \"y\""),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.paths @> @x1::text[]) and (not (rec.strs @> @x2::jsonb)))
-//           );",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"str\"}",
-//          "x2":"{\"str\":\"y\"}",
-//        ]))
-
 //    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 //    filter := Filter("haven and (str or num)")
 //    query := Query(filter)
@@ -458,28 +442,28 @@ class QueryTest : Test
 
     // Construct the Query and make sure it matches the expected query
     query := Query.fromFilter(filter)
-    echo()
-    echo(query)
-    echo("--------------")
+    //echo()
+    //echo(query)
+    //echo("--------------")
     verifyEq(query, expectedQuery)
 
-//    // Explain the Query's raw sql to make sure its not a sequential scan
-//    explained := explain(rawSql(query))
-//    //echo("explain (analyze true, verbose true, buffers true) ")
-//    //echo(rawSql(query))
-//    seq := isSeqScan(explained)
-//    if (seq) echo("************ SEQUENTIAL ************")
-//    if (!allowSequential)
-//      verifyFalse(seq)
-//    explained.each |s| {
-//      if (s.startsWith("Execution Time:"))
-//        echo(s)
-//    }
+    // Explain the Query's raw sql to make sure its not a sequential scan
+    explained := explain(rawSql(query))
+    //echo("explain (analyze true, verbose true, buffers true) ")
+    //echo(rawSql(query))
+    seq := isSeqScan(explained)
+    if (seq) echo("************ SEQUENTIAL ************")
+    if (!allowSequential)
+      verifyFalse(seq)
+    explained.each |s| {
+      if (s.startsWith("Execution Time:"))
+        echo(s)
+    }
 
     // Perfom the query in the database
     found := haven.select(query)
     echo("found ${found.size} rows")
-    echo(found.map |Dict v->Ref| { v.id })
+    //echo(found.map |Dict v->Ref| { v.id })
 
     // Make sure the results match the test data
     verifyDictsEq(expected, found)
