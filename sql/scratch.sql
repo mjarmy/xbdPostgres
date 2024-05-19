@@ -1,5 +1,3 @@
-select 
-  id, 
   --paths, 
   --refs,
   --strs,
@@ -7,9 +5,10 @@ select
   --units,
   --bools,
   --uris
-  dates,
-  times,
-  dateTimes
+  --dates,
+  --times,
+  --dateTimes
+select id, nums, units
 from rec where (paths @> '{"haven"}'::text[]);
 
 select rec.id from rec
@@ -79,16 +78,31 @@ where
 
 -----------------------------------
 
--- num eq
+-- num eq Niagara, needs units
 explain (analyze true, verbose true, buffers true)
 select rec.id from rec
 where
     (rec.nums @> '{"inA.value":68.0}'::jsonb);
 
--- num le
+-- num le Niagara, needs units
 explain (analyze true, verbose true, buffers true)
 select rec.id, rec.nums from rec
 where
     (rec.paths @> '{"inA.value"}'::text[]) 
     and 
     ((rec.nums->>'inA.value')::real < 67.0);
+
+-- num eq 
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    ((rec.nums @> '{"num":2}'::jsonb) and (rec.units @> '{"num":null}'::jsonb));
+
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    ((rec.nums @> '{"num":2}'::jsonb) and (rec.units @> '{"num":"m"}'::jsonb));

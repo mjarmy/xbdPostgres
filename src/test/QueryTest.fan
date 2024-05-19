@@ -67,9 +67,12 @@ class QueryTest : Test
       ])
   }
 
-  Void testSelectExtra()
+  Void testSelectHaven()
   {
     echo("==============================================================")
+
+    //-----------------
+    // has
 
     doSelect(
       Filter("haven"),
@@ -97,19 +100,27 @@ class QueryTest : Test
         ]))
 
     doSelect(
-      Filter("haven and not e"),
+      Filter("haven and (str or num)"),
       Query(
         "select rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
-             (not (rec.paths @> @x1::text[]))
+             (
+               (rec.paths @> @x1::text[])
+               or
+               (rec.paths @> @x2::text[])
+             )
            );",
         Str:Obj[
           "x0":"{\"haven\"}",
-          "x1":"{\"e\"}"
+          "x1":"{\"num\"}",
+          "x2":"{\"str\"}"
         ]))
+
+    //-----------------
+    // Refs
 
     doSelect(
       Filter("haven and id == @z0"),
@@ -141,6 +152,26 @@ class QueryTest : Test
           "x1":"{\"id\"}",
           "x2":"{\"id\":\"z0\"}",
         ]))
+
+
+    doSelect(
+      Filter("haven and id != @z0"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and (not (rec.refs @> @x2::jsonb)))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"id\"}",
+          "x2":"{\"id\":\"z0\"}",
+        ]))
+
+    //-----------------
+    // Strs
 
     doSelect(
       Filter("haven and str == \"y\""),
@@ -273,9 +304,126 @@ class QueryTest : Test
           "x3":"y",
         ]))
 
+    //-----------------
+    // Strs
+
+    doSelect(
+      Filter("haven and num == 2"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\":2.0}",
+          "x2":"{\"num\":null}",
+        ]))
+
+    doSelect(
+      Filter("haven and num != 2"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\"}",
+          "x2":"{\"num\":2.0}",
+          "x3":"{\"num\":null}",
+        ]))
+
+    doSelect(
+      Filter("haven and num == 2m"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\":2.0}",
+          "x2":"{\"num\":\"m\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and num != 2m"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\"}",
+          "x2":"{\"num\":2.0}",
+          "x3":"{\"num\":\"m\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and num == 2F"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\":2.0}",
+          "x2":"{\"num\":\"F\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and num != 2F"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\"}",
+          "x2":"{\"num\":2.0}",
+          "x3":"{\"num\":\"F\"}",
+        ]))
+
+//    doSelect(
+//      Filter("haven and str != \"y\""),
+//      Query(
+//        "select rec.brio from rec
+//         where
+//           (
+//             (rec.paths @> @x0::text[])
+//             and
+//             ((rec.paths @> @x1::text[]) and (not (rec.strs @> @x2::jsonb)))
+//           );",
+//        Str:Obj[
+//          "x0":"{\"haven\"}",
+//          "x1":"{\"str\"}",
+//          "x2":"{\"str\":\"y\"}",
+//        ]))
+
 //    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-//    filter := Filter("haven and str == \"y\"")
-//    //filter := Filter("haven and str < \"y\"")
+//    filter := Filter("haven and (str or num)")
 //    query := Query(filter)
 //    echo(filter)
 //    echo(query)

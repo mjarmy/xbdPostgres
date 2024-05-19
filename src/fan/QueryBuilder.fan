@@ -170,6 +170,14 @@ internal class QueryBuilder {
       x := eqParam(path, val)
       return "(${alias}.strs @> @$x::jsonb)"
     }
+    // Num
+    else if (val is Number)
+    {
+      Number n := (Number) val
+      xn := eqParam(path, n.toFloat)
+      xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
+      return "((${alias}.nums @> @$xn::jsonb) and (${alias}.units @> @$xu::jsonb))"
+    }
 
     // val type cannot be used for this node
     else
@@ -180,15 +188,29 @@ internal class QueryBuilder {
   {
     return addParam(
       JsonOutStream.writeJsonToStr(
-        Str:Obj[path:val]))
+        Str:Obj?[path:val]))
   }
 
   ** add the parameters for a 'ne' Filter
   private Str ne(Str alias, Str path, Obj? val)
   {
-    hasClause := has(alias, path)
-    eqClause := eq(alias, path, val)
-    return "($hasClause and (not $eqClause))"
+    //if (val is Number)
+    //{
+    //  hasClause := has(alias, path)
+
+    //  Number n := (Number) val
+    //  xn := eqParam(path, n.toFloat)
+    //  xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
+    //  neClause := "((not (${alias}.nums @> @$xn::jsonb)) and (${alias}.units @> @$xu::jsonb))"
+
+    //  return "($hasClause and $neClause)"
+    //}
+    //else
+    //{
+      hasClause := has(alias, path)
+      eqClause := eq(alias, path, val)
+      return "($hasClause and (not $eqClause))"
+    //}
   }
 
   ** 'cmp' AST node -- >,>=,<,<=

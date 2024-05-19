@@ -22,7 +22,7 @@ internal const class Rec
     Str:Str   refs,
     Str:Str   strs,
     Str:Float nums,
-    Str:Str   units,
+    Str:Str?  units,
     Str:Bool  bools,
     Str:Str   uris,
     Str:Str   dates,
@@ -51,7 +51,7 @@ internal const class Rec
     refs  := Str:Str[:]
     strs  := Str:Str[:]
     nums  := Str:Float[:]
-    units := Str:Str[:]
+    units := Str:Str?[:]
     bools := Str:Bool[:]
     uris  := Str:Str[:]
     dates := Str:Str[:]
@@ -76,7 +76,7 @@ internal const class Rec
       Str:Str refs,
       Str:Str strs,
       Str:Float nums,
-      Str:Str units,
+      Str:Str? units,
       Str:Bool bools,
       Str:Str uris,
       Str:Str dates,
@@ -112,7 +112,7 @@ internal const class Rec
       {
         Number n := (Number) val
         nums.add(dotted, n.toFloat)
-        units.add(dotted, n.unit == null ? "_" : n.unit.toStr)
+        units.add(dotted, n.unit == null ? null : n.unit.toStr)
       }
       // Bool
       else if (val is Bool)
@@ -212,7 +212,7 @@ internal const class Rec
   internal const Str:Str   refs
   internal const Str:Str   strs
   internal const Str:Float nums
-  internal const Str:Str   units
+  internal const Str:Str?  units
   internal const Str:Bool  bools
   internal const Str:Str   uris
   internal const Str:Str   dates

@@ -85,9 +85,12 @@ const class TestData
       Etc.dict4("id", ref("str-2"), "haven", M, "str", "y", "nest", Etc.dict1("bar", "y")),
       Etc.dict4("id", ref("str-3"), "haven", M, "str", "z", "nest", Etc.dict1("bar", "z")),
 
-      Etc.dict4("id", ref("num-1"), "haven", M, "num", n(1), "nest", Etc.dict1("bar", n(1))),
-      Etc.dict4("id", ref("num-2"), "haven", M, "num", n(2), "nest", Etc.dict1("bar", n(2))),
-      Etc.dict4("id", ref("num-3"), "haven", M, "num", n(3), "nest", Etc.dict1("bar", n(3))),
+      Etc.dict3("id", ref("num-1"), "haven", M, "num", n(1)),
+      Etc.dict3("id", ref("num-2"), "haven", M, "num", n(2)),
+      Etc.dict3("id", ref("num-3"), "haven", M, "num", n(3)),
+      Etc.dict3("id", ref("num-4"), "haven", M, "num", n(1, "m")),
+      Etc.dict3("id", ref("num-5"), "haven", M, "num", n(2, "m")),
+      Etc.dict3("id", ref("num-6"), "haven", M, "num", n(3, "m")),
     ]
     extra.each |d| { recs.add(d->id, d) }
 
