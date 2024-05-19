@@ -112,6 +112,21 @@ class QueryTest : Test
         ]))
 
     doSelect(
+      Filter("haven and id == @z0"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.refs @> @x1::jsonb)
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"id\":\"z0\"}",
+        ]))
+
+    doSelect(
       Filter("haven and id != @z0"),
       Query(
         "select rec.brio from rec
@@ -122,27 +137,160 @@ class QueryTest : Test
              ((rec.paths @> @x1::text[]) and (not (rec.refs @> @x2::jsonb)))
            );",
         Str:Obj[
-          "x0":"""{"haven"}""",
-          "x1":"""{"id"}""",
-          "x2":"""{"id":"z0"}""",
+          "x0":"{\"haven\"}",
+          "x1":"{\"id\"}",
+          "x2":"{\"id\":\"z0\"}",
         ]))
 
-    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    //filter := Filter("haven and foo == \"y\"")
-    filter := Filter("haven and nest->bar")
-    query := Query(filter)
-    echo(filter)
-    echo(query)
-    //echo("explain (analyze true, verbose true, buffers true) ")
-    echo()
-    echo("Raw:")
-    raw := rawSql(query)
-    raw = raw.replace("rec.brio", "rec.id")
-    echo(raw)
-    echo()
-    found := haven.select(query)
-    echo("found ${found.size} rows")
-    echo(found.map |Dict v->Ref| { v.id })
+    doSelect(
+      Filter("haven and str == \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.strs @> @x1::jsonb)
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"str\":\"y\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and nest->bar == \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.strs @> @x1::jsonb)
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"nest.bar\":\"y\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and str != \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and (not (rec.strs @> @x2::jsonb)))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"str\"}",
+          "x2":"{\"str\":\"y\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and nest->bar < \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text < @x3))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"nest.bar\"}",
+          "x2":"nest.bar",
+          "x3":"y",
+        ]))
+
+    doSelect(
+      Filter("haven and str < \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text < @x3))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"str\"}",
+          "x2":"str",
+          "x3":"y",
+        ]))
+
+    doSelect(
+      Filter("haven and str <= \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text <= @x3))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"str\"}",
+          "x2":"str",
+          "x3":"y",
+        ]))
+
+    doSelect(
+      Filter("haven and str > \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text > @x3))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"str\"}",
+          "x2":"str",
+          "x3":"y",
+        ]))
+
+    doSelect(
+      Filter("haven and str >= \"y\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text >= @x3))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"str\"}",
+          "x2":"str",
+          "x3":"y",
+        ]))
+
+//    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+//    filter := Filter("haven and str == \"y\"")
+//    //filter := Filter("haven and str < \"y\"")
+//    query := Query(filter)
+//    echo(filter)
+//    echo(query)
+//    echo()
+//
+//    echo("Raw:")
+//    echo("explain (analyze true, verbose true, buffers true) ")
+//    raw := rawSql(query)
+//    raw = raw.replace("rec.brio", "rec.id")
+//    echo(raw)
+//    echo()
+//
+//    found := haven.select(query)
+//    echo("found ${found.size} rows")
+//    echo(found.map |Dict v->Ref| { v.id })
 
     echo("==============================================================")
   }

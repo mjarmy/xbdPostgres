@@ -61,6 +61,8 @@ where
     ((rec.paths @> '{"nest.bar"}'::text[]) and ((rec.nums->>'nest.bar')::real < 2))
   );
 
+-----------------------------------
+
 -- str eq
 explain (analyze true, verbose true, buffers true)
 select rec.id from rec
@@ -83,7 +85,7 @@ select rec.id from rec
 where
     (rec.nums @> '{"inA.value":68.0}'::jsonb);
 
--- str le
+-- num le
 explain (analyze true, verbose true, buffers true)
 select rec.id, rec.nums from rec
 where

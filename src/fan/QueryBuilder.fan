@@ -21,135 +21,61 @@ internal class QueryBuilder {
 
   private Str visit(Filter f, Int indent)
   {
-    if (f.type == FilterType.has)
-      return visitLeaf(
-        f.argA,
-        null /*ignored*/,
-        |Str alias, Str path, Obj? arg->Str| { has(alias, path, arg) },
-        indent)
-
-    else if (f.type == FilterType.missing)
-      return visitLeaf(
-        f.argA,
-        null /*ignored*/,
-        |Str alias, Str path, Obj? arg->Str| { missing(alias, path, arg) },
-        indent)
-
-    else if (f.type == FilterType.eq)
-      return visitLeaf(
-        f.argA,
-        f.argB,
-        |Str alias, Str path, Obj? arg->Str| { eq(alias, path, arg) },
-        indent)
-
-    else if (f.type == FilterType.ne)
-      return visitLeaf(
-        f.argA,
-        f.argB,
-        |Str alias, Str path, Obj? arg->Str| { ne(alias, path, arg) },
-        indent)
-
-    else if (f.type == FilterType.and)
+    if (f.type == FilterType.and)
       return visitAnd(f.argA, f.argB, indent)
 
     else if (f.type == FilterType.or)
       return visitOr(f.argA, f.argB, indent)
 
+    else if (f.type == FilterType.has)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { has(alias, path) },
+        indent)
+
+    else if (f.type == FilterType.missing)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { missing(alias, path) },
+        indent)
+
+    else if (f.type == FilterType.eq)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { eq(alias, path, f.argB) },
+        indent)
+
+    else if (f.type == FilterType.ne)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { ne(alias, path, f.argB) },
+        indent)
+
+    else if (f.type == FilterType.lt)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<") },
+        indent)
+
+    else if (f.type == FilterType.le)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<=") },
+        indent)
+
+    else if (f.type == FilterType.gt)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">") },
+        indent)
+
+    else if (f.type == FilterType.ge)
+      return visitLeaf(
+        (FilterPath)f.argA,
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">=") },
+        indent)
+
     else throw Err("Encountered unknown FilterType ${f.type}")
-  }
-
-  private Str visitLeaf(
-    FilterPath fp,
-    Obj? arg,
-    |Str alias, Str path, Obj? arg -> Str| nodeFunc,
-    Int indent)
-  {
-    pad := doIndent(indent)
-    paths := dottedPaths(fp)
-
-    // no joins
-    if (paths.size == 1)
-    {
-      // process the node
-      return pad + nodeFunc("rec", paths[0], arg)
-    }
-    // joins
-    else
-    {
-      sb := StrBuf()
-      sb.add("(")
-
-      // add the join where clauses
-      last := paths.size-1
-      for (i := 0; i < last; i++)
-      {
-        joins++
-        n := params.size
-        params.add("x$n", paths[i])
-        sb.add("(p${joins}.path_ = @x$n) and ")
-      }
-
-      // process the node
-      sb.add(nodeFunc("r${joins}", paths[-1], arg))
-
-      sb.add(")")
-      return pad + sb.toStr
-    }
-  }
-
-  ** 'has' AST node
-  private Str has(Str alias, Str path, Obj? ignored := null)
-  {
-    n := params.size
-    params.add("x$n", "{\"$path\"}")
-    return "(${alias}.paths @> @x$n::text[])"
-  }
-
-  ** 'missing' AST node
-  private Str missing(Str alias, Str path, Obj? ignored)
-  {
-    n := params.size
-    params.add("x$n", "{\"$path\"}")
-    return "(not (${alias}.paths @> @x$n::text[]))"
-  }
-
-  ** 'eq' AST node
-  private Str eq(Str alias, Str path, Obj? val)
-  {
-    // Ref
-    if (val is Ref)
-    {
-      param := addValParam(path, ((Ref) val).id)
-      return "(${alias}.refs @> @$param::jsonb)"
-    }
-    // Str
-    else if (val is Str)
-    {
-      param := addValParam(path, (Str) val)
-      return "(${alias}.strs @> @$param::jsonb)"
-    }
-
-    // val type cannot be used for this node
-    else
-      return "false";
-  }
-
-  ** add the parameters for a 'ne' Filter
-  private Str ne(Str alias, Str path, Obj? arg)
-  {
-    hasClause := has(alias, path)
-    eqClause := eq(alias, path, arg)
-    return "($hasClause and (not $eqClause))"
-  }
-
-  private Str addValParam(Str path, Obj? val)
-  {
-    name := "x${params.size}"
-    params.add(
-      name,
-      JsonOutStream.writeJsonToStr(
-        Str:Obj[path:val]))
-    return name
   }
 
   private Str visitAnd(Filter a, Filter b, Int indent)
@@ -176,6 +102,113 @@ internal class QueryBuilder {
       visit(b, indent+1),
       pad + ")",
     ].join("\n")
+  }
+
+  private Str visitLeaf(
+    FilterPath fp,
+    |Str alias, Str path-> Str| nodeFunc,
+    Int indent)
+  {
+    pad := doIndent(indent)
+    paths := dottedPaths(fp)
+
+    // no joins
+    if (paths.size == 1)
+    {
+      // process the node
+      return pad + nodeFunc("rec", paths[0])
+    }
+    // joins
+    else
+    {
+      sb := StrBuf()
+      sb.add("(")
+
+      // add the join where clauses
+      last := paths.size-1
+      for (i := 0; i < last; i++)
+      {
+        joins++
+        x := addParam(paths[i])
+        sb.add("(p${joins}.path_ = @$x) and ")
+      }
+
+      // process the node
+      sb.add(nodeFunc("r${joins}", paths[-1]))
+
+      sb.add(")")
+      return pad + sb.toStr
+    }
+  }
+
+  ** 'has' AST node
+  private Str has(Str alias, Str path)
+  {
+    x := addParam("{\"$path\"}")
+    return "(${alias}.paths @> @$x::text[])"
+  }
+
+  ** 'missing' AST node
+  private Str missing(Str alias, Str path)
+  {
+    name := addParam("{\"$path\"}")
+    return "(not (${alias}.paths @> @$name::text[]))"
+  }
+
+  ** 'eq' AST node
+  private Str eq(Str alias, Str path, Obj? val)
+  {
+    // Ref
+    if (val is Ref)
+    {
+      x := eqParam(path, ((Ref) val).id)
+      return "(${alias}.refs @> @$x::jsonb)"
+    }
+    // Str
+    else if (val is Str)
+    {
+      x := eqParam(path, val)
+      return "(${alias}.strs @> @$x::jsonb)"
+    }
+
+    // val type cannot be used for this node
+    else
+      return "false";
+  }
+
+  private Str eqParam(Str path, Obj? val)
+  {
+    return addParam(
+      JsonOutStream.writeJsonToStr(
+        Str:Obj[path:val]))
+  }
+
+  ** add the parameters for a 'ne' Filter
+  private Str ne(Str alias, Str path, Obj? val)
+  {
+    hasClause := has(alias, path)
+    eqClause := eq(alias, path, val)
+    return "($hasClause and (not $eqClause))"
+  }
+
+  ** 'cmp' AST node -- >,>=,<,<=
+  private Str cmp(Str alias, Str path, Obj? val, Str op)
+  {
+    // Str
+    if (val is Str)
+    {
+      hasClause := has(alias, path)
+
+      xp := addParam(path)
+      xv := addParam(val)
+      cmpClause := "((${alias}.strs->>@$xp)::text $op @$xv)";
+
+      return "($hasClause and $cmpClause)"
+    }
+
+    // val type cannot be used for this node
+    else
+      return "false";
   }
 
   private static Str doIndent(Int indent)
@@ -209,6 +242,13 @@ internal class QueryBuilder {
       result.add(cur.join("."))
 
     return result
+  }
+
+  internal Str addParam(Obj val)
+  {
+    name := "x${params.size}"
+    params.add(name, val)
+    return name
   }
 
 //////////////////////////////////////////////////////////////////////////
