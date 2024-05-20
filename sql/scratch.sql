@@ -8,7 +8,7 @@
   --dates,
   --times,
   --dateTimes
-select id, nums, units
+select id, paths, nums, units
 from rec where (paths @> '{"haven"}'::text[]);
 
 select rec.id from rec
@@ -158,3 +158,40 @@ where
       )
     )
   );
+
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+  (
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    ((rec.paths @> '{"num"}'::text[]) and ((rec.nums->'num')::real < 2.0) and (rec.units @> '{"num":"\u00b0F"}'::jsonb))
+  );
+
+---------------------------------------
+
+select rec.id, rec.paths, rec.strs from rec
+where
+  (
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    ((rec.paths @> '{"str"}'::text[]) and (rec.strs->>'str' > 'y'))
+  );
+
+select 
+  rec.id, 
+  rec.paths, 
+  rec.nums,
+  rec.units,
+  pg_typeof(rec.nums->'num') as a,
+  pg_typeof((rec.nums->'num')::real) as b,
+  (((rec.nums->'num')::real) < 2) as x // <------------------
+from rec
+where
+  (
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    (rec.paths @> '{"num"}'::text[])
+  );
+
+

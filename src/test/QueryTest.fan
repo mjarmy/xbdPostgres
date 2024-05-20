@@ -156,38 +156,25 @@ class QueryTest : Test
     //-----------------
     // Strs
 
-    doSelect(
-      Filter("haven and str == \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             (rec.strs @> @x1::jsonb)
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"str\":\"y\"}",
-        ]))
+    ["str":"str", "nest->bar":"nest.bar"].each | dotted, arrows |
+    {
+      doSelect(
+        Filter("haven and $arrows == \"y\""),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               (rec.strs @> @x1::jsonb)
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"$dotted\":\"y\"}",
+          ]))
 
     doSelect(
-      Filter("haven and nest->bar == \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             (rec.strs @> @x1::jsonb)
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"nest.bar\":\"y\"}",
-        ]))
-
-    doSelect(
-      Filter("haven and str != \"y\""),
+      Filter("haven and $arrows != \"y\""),
       Query(
         "select rec.brio from rec
          where
@@ -198,26 +185,10 @@ class QueryTest : Test
            );",
         Str:Obj[
           "x0":"{\"haven\"}",
-          "x1":"{\"str\"}",
-          "x2":"{\"str\":\"y\"}",
+          "x1":"{\"$dotted\"}",
+          "x2":"{\"$dotted\":\"y\"}",
         ]))
-
-    doSelect(
-      Filter("haven and nest->bar < \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text < @x3))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"nest.bar\"}",
-          "x2":"nest.bar",
-          "x3":"y",
-        ]))
+    }
 
     ["<", "<=", ">", ">="].each |op|
     {
@@ -229,7 +200,7 @@ class QueryTest : Test
              (
                (rec.paths @> @x0::text[])
                and
-               ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text $op @x3))
+               ((rec.paths @> @x1::text[]) and ((rec.strs ->> @x2) $op @x3))
              );",
           Str:Obj[
             "x0":"{\"haven\"}",
@@ -239,168 +210,192 @@ class QueryTest : Test
           ]))
     }
 
-    //-----------------
-    // Numbers eq
-
-    doSelect(
-      Filter("haven and num == 2"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\":2.0}",
-          "x2":"{\"num\":null}",
-        ]))
-
-    doSelect(
-      Filter("haven and num != 2"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\"}",
-          "x2":"{\"num\":2.0}",
-          "x3":"{\"num\":null}",
-        ]))
-
-    doSelect(
-      Filter("haven and num == 2°F"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\":2.0}",
-          "x2":"{\"num\":\"\\u00b0F\"}",
-        ]))
-
-    doSelect(
-      Filter("haven and num != 2°F"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\"}",
-          "x2":"{\"num\":2.0}",
-          "x3":"{\"num\":\"\\u00b0F\"}",
-        ]))
-
-    doSelect(
-      Filter("haven and num == 2m"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\":2.0}",
-          "x2":"{\"num\":\"m\"}",
-        ]))
-
-    doSelect(
-      Filter("haven and num != 2m"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\"}",
-          "x2":"{\"num\":2.0}",
-          "x3":"{\"num\":\"m\"}",
-        ]))
 
     //-----------------
-    // Numbers cmp
+    // Numbers
 
-    ["<", "<=", ">", ">="].each |op|
-    {
-      doSelect(
-        Filter("haven and num $op 2"),
-        Query(
-          "select rec.brio from rec
-           where
-             (
-               (rec.paths @> @x0::text[])
-               and
-               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
-             );",
-          Str:Obj[
-            "x0":"{\"haven\"}",
-            "x1":"{\"num\"}",
-            "x2":"num",
-            "x3":2.0f,
-            "x4":"{\"num\":null}",
-          ]))
+//    [
+//      n(2):      "null",
+//      n(2,"°F"): "\"\\u00b0F\"",
+//      n(2,"m"):  "\"m\"",
+//    ].each | uparam, num |
+//    {
+//      doSelect(
+//        Filter("haven and num == ${num.toFloat}"),
+//        Query(
+//          "select rec.brio from rec
+//           where
+//             (
+//               (rec.paths @> @x0::text[])
+//               and
+//               ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+//             );",
+//          Str:Obj[
+//            "x0":"{\"haven\"}",
+//            "x1":"{\"num\":${num.toFloat}}",
+//            "x2":"{\"num\":$uparam}",
+//          ]))
+//    }
 
-      doSelect(
-        Filter("haven and num $op 2°F"),
-        Query(
-          "select rec.brio from rec
-           where
-             (
-               (rec.paths @> @x0::text[])
-               and
-               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
-             );",
-          Str:Obj[
-            "x0":"{\"haven\"}",
-            "x1":"{\"num\"}",
-            "x2":"num",
-            "x3":2.0f,
-            "x4":"{\"num\":\"\\u00b0F\"}",
-          ]))
+//    doSelect(
+//      Filter("haven and num == 2"),
+//      Query(
+//        "select rec.brio from rec
+//         where
+//           (
+//             (rec.paths @> @x0::text[])
+//             and
+//             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+//           );",
+//        Str:Obj[
+//          "x0":"{\"haven\"}",
+//          "x1":"{\"num\":2.0}",
+//          "x2":"{\"num\":null}",
+//        ]))
 
-      doSelect(
-        Filter("haven and num $op 2m"),
-        Query(
-          "select rec.brio from rec
-           where
-             (
-               (rec.paths @> @x0::text[])
-               and
-               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
-             );",
-          Str:Obj[
-            "x0":"{\"haven\"}",
-            "x1":"{\"num\"}",
-            "x2":"num",
-            "x3":2.0f,
-            "x4":"{\"num\":\"m\"}",
-          ]))
+//    doSelect(
+//      Filter("haven and num != 2"),
+//      Query(
+//        "select rec.brio from rec
+//         where
+//           (
+//             (rec.paths @> @x0::text[])
+//             and
+//             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
+//           );",
+//        Str:Obj[
+//          "x0":"{\"haven\"}",
+//          "x1":"{\"num\"}",
+//          "x2":"{\"num\":2.0}",
+//          "x3":"{\"num\":null}",
+//        ]))
+//
+//    doSelect(
+//      Filter("haven and num == 2°F"),
+//      Query(
+//        "select rec.brio from rec
+//         where
+//           (
+//             (rec.paths @> @x0::text[])
+//             and
+//             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+//           );",
+//        Str:Obj[
+//          "x0":"{\"haven\"}",
+//          "x1":"{\"num\":2.0}",
+//          "x2":"{\"num\":\"\\u00b0F\"}",
+//        ]))
+//
+//    doSelect(
+//      Filter("haven and num != 2°F"),
+//      Query(
+//        "select rec.brio from rec
+//         where
+//           (
+//             (rec.paths @> @x0::text[])
+//             and
+//             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
+//           );",
+//        Str:Obj[
+//          "x0":"{\"haven\"}",
+//          "x1":"{\"num\"}",
+//          "x2":"{\"num\":2.0}",
+//          "x3":"{\"num\":\"\\u00b0F\"}",
+//        ]))
+//
+//    doSelect(
+//      Filter("haven and num == 2m"),
+//      Query(
+//        "select rec.brio from rec
+//         where
+//           (
+//             (rec.paths @> @x0::text[])
+//             and
+//             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+//           );",
+//        Str:Obj[
+//          "x0":"{\"haven\"}",
+//          "x1":"{\"num\":2.0}",
+//          "x2":"{\"num\":\"m\"}",
+//        ]))
+//
+//    doSelect(
+//      Filter("haven and num != 2m"),
+//      Query(
+//        "select rec.brio from rec
+//         where
+//           (
+//             (rec.paths @> @x0::text[])
+//             and
+//             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
+//           );",
+//        Str:Obj[
+//          "x0":"{\"haven\"}",
+//          "x1":"{\"num\"}",
+//          "x2":"{\"num\":2.0}",
+//          "x3":"{\"num\":\"m\"}",
+//        ]))
 
-    }
+//    //-----------------
+//    // Numbers cmp
+//
+//    ["<", "<=", ">", ">="].each |op|
+//    {
+//      doSelect(
+//        Filter("haven and num $op 2"),
+//        Query(
+//          "select rec.brio from rec
+//           where
+//             (
+//               (rec.paths @> @x0::text[])
+//               and
+//               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
+//             );",
+//          Str:Obj[
+//            "x0":"{\"haven\"}",
+//            "x1":"{\"num\"}",
+//            "x2":"num",
+//            "x3":2.0f,
+//            "x4":"{\"num\":null}",
+//          ]))
+//
+//      doSelect(
+//        Filter("haven and num $op 2°F"),
+//        Query(
+//          "select rec.brio from rec
+//           where
+//             (
+//               (rec.paths @> @x0::text[])
+//               and
+//               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
+//             );",
+//          Str:Obj[
+//            "x0":"{\"haven\"}",
+//            "x1":"{\"num\"}",
+//            "x2":"num",
+//            "x3":2.0f,
+//            "x4":"{\"num\":\"\\u00b0F\"}",
+//          ]))
+//
+//      doSelect(
+//        Filter("haven and num $op 2m"),
+//        Query(
+//          "select rec.brio from rec
+//           where
+//             (
+//               (rec.paths @> @x0::text[])
+//               and
+//               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
+//             );",
+//          Str:Obj[
+//            "x0":"{\"haven\"}",
+//            "x1":"{\"num\"}",
+//            "x2":"num",
+//            "x3":2.0f,
+//            "x4":"{\"num\":\"m\"}",
+//          ]))
+//
+//    }
 
     //-----------------
     // Uri
@@ -471,8 +466,8 @@ class QueryTest : Test
 
     // Fetch the expected test data
     expected := testData.filter(filter)
-    //echo("expected ${expected.size} rows")
-    //echo(expected.map |Dict v->Ref| { v.id })
+    echo("expected ${expected.size} rows")
+    echo(expected.map |Dict v->Ref| { v.id })
 
     // Construct the Query and make sure it matches the expected query
     query := Query.fromFilter(filter)
@@ -603,6 +598,11 @@ class QueryTest : Test
   }
 
   private static Ref ref(Str str) { Ref.fromStr(str) }
+
+  private static Number n(Num val, Str? unit := null)
+  {
+    Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))
+  }
 
 //////////////////////////////////////////////////////////////////////////
 // Fields

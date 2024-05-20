@@ -97,10 +97,10 @@ const class TestData
 
       Etc.dict3("id", ref("num-1"), "haven", M, "num", n(1)),
       Etc.dict3("id", ref("num-2"), "haven", M, "num", n(2)),
-      Etc.dict3("id", ref("num-3"), "haven", M, "num", n(3)),
-      Etc.dict3("id", ref("num-4"), "haven", M, "num", n(1, "°F")),
-      Etc.dict3("id", ref("num-5"), "haven", M, "num", n(2, "°F")),
-      Etc.dict3("id", ref("num-6"), "haven", M, "num", n(3, "°F")),
+      Etc.dict3("id", ref("num-3"), "haven", M, "num", n(10)),
+      Etc.dict3("id", ref("num-4"), "haven", M, "num", n(1,  "°F")),
+      Etc.dict3("id", ref("num-5"), "haven", M, "num", n(2,  "°F")),
+      Etc.dict3("id", ref("num-6"), "haven", M, "num", n(10, "°F")),
     ]
     extra.each |d| { recs.add(d->id, d) }
 

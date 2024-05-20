@@ -158,7 +158,7 @@ internal class QueryBuilder {
   ** 'eq' AST node
   private Str eq(Str alias, Str path, Obj? val)
   {
-    // Ref
+    // misc
     if ((val is Str) || (val is Uri))
     {
       x := eqParam(path, val.toStr)
@@ -198,6 +198,8 @@ internal class QueryBuilder {
     hasClause := has(alias, path)
     eqClause := eq(alias, path, val)
     col := columnNames[val.typeof]
+
+    // beware of 3-Value booleans
     return "($hasClause and ((${alias}.$col is null) or (not $eqClause)))"
   }
 
@@ -211,7 +213,8 @@ internal class QueryBuilder {
 
       xp := addParam(path)
       xv := addParam(val)
-      cmpClause := "((${alias}.strs->>@$xp)::text $op @$xv)";
+      // double-stabby gives us '::text'
+      cmpClause := "((${alias}.strs ->> @$xp) $op @$xv)";
 
       return "($hasClause and $cmpClause)"
     }
@@ -224,12 +227,12 @@ internal class QueryBuilder {
 
       xp := addParam(path)
       xv := addParam(n.toFloat)
-      cmpClause := "((${alias}.nums->>@$xp)::real $op @$xv)";
+      cmpClause := "((${alias}.nums->@$xp)::real $op @$xv)";
 
       xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
-      unitClause := "(${alias}.units @> @$xu::jsonb)"
+      unitEqClause := "(${alias}.units @> @$xu::jsonb)"
 
-      return "($hasClause and $cmpClause and $unitClause)"
+      return "($hasClause and $cmpClause and $unitEqClause)"
     }
 
     // val type cannot be used for this node
