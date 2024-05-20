@@ -159,16 +159,17 @@ internal class QueryBuilder {
   private Str eq(Str alias, Str path, Obj? val)
   {
     // Ref
-    if (val is Ref)
+    if ((val is Str) || (val is Uri))
+    {
+      x := eqParam(path, val.toStr)
+      col := columnNames[val.typeof]
+      return "(${alias}.$col @> @$x::jsonb)"
+    }
+    // Ref
+    else if ((val is Ref) || (val is Str) || (val is Uri))
     {
       x := eqParam(path, ((Ref) val).id)
       return "(${alias}.refs @> @$x::jsonb)"
-    }
-    // Str
-    else if (val is Str)
-    {
-      x := eqParam(path, val)
-      return "(${alias}.strs @> @$x::jsonb)"
     }
     // Num
     else if (val is Number)
@@ -196,7 +197,8 @@ internal class QueryBuilder {
   {
     hasClause := has(alias, path)
     eqClause := eq(alias, path, val)
-    return "($hasClause and (not $eqClause))"
+    col := columnNames[val.typeof]
+    return "($hasClause and ((${alias}.$col is null) or (not $eqClause)))"
   }
 
   ** 'cmp' AST node >,>=,<,<=
@@ -282,6 +284,13 @@ internal class QueryBuilder {
   internal Str where
   internal Str:Obj params := Str:Obj[:]
   internal Int joins := 0
+
+  internal static const Type:Str columnNames := Type:Str[
+    Ref#:"refs",
+    Uri#:"uris",
+    Str#:"strs",
+    Number#:"nums",
+  ]
 }
 
 

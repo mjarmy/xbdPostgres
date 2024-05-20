@@ -80,7 +80,7 @@ where
 
 -- num eq Niagara, needs units
 explain (analyze true, verbose true, buffers true)
-select rec.id from rec
+select rec.id, rec.nums from rec
 where
     (rec.nums @> '{"inA.value":68.0}'::jsonb);
 
@@ -114,6 +114,47 @@ where
       and ((rec.strs->>@x2)::text < @x3))
   );
 
-  check path
-  units units
+---------------------------------------
 
+-- haven and b == `https://project-haystack.org/`"
+explain (analyze true, verbose true, buffers true)
+select 
+  rec.id,
+  rec.paths, 
+  rec.strs,
+  rec.uris
+from rec
+where
+  (
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    (rec.uris @> '{"b":"https://project-haystack.org/"}'::jsonb)
+  );
+
+-- haven and b != `https://project-haystack.org/`"
+explain (analyze true, verbose true, buffers true)
+select 
+  rec.id,
+  rec.paths, 
+  rec.strs,
+  rec.uris
+from rec
+where
+  (
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    (
+      (
+        -- we need to actually have the path
+        (rec.paths @> '{"b"}'::text[]) 
+        and 
+        (
+          -- either there is no uri
+          (rec.uris is null)
+          or
+          -- or its the wrong uri
+          (not (rec.uris @> '{"b":"https://project-haystack.org/"}'::jsonb))
+        )
+      )
+    )
+  );

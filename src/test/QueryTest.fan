@@ -145,24 +145,7 @@ class QueryTest : Test
            (
              (rec.paths @> @x0::text[])
              and
-             ((rec.paths @> @x1::text[]) and (not (rec.refs @> @x2::jsonb)))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"id\"}",
-          "x2":"{\"id\":\"z0\"}",
-        ]))
-
-
-    doSelect(
-      Filter("haven and id != @z0"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and (not (rec.refs @> @x2::jsonb)))
+             ((rec.paths @> @x1::text[]) and ((rec.refs is null) or (not (rec.refs @> @x2::jsonb))))
            );",
         Str:Obj[
           "x0":"{\"haven\"}",
@@ -211,7 +194,7 @@ class QueryTest : Test
            (
              (rec.paths @> @x0::text[])
              and
-             ((rec.paths @> @x1::text[]) and (not (rec.strs @> @x2::jsonb)))
+             ((rec.paths @> @x1::text[]) and ((rec.strs is null) or (not (rec.strs @> @x2::jsonb))))
            );",
         Str:Obj[
           "x0":"{\"haven\"}",
@@ -283,7 +266,7 @@ class QueryTest : Test
            (
              (rec.paths @> @x0::text[])
              and
-             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
+             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
            );",
         Str:Obj[
           "x0":"{\"haven\"}",
@@ -316,7 +299,7 @@ class QueryTest : Test
            (
              (rec.paths @> @x0::text[])
              and
-             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
+             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
            );",
         Str:Obj[
           "x0":"{\"haven\"}",
@@ -349,7 +332,7 @@ class QueryTest : Test
            (
              (rec.paths @> @x0::text[])
              and
-             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
+             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
            );",
         Str:Obj[
           "x0":"{\"haven\"}",
@@ -416,25 +399,64 @@ class QueryTest : Test
             "x3":2.0f,
             "x4":"{\"num\":\"m\"}",
           ]))
+
     }
 
-//    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-//    filter := Filter("haven and num < 2")
-//    query := Query(filter)
-//    echo(filter)
-//    echo(query)
-//    echo()
-//
-//    echo("Raw:")
-//    echo("explain (analyze true, verbose true, buffers true) ")
-//    raw := rawSql(query)
-//    raw = raw.replace("rec.brio", "rec.id")
-//    echo(raw)
-//    echo()
-//
-//    //found := haven.select(query)
-//    //echo("found ${found.size} rows")
-//    //echo(found.map |Dict v->Ref| { v.id })
+    //-----------------
+    // Uri
+
+    doSelect(
+      Filter("haven and b == `https://project-haystack.org/`"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.uris @> @x1::jsonb)
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"b\":\"https://project-haystack.org/\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and b != `https://project-haystack.org/`"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.uris is null) or (not (rec.uris @> @x2::jsonb))))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"b\"}",
+          "x2":"{\"b\":\"https://project-haystack.org/\"}",
+        ]))
+
+    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    filter := Filter("haven and b == `https://project-haystack.org/`")
+    query := Query(filter)
+    echo(filter)
+    echo(query)
+    echo()
+
+    echo("Raw:")
+    echo("explain (analyze true, verbose true, buffers true) ")
+    raw := rawSql(query)
+    raw = raw.replace("rec.brio", "rec.id")
+    echo(raw)
+    echo()
+
+    expected := testData.filter(filter)
+    echo("expected ${expected.size} rows")
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    //found := haven.select(query)
+    //echo("found ${found.size} rows")
+    //echo(found.map |Dict v->Ref| { v.id })
 
     echo("==============================================================")
   }
@@ -462,7 +484,7 @@ class QueryTest : Test
     // Explain the Query's raw sql to make sure its not a sequential scan
     explained := explain(rawSql(query))
     //echo("explain (analyze true, verbose true, buffers true) ")
-    //echo(rawSql(query))
+    echo(rawSql(query))
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
     if (!allowSequential)

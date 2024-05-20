@@ -80,6 +80,16 @@ const class TestData
         "d": Time.fromStr("17:19:23"),
         "e": DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
       ]),
+      Etc.dictFromMap([
+        "id": ref("z4"),
+        "haven": M,
+        "b": `https://example.com/`,
+      ]),
+      Etc.dictFromMap([
+        "id": ref("z5"),
+        "haven": M,
+        "b": "quux",
+      ]),
 
       Etc.dict4("id", ref("str-1"), "haven", M, "str", "x", "nest", Etc.dict1("bar", "x")),
       Etc.dict4("id", ref("str-2"), "haven", M, "str", "y", "nest", Etc.dict1("bar", "y")),
