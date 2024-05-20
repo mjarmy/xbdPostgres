@@ -213,6 +213,22 @@ internal class QueryBuilder {
 
       return "($hasClause and $cmpClause)"
     }
+    // Number
+    else if (val is Number)
+    {
+      Number n := (Number) val
+
+      hasClause := has(alias, path)
+
+      xp := addParam(path)
+      xv := addParam(n.toFloat)
+      cmpClause := "((${alias}.nums->>@$xp)::real $op @$xv)";
+
+      xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
+      unitClause := "(${alias}.units @> @$xu::jsonb)"
+
+      return "($hasClause and $cmpClause and $unitClause)"
+    }
 
     // val type cannot be used for this node
     else

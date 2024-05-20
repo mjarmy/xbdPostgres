@@ -236,76 +236,28 @@ class QueryTest : Test
           "x3":"y",
         ]))
 
-    doSelect(
-      Filter("haven and str < \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text < @x3))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"str\"}",
-          "x2":"str",
-          "x3":"y",
-        ]))
-
-    doSelect(
-      Filter("haven and str <= \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text <= @x3))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"str\"}",
-          "x2":"str",
-          "x3":"y",
-        ]))
-
-    doSelect(
-      Filter("haven and str > \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text > @x3))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"str\"}",
-          "x2":"str",
-          "x3":"y",
-        ]))
-
-    doSelect(
-      Filter("haven and str >= \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text >= @x3))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"str\"}",
-          "x2":"str",
-          "x3":"y",
-        ]))
+    ["<", "<=", ">", ">="].each |op|
+    {
+      doSelect(
+        Filter("haven and str $op \"y\""),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.strs->>@x2)::text $op @x3))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"str\"}",
+            "x2":"str",
+            "x3":"y",
+          ]))
+    }
 
     //-----------------
-    // Numbers
+    // Numbers eq
 
     doSelect(
       Filter("haven and num == 2"),
@@ -341,6 +293,39 @@ class QueryTest : Test
         ]))
 
     doSelect(
+      Filter("haven and num == 2°F"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\":2.0}",
+          "x2":"{\"num\":\"\\u00b0F\"}",
+        ]))
+
+    doSelect(
+      Filter("haven and num != 2°F"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"num\"}",
+          "x2":"{\"num\":2.0}",
+          "x3":"{\"num\":\"\\u00b0F\"}",
+        ]))
+
+    doSelect(
       Filter("haven and num == 2m"),
       Query(
         "select rec.brio from rec
@@ -373,41 +358,68 @@ class QueryTest : Test
           "x3":"{\"num\":\"m\"}",
         ]))
 
-    doSelect(
-      Filter("haven and num == 2F"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\":2.0}",
-          "x2":"{\"num\":\"F\"}",
-        ]))
+    //-----------------
+    // Numbers cmp
 
-    doSelect(
-      Filter("haven and num != 2F"),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb))))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"num\"}",
-          "x2":"{\"num\":2.0}",
-          "x3":"{\"num\":\"F\"}",
-        ]))
+    ["<", "<=", ">", ">="].each |op|
+    {
+      doSelect(
+        Filter("haven and num $op 2"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"num\"}",
+            "x2":"num",
+            "x3":2.0f,
+            "x4":"{\"num\":null}",
+          ]))
+
+      doSelect(
+        Filter("haven and num $op 2°F"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"num\"}",
+            "x2":"num",
+            "x3":2.0f,
+            "x4":"{\"num\":\"\\u00b0F\"}",
+          ]))
+
+      doSelect(
+        Filter("haven and num $op 2m"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"num\"}",
+            "x2":"num",
+            "x3":2.0f,
+            "x4":"{\"num\":\"m\"}",
+          ]))
+    }
 
 //    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-//    filter := Filter("haven and (str or num)")
+//    filter := Filter("haven and num < 2")
 //    query := Query(filter)
 //    echo(filter)
 //    echo(query)
@@ -420,9 +432,9 @@ class QueryTest : Test
 //    echo(raw)
 //    echo()
 //
-//    found := haven.select(query)
-//    echo("found ${found.size} rows")
-//    echo(found.map |Dict v->Ref| { v.id })
+//    //found := haven.select(query)
+//    //echo("found ${found.size} rows")
+//    //echo(found.map |Dict v->Ref| { v.id })
 
     echo("==============================================================")
   }
@@ -442,9 +454,9 @@ class QueryTest : Test
 
     // Construct the Query and make sure it matches the expected query
     query := Query.fromFilter(filter)
-    //echo()
-    //echo(query)
-    //echo("--------------")
+    echo()
+    echo(query)
+    echo("--------------")
     verifyEq(query, expectedQuery)
 
     // Explain the Query's raw sql to make sure its not a sequential scan

@@ -106,3 +106,14 @@ where
     (rec.paths @> '{"haven"}'::text[])
     and
     ((rec.nums @> '{"num":2}'::jsonb) and (rec.units @> '{"num":"m"}'::jsonb));
+
+select rec.brio from rec
+where
+  (
+    ((rec.paths @> @x1::text[]) 
+      and ((rec.strs->>@x2)::text < @x3))
+  );
+
+  check path
+  units units
+
