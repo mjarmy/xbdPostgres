@@ -188,28 +188,27 @@ class QueryTest : Test
           "x1":"{\"$dotted\"}",
           "x2":"{\"$dotted\":\"y\"}",
         ]))
-    }
 
-    ["<", "<=", ">", ">="].each |op|
-    {
-      doSelect(
-        Filter("haven and str $op \"y\""),
-        Query(
-          "select rec.brio from rec
-           where
-             (
-               (rec.paths @> @x0::text[])
-               and
-               ((rec.paths @> @x1::text[]) and ((rec.strs ->> @x2) $op @x3))
-             );",
-          Str:Obj[
-            "x0":"{\"haven\"}",
-            "x1":"{\"str\"}",
-            "x2":"str",
-            "x3":"y",
-          ]))
+      ["<", "<=", ">", ">="].each |op|
+      {
+        doSelect(
+          Filter("haven and $arrows $op \"y\""),
+          Query(
+            "select rec.brio from rec
+             where
+               (
+                 (rec.paths @> @x0::text[])
+                 and
+                 ((rec.paths @> @x1::text[]) and ((rec.strs ->> @x2) $op @x3))
+               );",
+            Str:Obj[
+              "x0":"{\"haven\"}",
+              "x1":"{\"$dotted\"}",
+              "x2":"$dotted",
+              "x3":"y",
+            ]))
+      }
     }
-
 
     //-----------------
     // Numbers
