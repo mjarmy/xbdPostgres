@@ -154,249 +154,6 @@ class QueryTest : Test
         ]))
 
     //-----------------
-    // Strs
-
-    ["str":"str", "nest->bar":"nest.bar"].each | dotted, arrows |
-    {
-      doSelect(
-        Filter("haven and $arrows == \"y\""),
-        Query(
-          "select rec.brio from rec
-           where
-             (
-               (rec.paths @> @x0::text[])
-               and
-               (rec.strs @> @x1::jsonb)
-             );",
-          Str:Obj[
-            "x0":"{\"haven\"}",
-            "x1":"{\"$dotted\":\"y\"}",
-          ]))
-
-    doSelect(
-      Filter("haven and $arrows != \"y\""),
-      Query(
-        "select rec.brio from rec
-         where
-           (
-             (rec.paths @> @x0::text[])
-             and
-             ((rec.paths @> @x1::text[]) and ((rec.strs is null) or (not (rec.strs @> @x2::jsonb))))
-           );",
-        Str:Obj[
-          "x0":"{\"haven\"}",
-          "x1":"{\"$dotted\"}",
-          "x2":"{\"$dotted\":\"y\"}",
-        ]))
-
-      ["<", "<=", ">", ">="].each |op|
-      {
-        doSelect(
-          Filter("haven and $arrows $op \"y\""),
-          Query(
-            "select rec.brio from rec
-             where
-               (
-                 (rec.paths @> @x0::text[])
-                 and
-                 ((rec.paths @> @x1::text[]) and ((rec.strs ->> @x2) $op @x3))
-               );",
-            Str:Obj[
-              "x0":"{\"haven\"}",
-              "x1":"{\"$dotted\"}",
-              "x2":"$dotted",
-              "x3":"y",
-            ]))
-      }
-    }
-
-    //-----------------
-    // Numbers
-
-//    [
-//      n(2):      "null",
-//      n(2,"°F"): "\"\\u00b0F\"",
-//      n(2,"m"):  "\"m\"",
-//    ].each | uparam, num |
-//    {
-//      doSelect(
-//        Filter("haven and num == ${num.toFloat}"),
-//        Query(
-//          "select rec.brio from rec
-//           where
-//             (
-//               (rec.paths @> @x0::text[])
-//               and
-//               ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-//             );",
-//          Str:Obj[
-//            "x0":"{\"haven\"}",
-//            "x1":"{\"num\":${num.toFloat}}",
-//            "x2":"{\"num\":$uparam}",
-//          ]))
-//    }
-
-//    doSelect(
-//      Filter("haven and num == 2"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-//           );",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"num\":2.0}",
-//          "x2":"{\"num\":null}",
-//        ]))
-
-//    doSelect(
-//      Filter("haven and num != 2"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
-//           );",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"num\"}",
-//          "x2":"{\"num\":2.0}",
-//          "x3":"{\"num\":null}",
-//        ]))
-//
-//    doSelect(
-//      Filter("haven and num == 2°F"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-//           );",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"num\":2.0}",
-//          "x2":"{\"num\":\"\\u00b0F\"}",
-//        ]))
-//
-//    doSelect(
-//      Filter("haven and num != 2°F"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
-//           );",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"num\"}",
-//          "x2":"{\"num\":2.0}",
-//          "x3":"{\"num\":\"\\u00b0F\"}",
-//        ]))
-//
-//    doSelect(
-//      Filter("haven and num == 2m"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-//           );",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"num\":2.0}",
-//          "x2":"{\"num\":\"m\"}",
-//        ]))
-//
-//    doSelect(
-//      Filter("haven and num != 2m"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
-//           );",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"num\"}",
-//          "x2":"{\"num\":2.0}",
-//          "x3":"{\"num\":\"m\"}",
-//        ]))
-
-//    //-----------------
-//    // Numbers cmp
-//
-//    ["<", "<=", ">", ">="].each |op|
-//    {
-//      doSelect(
-//        Filter("haven and num $op 2"),
-//        Query(
-//          "select rec.brio from rec
-//           where
-//             (
-//               (rec.paths @> @x0::text[])
-//               and
-//               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
-//             );",
-//          Str:Obj[
-//            "x0":"{\"haven\"}",
-//            "x1":"{\"num\"}",
-//            "x2":"num",
-//            "x3":2.0f,
-//            "x4":"{\"num\":null}",
-//          ]))
-//
-//      doSelect(
-//        Filter("haven and num $op 2°F"),
-//        Query(
-//          "select rec.brio from rec
-//           where
-//             (
-//               (rec.paths @> @x0::text[])
-//               and
-//               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
-//             );",
-//          Str:Obj[
-//            "x0":"{\"haven\"}",
-//            "x1":"{\"num\"}",
-//            "x2":"num",
-//            "x3":2.0f,
-//            "x4":"{\"num\":\"\\u00b0F\"}",
-//          ]))
-//
-//      doSelect(
-//        Filter("haven and num $op 2m"),
-//        Query(
-//          "select rec.brio from rec
-//           where
-//             (
-//               (rec.paths @> @x0::text[])
-//               and
-//               ((rec.paths @> @x1::text[]) and ((rec.nums->>@x2)::real $op @x3) and (rec.units @> @x4::jsonb))
-//             );",
-//          Str:Obj[
-//            "x0":"{\"haven\"}",
-//            "x1":"{\"num\"}",
-//            "x2":"num",
-//            "x3":2.0f,
-//            "x4":"{\"num\":\"m\"}",
-//          ]))
-//
-//    }
-
-    //-----------------
     // Uri
 
     doSelect(
@@ -430,23 +187,150 @@ class QueryTest : Test
           "x2":"{\"b\":\"https://project-haystack.org/\"}",
         ]))
 
-    echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    filter := Filter("haven and b == `https://project-haystack.org/`")
-    query := Query(filter)
-    echo(filter)
-    echo(query)
-    echo()
+    //-----------------
+    // Strs
 
-    echo("Raw:")
-    echo("explain (analyze true, verbose true, buffers true) ")
-    raw := rawSql(query)
-    raw = raw.replace("rec.brio", "rec.id")
-    echo(raw)
-    echo()
+    ["str":"str", "nest->bar":"nest.bar"].each | dotted, arrows |
+    {
+      // ==
+      doSelect(
+        Filter("haven and $arrows == \"y\""),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               (rec.strs @> @x1::jsonb)
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"$dotted\":\"y\"}",
+          ]))
 
-    expected := testData.filter(filter)
-    echo("expected ${expected.size} rows")
-    echo(expected.map |Dict v->Ref| { v.id })
+      // !=
+      doSelect(
+        Filter("haven and $arrows != \"y\""),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.strs is null) or (not (rec.strs @> @x2::jsonb))))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"$dotted\"}",
+            "x2":"{\"$dotted\":\"y\"}",
+          ]))
+
+      // cmp
+      ["<", "<=", ">", ">="].each |op|
+      {
+        doSelect(
+          Filter("haven and $arrows $op \"y\""),
+          Query(
+            "select rec.brio from rec
+             where
+               (
+                 (rec.paths @> @x0::text[])
+                 and
+                 ((rec.paths @> @x1::text[]) and ((rec.strs ->> @x2) $op @x3))
+               );",
+            Str:Obj[
+              "x0":"{\"haven\"}",
+              "x1":"{\"$dotted\"}",
+              "x2":dotted,
+              "x3":"y",
+            ]))
+      }
+    }
+
+    //-----------------
+    // Numbers
+
+    [
+      n(2):      null,
+      n(2,"°F"): "\"\\u00b0F\"",
+      n(2,"m"):  "\"m\"",
+    ].each | uparam, num |
+    {
+      // ==
+      doSelect(
+        Filter("haven and num == $num"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"num\":${num.toFloat}}",
+            "x2":"{\"num\":$uparam}",
+          ]))
+
+      // !=
+      doSelect(
+        Filter("haven and num != $num"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"num\"}",
+            "x2":"{\"num\":${num.toFloat}}",
+            "x3":"{\"num\":$uparam}",
+          ]))
+
+      // cmp
+      ["<", "<=", ">", ">="].each |op|
+      {
+        doSelect(
+          Filter("haven and num $op $num"),
+          Query(
+            "select rec.brio from rec
+             where
+               (
+                 (rec.paths @> @x0::text[])
+                 and
+                 ((rec.paths @> @x1::text[]) and (((rec.nums -> @x2)::real) $op @x3) and (rec.units @> @x4::jsonb))
+               );",
+            Str:Obj[
+              "x0":"{\"haven\"}",
+              "x1":"{\"num\"}",
+              "x2":"num",
+              "x3":num.toFloat,
+              "x4":"{\"num\":$uparam}",
+            ]))
+      }
+    }
+
+    //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    //filter := Filter("haven and num < 2")
+    //query := Query(filter)
+    //echo(filter)
+    //dumpQuery(query)
+    //echo()
+
+    //echo("Raw:")
+    //echo("explain (analyze true, verbose true, buffers true) ")
+    //raw := rawSql(query)
+    //raw = raw.replace("rec.brio", "rec.id")
+    //echo(raw)
+    //echo()
+
+    //expected := testData.filter(filter)
+    //echo("expected ${expected.size} rows")
+    //echo(expected.map |Dict v->Ref| { v.id })
 
     //found := haven.select(query)
     //echo("found ${found.size} rows")
@@ -466,19 +350,24 @@ class QueryTest : Test
     // Fetch the expected test data
     expected := testData.filter(filter)
     echo("expected ${expected.size} rows")
-    echo(expected.map |Dict v->Ref| { v.id })
+    //echo(expected.map |Dict v->Ref| { v.id })
 
     // Construct the Query and make sure it matches the expected query
     query := Query.fromFilter(filter)
-    echo()
-    echo(query)
     echo("--------------")
-    verifyEq(query, expectedQuery)
+    dumpQuery(expectedQuery)
+    echo("--------------")
+    dumpQuery(query)
+    echo("--------------")
+    echo("sql eq ${expectedQuery.sql == query.sql}")
+    echo("params eq ${expectedQuery.params == query.params}")
+    echo("--------------")
+    verifyEq(expectedQuery, query)
 
     // Explain the Query's raw sql to make sure its not a sequential scan
     explained := explain(rawSql(query))
     //echo("explain (analyze true, verbose true, buffers true) ")
-    echo(rawSql(query))
+    //echo(rawSql(query))
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
     if (!allowSequential)
@@ -593,6 +482,15 @@ class QueryTest : Test
     a.each |dict, i|
     {
       verifyTrue(Etc.dictEq(a[i], b[i]))
+    }
+  }
+
+  private static Void dumpQuery(Query query)
+  {
+    echo("'${query.sql}'")
+    query.params.each | val, key |
+    {
+      echo("$key: ${val.typeof} $val")
     }
   }
 

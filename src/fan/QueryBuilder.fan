@@ -158,7 +158,7 @@ internal class QueryBuilder {
   ** 'eq' AST node
   private Str eq(Str alias, Str path, Obj? val)
   {
-    // misc
+    // Misc
     if ((val is Str) || (val is Uri))
     {
       x := eqParam(path, val.toStr)
@@ -166,7 +166,7 @@ internal class QueryBuilder {
       return "(${alias}.$col @> @$x::jsonb)"
     }
     // Ref
-    else if ((val is Ref) || (val is Str) || (val is Uri))
+    else if (val is Ref)
     {
       x := eqParam(path, ((Ref) val).id)
       return "(${alias}.refs @> @$x::jsonb)"
@@ -211,9 +211,10 @@ internal class QueryBuilder {
     {
       hasClause := has(alias, path)
 
+      // double-stabby gives us '::text'
+      // https://hashrocket.com/blog/posts/dealing-with-nested-json-objects-in-postgresql
       xp := addParam(path)
       xv := addParam(val)
-      // double-stabby gives us '::text'
       cmpClause := "((${alias}.strs ->> @$xp) $op @$xv)";
 
       return "($hasClause and $cmpClause)"
@@ -225,9 +226,11 @@ internal class QueryBuilder {
 
       hasClause := has(alias, path)
 
+      // single-stabby plus cast gives us '::real'
+      // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
       xp := addParam(path)
       xv := addParam(n.toFloat)
-      cmpClause := "((${alias}.nums->@$xp)::real $op @$xv)";
+      cmpClause := "(((${alias}.nums -> @$xp)::real) $op @$xv)";
 
       xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
       unitEqClause := "(${alias}.units @> @$xu::jsonb)"
