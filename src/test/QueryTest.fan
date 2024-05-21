@@ -314,6 +314,63 @@ class QueryTest : Test
       }
     }
 
+    //-----------------
+    // Bools
+
+    // ==
+    doSelect(
+      Filter("haven and bool == true"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.bools @> @x1::jsonb)
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"bool\":true}",
+        ]))
+
+    // !=
+    doSelect(
+      Filter("haven and bool != true"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.bools is null) or (not (rec.bools @> @x2::jsonb))))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"bool\"}",
+          "x2":"{\"bool\":true}",
+        ]))
+
+    // cmp
+    ["<", "<=", ">", ">="].each |op|
+    {
+      doSelect(
+        Filter("haven and bool $op true"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and (((rec.bools -> @x2)::boolean) $op @x3))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"bool\"}",
+            "x2":"bool",
+            "x3":true,
+          ]))
+    }
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
     //filter := Filter("haven and num < 2")
     //query := Query(filter)
@@ -366,8 +423,8 @@ class QueryTest : Test
 
     // Explain the Query's raw sql to make sure its not a sequential scan
     explained := explain(rawSql(query))
-    //echo("explain (analyze true, verbose true, buffers true) ")
-    //echo(rawSql(query))
+    echo("explain (analyze true, verbose true, buffers true) ")
+    echo(rawSql(query))
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
     if (!allowSequential)

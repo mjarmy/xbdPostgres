@@ -158,7 +158,7 @@ internal class QueryBuilder {
   ** 'eq' AST node
   private Str eq(Str alias, Str path, Obj? val)
   {
-    // Misc
+    // Misc toStr()
     if ((val is Str) || (val is Uri))
     {
       x := eqParam(path, val.toStr)
@@ -178,6 +178,12 @@ internal class QueryBuilder {
       xn := eqParam(path, n.toFloat)
       xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
       return "((${alias}.nums @> @$xn::jsonb) and (${alias}.units @> @$xu::jsonb))"
+    }
+    // Bool
+    else if (val is Bool)
+    {
+      x := eqParam(path, val)
+      return "(${alias}.bools @> @$x::jsonb)"
     }
 
     // val type cannot be used for this node
@@ -226,7 +232,7 @@ internal class QueryBuilder {
 
       hasClause := has(alias, path)
 
-      // single-stabby plus cast gives us '::real'
+      // single-stabby plus cast
       // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
       xp := addParam(path)
       xv := addParam(n.toFloat)
@@ -236,6 +242,19 @@ internal class QueryBuilder {
       unitEqClause := "(${alias}.units @> @$xu::jsonb)"
 
       return "($hasClause and $cmpClause and $unitEqClause)"
+    }
+    // Bool
+    else if (val is Bool)
+    {
+      hasClause := has(alias, path)
+
+      // single-stabby plus cast
+      // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
+      xp := addParam(path)
+      xv := addParam(val)
+      cmpClause := "(((${alias}.bools -> @$xp)::boolean) $op @$xv)";
+
+      return "($hasClause and $cmpClause)"
     }
 
     // val type cannot be used for this node
@@ -296,6 +315,7 @@ internal class QueryBuilder {
     Uri#:"uris",
     Str#:"strs",
     Number#:"nums",
+    Bool#:"bools",
   ]
 }
 
