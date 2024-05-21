@@ -76,9 +76,6 @@ const class TestData
         "haven": M,
         "a": true,
         "b": `https://project-haystack.org/`,
-        "c": Date.fromStr("2021-03-22"),
-        "d": Time.fromStr("17:19:23"),
-        "e": DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
       ]),
       Etc.dictFromMap([
         "id": ref("z4"),
@@ -101,6 +98,18 @@ const class TestData
       Etc.dict3("id", ref("num-4"), "haven", M, "num", n(1,  "°F")),
       Etc.dict3("id", ref("num-5"), "haven", M, "num", n(2,  "°F")),
       Etc.dict3("id", ref("num-6"), "haven", M, "num", n(10, "°F")),
+
+      Etc.dict3("id", ref("bool-1"), "haven", M, "bool", true),
+      Etc.dict3("id", ref("bool-2"), "haven", M, "bool", false),
+
+      Etc.dict3("id", ref("date-1"), "haven", M, "foo", Date.fromStr("2021-03-22")),
+      Etc.dict3("id", ref("date-2"), "haven", M, "foo", Date.fromStr("2021-03-23")),
+
+      Etc.dict3("id", ref("time-1"), "haven", M, "bar", Time.fromStr("17:19:23")),
+      Etc.dict3("id", ref("time-2"), "haven", M, "bar", Time.fromStr("17:19:24")),
+
+      Etc.dict3("id", ref("dateTime-1"), "haven", M, "quux", DateTime.fromIso("2001-02-01T13:57:00.001-04:00")),
+      Etc.dict3("id", ref("dateTime-2"), "haven", M, "quux", DateTime.fromIso("2001-02-02T13:57:00.002-04:00")),
     ]
     extra.each |d| { recs.add(d->id, d) }
 

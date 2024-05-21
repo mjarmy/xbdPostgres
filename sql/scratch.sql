@@ -11,6 +11,14 @@
 select id, paths, nums, units
 from rec where (paths @> '{"haven"}'::text[]);
 
+select id, dates, times, dateTimes
+from rec 
+where 
+  (paths @> '{"haven"}'::text[])
+  and 
+  ((dates is not null) or (times is not null) or (dateTimes is not null))
+order by id;
+
 select rec.id from rec
 where
   (

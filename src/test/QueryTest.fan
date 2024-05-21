@@ -413,6 +413,15 @@ class QueryTest : Test
       ["equipRef", "siteRef", "area"])
   }
 
+  Void testDateTime()
+  {
+    a := DateTime.fromIso("2001-02-01T23:00:00-01:00")
+    b := DateTime.fromIso("2001-02-02T01:00:00+01:00")
+    verifyEq(a, b)
+    verifyFalse(a.date == b.date)
+    verifyFalse(a.time == b.time)
+  }
+
 //  Void testExplain()
 //  {
 //    exp := haven.explain("select * from rec")

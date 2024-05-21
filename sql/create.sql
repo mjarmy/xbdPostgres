@@ -20,7 +20,7 @@ create table rec (
   times     jsonb,
   dateTimes jsonb
 );
-create index rec_paths on rec using gin (paths); -- TODO jsonb_path_ops
+create index rec_paths on rec using gin (paths jsonb_path_ops);
 
 create index rec_refs      on rec using gin (refs      jsonb_path_ops);
 create index rec_strs      on rec using gin (strs      jsonb_path_ops);
