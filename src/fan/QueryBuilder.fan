@@ -14,8 +14,9 @@ using util
 **
 internal class QueryBuilder {
 
-  internal new make(Filter f)
+  internal new make(Haven haven, Filter f)
   {
+    this.haven = haven
     this.where = visit(f, 1)
   }
 
@@ -110,7 +111,7 @@ internal class QueryBuilder {
     Int indent)
   {
     pad := doIndent(indent)
-    paths := dottedPaths(fp)
+    paths := haven.refPaths(fp)
 
     // no joins
     if (paths.size == 1)
@@ -293,31 +294,6 @@ internal class QueryBuilder {
     return sb.toStr
   }
 
-  ** make a List of dotted Paths
-  internal static Str[] dottedPaths(FilterPath fp)
-  {
-    result := Str[,]
-
-    cur := Str[,]
-    for (i := 0; i < fp.size; i++)
-    {
-      tag := fp.get(i)
-      cur.add(tag)
-
-      // TODO whitelist
-      if ((tag == "id") || tag.endsWith("Ref") || tag.endsWith("Of"))
-      {
-        result.add(cur.join("."))
-        cur.clear
-      }
-    }
-
-    if (!cur.isEmpty)
-      result.add(cur.join("."))
-
-    return result
-  }
-
   internal Str addParam(Obj val)
   {
     name := "x${params.size}"
@@ -328,6 +304,8 @@ internal class QueryBuilder {
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
+
+  private Haven haven
 
   internal Str where
   internal Str:Obj params := Str:Obj[:]

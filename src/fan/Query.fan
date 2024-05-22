@@ -22,9 +22,9 @@ const class Query
   **
   ** Create a Query from a Filter
   **
-  static new fromFilter(Filter f)
+  static new fromFilter(Haven haven, Filter f)
   {
-    qb := QueryBuilder(f)
+    qb := QueryBuilder(haven, f)
 
     sql := StrBuf()
     sql.add("select rec.brio from rec\n")

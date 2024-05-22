@@ -43,9 +43,22 @@ class Haven
          (@source, @path, @target)"
      ).prepare
 
+    refTagInsert = conn.sql(
+      "insert into ref_tag (name) values (@name)"
+     ).prepare
+
     byIdSelect = conn.sql(
       "select brio from rec where id = @id"
     ).prepare;
+
+    // load ref tags
+    stmt := conn.sql("select name from ref_tag")
+    stmt.query.each |r|
+    {
+      name := r->name
+      refTagSet[name] = name
+    }
+    stmt.close
   }
 
   **
@@ -55,6 +68,7 @@ class Haven
   {
     recInsert.close
     pathRefInsert.close
+    refTagInsert.close
     byIdSelect.close
 
     conn.close
@@ -85,6 +99,16 @@ class Haven
 
     rec.refs.each |target, path|
     {
+      // update ref tags if need be
+      n := path.indexr(".")
+      lastTag := (n == null) ? path : path[(n+1)..-1]
+      if (!refTagSet.containsKey(lastTag))
+      {
+        refTagInsert.execute(["name": lastTag])
+        refTagSet[lastTag] = lastTag
+      }
+
+      // insert path ref
       pathRefInsert.execute([
         "source": rec.id,
         "path":   path,
@@ -163,6 +187,30 @@ class Haven
     return res
   }
 
+  ** make a List of dotted Paths ending in Refs, using the refTag whitelist
+  internal Str[] refPaths(FilterPath fp)
+  {
+    result := Str[,]
+
+    cur := Str[,]
+    for (i := 0; i < fp.size; i++)
+    {
+      tag := fp.get(i)
+      cur.add(tag)
+
+      if (refTagSet.containsKey(tag))
+      {
+        result.add(cur.join("."))
+        cur.clear
+      }
+    }
+
+    if (!cur.isEmpty)
+      result.add(cur.join("."))
+
+    return result
+  }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
@@ -172,6 +220,10 @@ class Haven
 
   private Statement? recInsert
   private Statement? pathRefInsert
+  private Statement? refTagInsert
   private Statement? byIdSelect
+
+  // Always mirrors the records in the ref_tag table
+  private Str:Str refTagSet := Str:Str[:]
 }
 

@@ -4,6 +4,11 @@ alter role xbd with login;
 create schema authorization xbd;
 set search_path to xbd;
 
+-- Ref_tag is the set of every tag that contains a ref
+create table ref_tag (
+  name text primary key
+);
+
 -- Recs
 create table rec (
   id text primary key,
