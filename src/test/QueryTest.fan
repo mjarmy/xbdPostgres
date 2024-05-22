@@ -724,6 +724,7 @@ class QueryTest : Test
   Void testSeqScan()
   {
     echo("==============================================================")
+
     doSelect(
       Filter("not point"),
       Query(
@@ -733,6 +734,80 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"point\"}"]),
         true)
+  }
+
+  Void testNiagara()
+  {
+    echo("==============================================================")
+
+    doSelect(
+      Filter("facets->min"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.paths @> @x0::text[]);",
+        Str:Obj["x0": "{\"facets.min\"}"]))
+
+    doSelect(
+      Filter("links->in4->fromRef->meta->inA->flags->linkTarget"),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+        Str:Obj[
+          "x0":"links.in4.fromRef",
+          "x1":"{\"meta.inA.flags.linkTarget\"}"]))
+
+    doSelect(
+      Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath"),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+           inner join path_ref p2 on p2.source = r1.id
+           inner join rec      r2 on r2.id     = p2.target
+           inner join path_ref p3 on p3.source = r2.id
+           inner join rec      r3 on r3.id     = p3.target
+         where
+           (
+             ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
+             and
+             ((p2.path_ = @x2) and (p3.path_ = @x3) and (r3.paths @> @x4::text[]))
+           );",
+        Str:Obj[
+          "x0":"links.in4.fromRef",
+          "x1":"{\"meta.inA.flags.linkTarget\"}",
+          "x2":"parentRef",
+          "x3":"parentRef",
+          "x4":"{\"slotPath\"}"]))
+
+    doSelect(
+      Filter("parentRef->parentRef->slotPath == \"slot:/AHUSystem/vavs\""),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+           inner join path_ref p2 on p2.source = r1.id
+           inner join rec      r2 on r2.id     = p2.target
+         where
+           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb));",
+        Str:Obj[
+          "x0":"parentRef",
+          "x1":"parentRef",
+          "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
+
+    doSelect(
+      Filter("facets->precision == 1"),
+      Query(
+        "select rec.brio from rec
+         where
+           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb));",
+        Str:Obj[
+          "x0":"{\"facets.precision\":1.0}",
+          "x1":"{\"facets.precision\":null}",
+        ]))
   }
 
   private Void doSelect(
