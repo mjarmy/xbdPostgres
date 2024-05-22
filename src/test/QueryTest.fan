@@ -432,6 +432,130 @@ class QueryTest : Test
       }
     }
 
+    //-----------------
+    // Times
+
+    ["foo":"foo", "quux->time":"quux.time"].each | dotted, arrows |
+    {
+      // ==
+      doSelect(
+        Filter("haven and $arrows == 17:19:23"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               (rec.times @> @x1::jsonb)
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"$dotted\":\"17:19:23\"}",
+          ]))
+
+      // !=
+      doSelect(
+        Filter("haven and $arrows != 17:19:23"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.times is null) or (not (rec.times @> @x2::jsonb))))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"$dotted\"}",
+            "x2":"{\"$dotted\":\"17:19:23\"}",
+          ]))
+
+      // cmp
+      ["<", "<=", ">", ">="].each |op|
+      {
+        doSelect(
+          Filter("haven and $arrows $op 17:19:23"),
+          Query(
+            "select rec.brio from rec
+             where
+               (
+                 (rec.paths @> @x0::text[])
+                 and
+                 ((rec.paths @> @x1::text[]) and ((rec.times ->> @x2) $op @x3))
+               );",
+            Str:Obj[
+              "x0":"{\"haven\"}",
+              "x1":"{\"$dotted\"}",
+              "x2":dotted,
+              "x3":"17:19:23",
+            ]))
+      }
+    }
+
+    //-----------------
+    // DateTimes
+
+    ts := DateTime.fromIso("2021-03-22T17:19:23.000-04:00")
+
+    // ==
+    doSelect(
+      Filter.has("haven").and(Filter.eq("quux", ts)),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.dateTimes @> @x1::jsonb)
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"quux\":669763163000}",
+        ]))
+
+    // !=
+    doSelect(
+      Filter.has("haven").and(Filter.ne("quux", ts)),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.paths @> @x1::text[]) and ((rec.dateTimes is null) or (not (rec.dateTimes @> @x2::jsonb))))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"quux\"}",
+          "x2":"{\"quux\":669763163000}",
+        ]))
+
+    // cmp
+    [
+      "<":  Filter.lt("quux", ts),
+      "<=": Filter.le("quux", ts),
+      ">":  Filter.gt("quux", ts),
+      ">=": Filter.ge("quux", ts)
+    ].each |f, op|
+    {
+      doSelect(
+        Filter.has("haven").and(f),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and (((rec.dateTimes -> @x2)::bigint) $op @x3))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"quux\"}",
+            "x2":"quux",
+            "x3":669763163000,
+          ]))
+    }
+
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
     //filter := Filter("haven and num < 2")
     //query := Query(filter)

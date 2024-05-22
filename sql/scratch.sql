@@ -203,3 +203,4 @@ where
   );
 
 
+select pg_typeof(669849564000);

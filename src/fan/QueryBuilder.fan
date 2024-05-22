@@ -185,6 +185,13 @@ internal class QueryBuilder {
       x := eqParam(path, val)
       return "(${alias}.bools @> @$x::jsonb)"
     }
+    // DateTime
+    else if (val is DateTime)
+    {
+      DateTime ts := (DateTime) val
+      xn := eqParam(path, Duration(ts.ticks).toMillis)
+      return "(${alias}.dateTimes @> @$xn::jsonb)"
+    }
 
     // val type cannot be used for this node
     else
@@ -254,6 +261,21 @@ internal class QueryBuilder {
       xp := addParam(path)
       xv := addParam(val)
       cmpClause := "(((${alias}.bools -> @$xp)::boolean) $op @$xv)";
+
+      return "($hasClause and $cmpClause)"
+    }
+    // DateTime
+    else if (val is DateTime)
+    {
+      DateTime ts := (DateTime) val
+
+      hasClause := has(alias, path)
+
+      // single-stabby plus cast
+      // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
+      xp := addParam(path)
+      xv := addParam(Duration(ts.ticks).toMillis)
+      cmpClause := "(((${alias}.dateTimes -> @$xp)::bigint) $op @$xv)";
 
       return "($hasClause and $cmpClause)"
     }
