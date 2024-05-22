@@ -581,6 +581,25 @@ class QueryTest : Test
     echo("==============================================================")
   }
 
+  Void testMismatchedType()
+  {
+    doSelect(
+      Filter("haven and str == 2"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+           );",
+        Str:Obj[
+          "x0":"{\"haven\"}",
+          "x1":"{\"str\":2.0}",
+          "x2":"{\"str\":null}",
+        ]))
+  }
+
   private Void doSelect(
     Filter filter,
     Query expectedQuery,
