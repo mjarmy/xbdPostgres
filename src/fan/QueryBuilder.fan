@@ -159,7 +159,7 @@ internal class QueryBuilder {
   private Str eq(Str alias, Str path, Obj? val)
   {
     // Misc toStr()
-    if ((val is Str) || (val is Uri))
+    if ((val is Str) || (val is Uri) || (val is Date) || (val is Time))
     {
       x := eqParam(path, val.toStr)
       col := columnNames[val.typeof]
@@ -212,16 +212,17 @@ internal class QueryBuilder {
   ** 'cmp' AST node >,>=,<,<=
   private Str cmp(Str alias, Str path, Obj? val, Str op)
   {
-    // Str
-    if (val is Str)
+    // Misc toStr()
+    if ((val is Str) || (val is Date) || (val is Time))
     {
       hasClause := has(alias, path)
+      col := columnNames[val.typeof]
 
       // double-stabby gives us '::text'
       // https://hashrocket.com/blog/posts/dealing-with-nested-json-objects-in-postgresql
       xp := addParam(path)
-      xv := addParam(val)
-      cmpClause := "((${alias}.strs ->> @$xp) $op @$xv)";
+      xv := addParam(val.toStr)
+      cmpClause := "((${alias}.$col ->> @$xp) $op @$xv)";
 
       return "($hasClause and $cmpClause)"
     }
@@ -316,6 +317,9 @@ internal class QueryBuilder {
     Str#:"strs",
     Number#:"nums",
     Bool#:"bools",
+    Date#:"dates",
+    Time#:"times",
+    DateTime#:"dateTimes",
   ]
 }
 

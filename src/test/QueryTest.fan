@@ -369,6 +369,67 @@ class QueryTest : Test
             "x2":"bool",
             "x3":true,
           ]))
+
+    }
+
+    //-----------------
+    // Dates
+
+    ["foo":"foo", "quux->date":"quux.date"].each | dotted, arrows |
+    {
+      // ==
+      doSelect(
+        Filter("haven and $arrows == 2021-03-22"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               (rec.dates @> @x1::jsonb)
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"$dotted\":\"2021-03-22\"}",
+          ]))
+
+      // !=
+      doSelect(
+        Filter("haven and $arrows != 2021-03-22"),
+        Query(
+          "select rec.brio from rec
+           where
+             (
+               (rec.paths @> @x0::text[])
+               and
+               ((rec.paths @> @x1::text[]) and ((rec.dates is null) or (not (rec.dates @> @x2::jsonb))))
+             );",
+          Str:Obj[
+            "x0":"{\"haven\"}",
+            "x1":"{\"$dotted\"}",
+            "x2":"{\"$dotted\":\"2021-03-22\"}",
+          ]))
+
+      // cmp
+      ["<", "<=", ">", ">="].each |op|
+      {
+        doSelect(
+          Filter("haven and $arrows $op 2021-03-22"),
+          Query(
+            "select rec.brio from rec
+             where
+               (
+                 (rec.paths @> @x0::text[])
+                 and
+                 ((rec.paths @> @x1::text[]) and ((rec.dates ->> @x2) $op @x3))
+               );",
+            Str:Obj[
+              "x0":"{\"haven\"}",
+              "x1":"{\"$dotted\"}",
+              "x2":dotted,
+              "x3":"2021-03-22",
+            ]))
+      }
     }
 
     //echo("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")

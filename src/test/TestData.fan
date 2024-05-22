@@ -108,8 +108,8 @@ const class TestData
       Etc.dict3("id", ref("time-1"), "haven", M, "bar", Time.fromStr("17:19:23")),
       Etc.dict3("id", ref("time-2"), "haven", M, "bar", Time.fromStr("17:19:24")),
 
-      Etc.dict3("id", ref("dateTime-1"), "haven", M, "quux", DateTime.fromIso("2001-02-01T13:57:00.001-04:00")),
-      Etc.dict3("id", ref("dateTime-2"), "haven", M, "quux", DateTime.fromIso("2001-02-02T13:57:00.002-04:00")),
+      Etc.dict3("id", ref("dateTime-1"), "haven", M, "quux", DateTime.fromIso("2021-03-22T17:19:23.000-04:00")),
+      Etc.dict3("id", ref("dateTime-2"), "haven", M, "quux", DateTime.fromIso("2021-03-23T17:19:24.000-04:00")),
     ]
     extra.each |d| { recs.add(d->id, d) }
 
