@@ -600,6 +600,141 @@ class QueryTest : Test
         ]))
   }
 
+  Void testAlpha()
+  {
+    echo("==============================================================")
+
+    doSelect(
+      Filter("ahu"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.paths @> @x0::text[]);",
+        Str:Obj["x0": "{\"ahu\"}"]))
+
+    doSelect(
+      Filter("chilledWaterRef->chilled"),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+        Str:Obj[
+          "x0":"chilledWaterRef",
+          "x1":"{\"chilled\"}"]))
+
+    doSelect(
+      Filter("ahu and elec"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (rec.paths @> @x0::text[])
+             and
+             (rec.paths @> @x1::text[])
+           );",
+        Str:Obj[
+          "x0":"{\"ahu\"}",
+          "x1":"{\"elec\"}"]))
+
+    doSelect(
+      Filter("chilled and pump and sensor and equipRef->siteRef->site"),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+           inner join path_ref p2 on p2.source = r1.id
+           inner join rec      r2 on r2.id     = p2.target
+         where
+           (
+             (
+               (
+                 (rec.paths @> @x0::text[])
+                 and
+                 ((p1.path_ = @x1) and (p2.path_ = @x2) and (r2.paths @> @x3::text[]))
+               )
+               and
+               (rec.paths @> @x4::text[])
+             )
+             and
+             (rec.paths @> @x5::text[])
+           );",
+        Str:Obj[
+          "x0":"{\"chilled\"}",
+          "x1":"equipRef",
+          "x2":"siteRef",
+          "x3":"{\"site\"}",
+          "x4":"{\"pump\"}",
+          "x5":"{\"sensor\"}"]))
+
+    doSelect(
+      Filter("custom->description == \"Clg_Valve_Cmd\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.strs @> @x0::jsonb);",
+        Str:Obj[
+          "x0": """{"custom.description":"Clg_Valve_Cmd"}"""
+        ]))
+
+    doSelect(
+      Filter("dis == \"Alpha Airside AHU-4\""),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.strs @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"dis\":\"Alpha Airside AHU-4\"}"]))
+
+    doSelect(
+      Filter("geoElevation == 2956m"),
+      Query(
+        "select rec.brio from rec
+         where
+           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb));",
+        Str:Obj[
+          "x0":"{\"geoElevation\":2956.0}",
+          "x1":"{\"geoElevation\":\"m\"}"
+        ]))
+
+    doSelect(
+      Filter("equipRef == @a-0001"),
+      Query(
+        "select rec.brio from rec
+         where
+           (rec.refs @> @x0::jsonb);",
+        Str:Obj[
+          "x0":"{\"equipRef\":\"a-0001\"}"
+        ]))
+
+    doSelect(
+      Filter("id->area"),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+        Str:Obj[
+          "x0":"id",
+          "x1":"{\"area\"}"]))
+  }
+
+  Void testSeqScan()
+  {
+    echo("==============================================================")
+    doSelect(
+      Filter("not point"),
+      Query(
+        "select rec.brio from rec
+         where
+           (not (rec.paths @> @x0::text[]));",
+        Str:Obj[
+          "x0":"{\"point\"}"]),
+        true)
+  }
+
   private Void doSelect(
     Filter filter,
     Query expectedQuery,

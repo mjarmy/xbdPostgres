@@ -30,7 +30,7 @@ class QueryTest : Test
   {
     echo("==============================================================")
 
-    doTest(
+    doSelect(
       Filter("ahu"),
       Query(
         "select rec.brio from rec
@@ -38,7 +38,7 @@ class QueryTest : Test
            (rec.paths @> @x0::text[]);",
         Str:Obj["x0": "{\"ahu\"}"]))
 
-    doTest(
+    doSelect(
       Filter("facets->min"),
       Query(
         "select rec.brio from rec
@@ -46,11 +46,11 @@ class QueryTest : Test
            (rec.paths @> @x0::text[]);",
         Str:Obj["x0": "{\"facets.min\"}"]))
 
-    doTest(
+    doSelect(
       Filter("chilledWaterRef->chilled"),
       Query(
         "select rec.brio from rec
-           inner join pathref p1 on p1.source = rec.id
+           inner join path_ref p1 on p1.source = rec.id
            inner join rec     r1 on r1.id     = p1.target
          where
            ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
@@ -58,11 +58,11 @@ class QueryTest : Test
           "x0":"chilledWaterRef",
           "x1":"{\"chilled\"}"]))
 
-    doTest(
+    doSelect(
       Filter("links->in4->fromRef->meta->inA->flags->linkTarget"),
       Query(
         "select rec.brio from rec
-           inner join pathref p1 on p1.source = rec.id
+           inner join path_ref p1 on p1.source = rec.id
            inner join rec     r1 on r1.id     = p1.target
          where
            ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
@@ -70,7 +70,7 @@ class QueryTest : Test
           "x0":"links.in4.fromRef",
           "x1":"{\"meta.inA.flags.linkTarget\"}"]))
 
-    doTest(
+    doSelect(
       Filter("ahu and elec"),
       Query(
         "select rec.brio from rec
@@ -84,13 +84,13 @@ class QueryTest : Test
           "x0":"{\"ahu\"}",
           "x1":"{\"elec\"}"]))
 
-    doTest(
+    doSelect(
       Filter("chilled and pump and sensor and equipRef->siteRef->site"),
       Query(
         "select rec.brio from rec
-           inner join pathref p1 on p1.source = rec.id
+           inner join path_ref p1 on p1.source = rec.id
            inner join rec     r1 on r1.id     = p1.target
-           inner join pathref p2 on p2.source = r1.id
+           inner join path_ref p2 on p2.source = r1.id
            inner join rec     r2 on r2.id     = p2.target
          where
            (
@@ -114,15 +114,15 @@ class QueryTest : Test
           "x4":"{\"pump\"}",
           "x5":"{\"sensor\"}"]))
 
-    doTest(
+    doSelect(
       Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath"),
       Query(
         "select rec.brio from rec
-           inner join pathref p1 on p1.source = rec.id
+           inner join path_ref p1 on p1.source = rec.id
            inner join rec     r1 on r1.id     = p1.target
-           inner join pathref p2 on p2.source = r1.id
+           inner join path_ref p2 on p2.source = r1.id
            inner join rec     r2 on r2.id     = p2.target
-           inner join pathref p3 on p3.source = r2.id
+           inner join path_ref p3 on p3.source = r2.id
            inner join rec     r3 on r3.id     = p3.target
          where
            (
@@ -137,7 +137,7 @@ class QueryTest : Test
           "x3":"parentRef",
           "x4":"{\"slotPath\"}"]))
 
-    doTest(
+    doSelect(
       Filter("custom->description == \"Clg_Valve_Cmd\""),
       Query(
         "select rec.brio from rec
@@ -146,7 +146,7 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"custom\":{\"description\":\"Clg_Valve_Cmd\"}}"]))
 
-    doTest(
+    doSelect(
       Filter("dis == \"Alpha Airside AHU-4\""),
       Query(
         "select rec.brio from rec
@@ -155,13 +155,13 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"dis\":\"Alpha Airside AHU-4\"}"]))
 
-    doTest(
+    doSelect(
       Filter("parentRef->parentRef->slotPath == \"slot:/AHUSystem/vavs\""),
       Query(
         "select rec.brio from rec
-           inner join pathref p1 on p1.source = rec.id
+           inner join path_ref p1 on p1.source = rec.id
            inner join rec     r1 on r1.id     = p1.target
-           inner join pathref p2 on p2.source = r1.id
+           inner join path_ref p2 on p2.source = r1.id
            inner join rec     r2 on r2.id     = p2.target
          where
            ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.hayson @> @x2::jsonb));",
@@ -170,7 +170,7 @@ class QueryTest : Test
           "x1":"parentRef",
           "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
 
-    doTest(
+    doSelect(
       Filter("geoElevation == 2956m"),
       Query(
         "select rec.brio from rec
@@ -179,7 +179,7 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"area\":151455}"]))
 
-    doTest(
+    doSelect(
       Filter("facets->precision == 1"),
       Query(
         "select rec.brio from rec
@@ -188,7 +188,7 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"facets\":{\"precision\":1}}"]))
 
-    doTest(
+    doSelect(
       Filter("equipRef == @a-0001"),
       Query(
         "select rec.brio from rec
@@ -197,11 +197,11 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"equipRef\":{\"_kind\":\"ref\", \"val\":\"a-0001\"}}"]))
 
-    doTest(
+    doSelect(
       Filter("id->area"),
       Query(
         "select rec.brio from rec
-           inner join pathref p1 on p1.source = rec.id
+           inner join path_ref p1 on p1.source = rec.id
            inner join rec     r1 on r1.id     = p1.target
          where
            ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
@@ -209,7 +209,7 @@ class QueryTest : Test
           "x0":"id",
           "x1":"{\"area\"}"]))
 
-    doTest(
+    doSelect(
       Filter("not point"),
       Query(
         "select rec.brio from rec
@@ -219,7 +219,7 @@ class QueryTest : Test
           "x0":"{\"point\"}"]),
         true)
 
-    doTest(
+    doSelect(
       Filter("b != 1"),
       Query(
         "select rec.brio from rec
@@ -229,7 +229,7 @@ class QueryTest : Test
           "x0":"{\"b\"}",
           "x1":"{\"b\":1}"]))
 
-    doTest(
+    doSelect(
       Filter("c->d != 1"),
       Query(
         "select rec.brio from rec
@@ -239,7 +239,7 @@ class QueryTest : Test
           "x0":"{\"c.d\"}",
           "x1":"{\"c\":{\"d\":1}}"]))
 
-    doTest(
+    doSelect(
       Filter("a == 1 or b == 2"),
       Query(
         "select rec.brio from rec
@@ -253,7 +253,7 @@ class QueryTest : Test
           "x0":"{\"a\":1}",
           "x1":"{\"b\":2}"]))
 
-    doTest(
+    doSelect(
       Filter("e == true"),
       Query(
         "select rec.brio from rec
@@ -262,7 +262,7 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"e\":true}"]))
 
-    doTest(
+    doSelect(
       Filter("e != true"),
       Query(
         "select rec.brio from rec
@@ -272,7 +272,7 @@ class QueryTest : Test
           "x0":"{\"e\"}",
           "x1":"{\"e\":true}"]))
 
-    doTest(
+    doSelect(
       Filter("f == `https://project-haystack.org`"),
       Query(
         "select rec.brio from rec
@@ -281,7 +281,7 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"f\":{\"_kind\":\"uri\", \"val\":\"https://project-haystack.org/\"}}"]))
 
-    doTest(
+    doSelect(
       Filter("f != `https://project-haystack.org`"),
       Query(
         "select rec.brio from rec
@@ -291,7 +291,7 @@ class QueryTest : Test
           "x0":"{\"f\"}",
           "x1":"{\"f\":{\"_kind\":\"uri\", \"val\":\"https://project-haystack.org/\"}}"]))
 
-    doTest(
+    doSelect(
       Filter("x == 2021-03-22"),
       Query(
         "select rec.brio from rec
@@ -300,7 +300,7 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"x\":{\"_kind\":\"date\", \"val\":\"2021-03-22\"}}"]))
 
-    doTest(
+    doSelect(
       Filter("y == 17:19:23"),
       Query(
         "select rec.brio from rec
@@ -311,7 +311,7 @@ class QueryTest : Test
 
     dt := DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
     millis := Duration(dt.ticks).toMillis
-    doTest(
+    doSelect(
       Filter.eq("z", dt),
       Query(
         "select rec.brio from rec
@@ -320,7 +320,7 @@ class QueryTest : Test
         Str:Obj[
           "x0":"{\"z\":{\"_kind\":\"dateTime\", \"millis\":$millis}}"]))
 
-    doTest(
+    doSelect(
       Filter.ne("z", dt),
       Query(
         "select rec.brio from rec
@@ -347,7 +347,7 @@ class QueryTest : Test
     echo("==============================================================")
   }
 
-  Void doTest(
+  Void doSelect(
     Filter filter,
     Query expectedQuery,
     Bool allowSequential := false)
@@ -428,7 +428,7 @@ class QueryTest : Test
 
     exp = haven.explain(
       "select * from rec
-         inner join pathref p1 on p1.source = rec.id
+         inner join path_ref p1 on p1.source = rec.id
          inner join rec     r1 on r1.id     = p1.target
        where
          (p1.path_ = 'chilledWaterRef') and
