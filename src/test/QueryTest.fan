@@ -810,6 +810,40 @@ class QueryTest : Test
         ]))
   }
 
+  Void testDemogen()
+  {
+    echo("==============================================================")
+
+    doSelect(
+      Filter("elec and sensor and equipRef->siteRef->area < 10000ft²"),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+           inner join path_ref p2 on p2.source = r1.id
+           inner join rec      r2 on r2.id     = p2.target
+         where
+           (
+             (
+               (rec.paths @> @x0::text[])
+               and
+               (rec.paths @> @x1::text[])
+             )
+             and
+             ((p1.path_ = @x2) and (p2.path_ = @x3) and ((r2.paths @> @x4::text[]) and (((r2.nums -> @x5)::real) < @x6) and (r2.units @> @x7::jsonb)))
+           );",
+        Str:Obj[
+          "x0":"{\"elec\"}",
+          "x1":"{\"sensor\"}",
+          "x2":"equipRef",
+          "x3":"siteRef",
+          "x4":"{\"area\"}",
+          "x5":"area",
+          "x6":10000.0f,
+          "x7":"{\"area\":\"ft\\u00b2\"}"
+        ]))
+  }
+
   private Void doSelect(
     Filter filter,
     Query expectedQuery,

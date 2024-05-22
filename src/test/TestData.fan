@@ -26,6 +26,15 @@ const class TestData
       recs.add(d->id, d)
     }
 
+    // alpha
+    Grid demogen := ZincReader(File(`test_data/demogen.zinc`).in).readVal
+    demogen.each |d, i|
+    {
+      if (recs.containsKey(d->id))
+        throw Err("oops ${d->id}")
+      recs.add(d->id, d)
+    }
+
     // TODO sys::IOErr: Unsupported JSON float literal: 'INF'
     // niagara
     f := File(`test_data/jason.txt`)
