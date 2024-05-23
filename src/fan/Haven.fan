@@ -183,16 +183,24 @@ class Haven
     stmt := conn.sql(q.sql).prepare
     stmt.query(q.params).each |r|
     {
-      // The queries are always ordered by rec.id, so we can use this mechanism
-      // to discard duplicate records.
-      id := r->id
-      if (id != prevId)
+      idCol := r.col("id", false)
+
+      // If there is no id column, then the resulset is not ordered
+      if (idCol == null)
       {
         res.add(BrioReader(((Buf)r->brio).in).readDict)
       }
-
-      // Save the last id
-      prevId = id
+      // Otherwise, the result is ordered by id, so we track the previous id
+      // to discard duplicate records.
+      else
+      {
+        id := r.get(idCol)
+        if (id != prevId)
+        {
+          res.add(BrioReader(((Buf)r->brio).in).readDict)
+        }
+        prevId = id
+      }
     }
     stmt.close
 
