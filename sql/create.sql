@@ -11,11 +11,9 @@ create table ref_tag (
 
 -- Recs
 create table rec (
-  id text primary key,
-  brio bytea,
-  paths text[] not null,
-
-  refs      jsonb not null,
+  id text   primary key,
+  brio      bytea  not null,
+  paths     text[] not null,
   strs      jsonb,
   nums      jsonb,
   units     jsonb,
@@ -25,9 +23,7 @@ create table rec (
   times     jsonb,
   dateTimes jsonb
 );
-create index rec_paths on rec using gin (paths);
-
-create index rec_refs      on rec using gin (refs      jsonb_path_ops);
+create index rec_paths     on rec using gin (paths);
 create index rec_strs      on rec using gin (strs      jsonb_path_ops);
 create index rec_nums      on rec using gin (nums      jsonb_path_ops);
 create index rec_units     on rec using gin (units     jsonb_path_ops);

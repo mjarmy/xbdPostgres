@@ -8,8 +8,10 @@
   --dates,
   --times,
   --dateTimes
-select id, paths, nums, units
-from rec where (paths @> '{"haven"}'::text[]);
+select r.id, r.paths, p.path_, p.target
+from rec r
+  inner join path_ref p on p.source = r.id
+where (r.paths @> '{"haven"}'::text[]);
 
 select id, dates, times, dateTimes
 from rec 

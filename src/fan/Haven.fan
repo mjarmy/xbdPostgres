@@ -26,12 +26,12 @@ class Haven
     recInsert = conn.sql(
       "insert into rec (
          id, brio, paths,
-         refs, strs, nums, units,
+         strs, nums, units,
          bools, uris,
          dates, times, dateTimes)
        values (
          @id, @brio, @paths,
-         @refs::jsonb, @strs::jsonb, @nums::jsonb, @units::jsonb,
+         @strs::jsonb, @nums::jsonb, @units::jsonb,
          @bools::jsonb, @uris::jsonb,
          @dates::jsonb, @times::jsonb, @dateTimes::jsonb)"
      ).prepare
@@ -86,7 +86,6 @@ class Haven
       "id":        rec.id,
       "brio":      BrioWriter.valToBuf(dict),
       "paths":     rec.paths,
-      "refs":      JsonOutStream.writeJsonToStr(rec.refs),
       "strs":      (rec.strs      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.strs),
       "nums":      (rec.nums      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.nums),
       "units":     (rec.units     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.units),
@@ -97,7 +96,7 @@ class Haven
       "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes)
     ])
 
-    rec.refs.each |target, path|
+    rec.refs.each |targets, path|
     {
       // update ref tags if need be
       n := path.indexr(".")
@@ -108,12 +107,15 @@ class Haven
         refTagSet[lastTag] = lastTag
       }
 
-      // insert path ref
-      pathRefInsert.execute([
-        "source": rec.id,
-        "path":   path,
-        "target": target
-      ])
+      // insert path refs
+      targets.each | target |
+      {
+        pathRefInsert.execute([
+          "source": rec.id,
+          "path":   path,
+          "target": target
+        ])
+      }
     }
 
     conn.commit
