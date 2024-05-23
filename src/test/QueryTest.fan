@@ -699,13 +699,26 @@ class QueryTest : Test
         ]))
 
     doSelect(
-      Filter("equipRef == @a-0001"),
+      Filter("equipRef == @a-0039"),
       Query(
         "select rec.brio from rec
          where
            (rec.refs @> @x0::jsonb);",
         Str:Obj[
-          "x0":"{\"equipRef\":\"a-0001\"}"
+          "x0":"{\"equipRef\":\"a-0039\"}"
+        ]))
+
+    doSelect(
+      Filter("equipRef->dis == \"Alpha Airside AHU-4\""),
+      Query(
+        "select rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb));",
+        Str:Obj[
+          "x0":"equipRef",
+          "x1":"{\"dis\":\"Alpha Airside AHU-4\"}"
         ]))
 
     doSelect(
@@ -808,6 +821,61 @@ class QueryTest : Test
           "x0":"{\"facets.precision\":1.0}",
           "x1":"{\"facets.precision\":null}",
         ]))
+  }
+
+  Void testListOfRefs()
+  {
+    echo("==============================================================")
+
+    f := Filter("midRef == @mid-1")
+    expected := testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    f = Filter("midRef == @mid-2")
+    expected = testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    f = Filter("midRef->dis == \"Mid 1\"")
+    expected = testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    f = Filter("midRef->dis == \"Mid 2\"")
+    expected = testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    f = Filter("midRef->topRef == @top-1")
+    expected = testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    f = Filter("midRef->topRef == @top-2")
+    expected = testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    f = Filter("midRef->topRef->dis == \"Top 1\"")
+    expected = testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    f = Filter("midRef->topRef->dis == \"Top 2\"")
+    expected = testData.filter(f)
+    echo("--------------")
+    echo(f)
+    echo(expected.map |Dict v->Ref| { v.id })
+
+    echo()
   }
 
   Void testDemogen()

@@ -204,3 +204,35 @@ where
 
 
 select pg_typeof(669849564000);
+
+select '["a", "b", "c"]'::jsonb ? 'b';
+select '{"a":"b"}'::jsonb ? 'a';
+
+select '["a","b"]'::jsonb @> '{"a"}'::jsonb;
+
+select refs from rec
+where 
+
+------------------------------------
+-- list of refs
+
+-- midRef == @mid-1
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+  (rec.refs @> '{"midRef":"mid-1"}'::jsonb);
+
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where exists 
+(select 1 from path_ref 
+where 
+  source = rec.id
+  and path_ = 'midRef' 
+  and target = 'mid-1');
+
+select id, refs
+from rec where (paths @> '{"haven"}'::text[]);
+
+select * from path_ref where path_ = 'midRef';
+
