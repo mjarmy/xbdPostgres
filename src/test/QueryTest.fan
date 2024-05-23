@@ -988,49 +988,51 @@ class QueryTest : Test
   {
     echo("--------------------------------------------------------------")
     echo("Filter: '$filter'")
-    echo
+    //echo
 
     // Dump the expected query
-    echo("-------------------------------------")
-    echo("expected query")
-    echo
-    dumpQuery(expectedQuery)
-    echo
+    //echo("-------------------------------------")
+    //echo("expected query")
+    //echo
+    //dumpQuery(expectedQuery)
+    //echo
 
-    // Construct the Query and dump it
+    // Construct the Query
     query := Query.fromFilter(haven, filter)
-    echo("-------------------------------------")
-    echo("found query")
-    echo
-    dumpQuery(query)
-    echo
+    //echo("-------------------------------------")
+    //echo("found query")
+    //echo
+    //dumpQuery(query)
+    //echo
 
-    // dump the raw sql
+    // get the raw sql
     raw := rawSql(query)
-    echo("-------------------------------------")
-    echo("explain (analyze true, verbose true, buffers true) ")
-    echo(raw)
-    echo
+    //echo("-------------------------------------")
+    //echo("explain (analyze true, verbose true, buffers true) ")
+    //echo(raw)
+    //echo
 
     // make sure the queries are equal
-    echo("-------------------------------------")
-    echo("sql eq ${expectedQuery.sql == query.sql}")
-    echo("params eq ${expectedQuery.params == query.params}")
-    echo
+    //echo("-------------------------------------")
+    //echo("sql eq ${expectedQuery.sql == query.sql}")
+    //echo("params eq ${expectedQuery.params == query.params}")
+    //echo
     verifyEq(expectedQuery, query)
 
     // Explain the Query's raw sql to make sure its not a sequential scan
-    echo("-------------------------------------")
+    //echo("-------------------------------------")
     explained := explain(raw)
+
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
     if (!allowSequential)
       verifyFalse(seq)
+
     explained.each |s| {
       if (s.startsWith("Execution Time:"))
         echo(s)
     }
-    echo
+    //echo
 
     // Fetch the expected data
     expected := testData.filter(filter)
@@ -1039,17 +1041,26 @@ class QueryTest : Test
     found := haven.select(query)
 
     // Make sure the results match the test data
-    echo("-------------------------------------")
+    //echo("-------------------------------------")
     verifyDictsEq(expected, found)
   }
 
-  Void testDateTime()
+  private Void verifyDictsEq(Dict[] expected, Dict[] found)
   {
-    a := DateTime.fromIso("2001-02-01T23:00:00-01:00")
-    b := DateTime.fromIso("2001-02-02T01:00:00+01:00")
-    verifyEq(a, b)
-    verifyFalse(a.date == b.date)
-    verifyFalse(a.time == b.time)
+    expected.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+    found.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+
+    //echo("expected ${expected.size} rows")
+    //echo(expected.map |Dict v->Ref| { v.id })
+    //echo("found ${found.size} rows")
+    //echo(found.map |Dict v->Ref| { v.id })
+
+    verifyEq(expected.size, found.size)
+    expected.each |dict, i|
+    {
+      //echo("$i ${expected[i]}, ${found[i]} --> ${expected[i] == found[i]}")
+      verifyTrue(Etc.dictEq(expected[i], found[i]))
+    }
   }
 
   **
@@ -1092,24 +1103,6 @@ class QueryTest : Test
         res = true
     }
     return res
-  }
-
-  private Void verifyDictsEq(Dict[] expected, Dict[] found)
-  {
-    expected.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
-    found.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
-
-    echo("expected ${expected.size} rows")
-    //echo(expected.map |Dict v->Ref| { v.id })
-    echo("found ${found.size} rows")
-    //echo(found.map |Dict v->Ref| { v.id })
-
-    verifyEq(expected.size, found.size)
-    expected.each |dict, i|
-    {
-      //echo("$i ${expected[i]}, ${found[i]} --> ${expected[i] == found[i]}")
-      verifyTrue(Etc.dictEq(expected[i], found[i]))
-    }
   }
 
   private static Void dumpQuery(Query query)

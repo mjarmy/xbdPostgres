@@ -9,11 +9,11 @@
 using haystack
 
 **
-** Query translates a haystack Filter to parameterized SQL
+** Query is a haystack Filter that has been translated to parameterized SQL
 **
 const class Query
 {
-  new make(Str sql, Str:Obj params)
+  internal new make(Str sql, Str:Obj params)
   {
     this.sql = sql
     this.params = params

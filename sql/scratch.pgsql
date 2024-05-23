@@ -1,4 +1,4 @@
-  --paths, 
+  --paths,
   --refs,
   --strs,
   --nums,
@@ -14,10 +14,10 @@ from rec r
 where (r.paths @> '{"haven"}'::text[]);
 
 select id, dates, times, dateTimes
-from rec 
-where 
+from rec
+where
   (paths @> '{"haven"}'::text[])
-  and 
+  and
   ((dates is not null) or (times is not null) or (dateTimes is not null))
 order by id;
 
@@ -45,8 +45,8 @@ where
     ((rec.paths @> '{"nest.bar"}'::text[]) and ((rec.strs->'nest.bar')::text < 'y'))
   );
 
-select 
-  rec.id, 
+select
+  rec.id,
   rec.strs->'nest.bar' as val,
   (rec.strs @> '{"nest.bar":"y"}'::jsonb) as eq,
   ((rec.strs->>'nest.bar')::text < 'y') as lt
@@ -82,8 +82,8 @@ where
 explain (analyze true, verbose true, buffers true)
 select rec.id from rec
 where
-    (rec.paths @> '{"links.inA.fromSlot"}'::text[]) 
-    and 
+    (rec.paths @> '{"links.inA.fromSlot"}'::text[])
+    and
     ((rec.strs->>'links.inA.fromSlot')::text < 'out');
 
 -----------------------------------
@@ -98,11 +98,11 @@ where
 explain (analyze true, verbose true, buffers true)
 select rec.id, rec.nums from rec
 where
-    (rec.paths @> '{"inA.value"}'::text[]) 
-    and 
+    (rec.paths @> '{"inA.value"}'::text[])
+    and
     ((rec.nums->>'inA.value')::real < 67.0);
 
--- num eq 
+-- num eq
 explain (analyze true, verbose true, buffers true)
 select rec.id from rec
 where
@@ -120,7 +120,7 @@ where
 select rec.brio from rec
 where
   (
-    ((rec.paths @> @x1::text[]) 
+    ((rec.paths @> @x1::text[])
       and ((rec.strs->>@x2)::text < @x3))
   );
 
@@ -128,9 +128,9 @@ where
 
 -- haven and b == `https://project-haystack.org/`"
 explain (analyze true, verbose true, buffers true)
-select 
+select
   rec.id,
-  rec.paths, 
+  rec.paths,
   rec.strs,
   rec.uris
 from rec
@@ -143,9 +143,9 @@ where
 
 -- haven and b != `https://project-haystack.org/`"
 explain (analyze true, verbose true, buffers true)
-select 
+select
   rec.id,
-  rec.paths, 
+  rec.paths,
   rec.strs,
   rec.uris
 from rec
@@ -156,8 +156,8 @@ where
     (
       (
         -- we need to actually have the path
-        (rec.paths @> '{"b"}'::text[]) 
-        and 
+        (rec.paths @> '{"b"}'::text[])
+        and
         (
           -- either there is no uri
           (rec.uris is null)
@@ -188,9 +188,9 @@ where
     ((rec.paths @> '{"str"}'::text[]) and (rec.strs->>'str' > 'y'))
   );
 
-select 
-  rec.id, 
-  rec.paths, 
+select
+  rec.id,
+  rec.paths,
   rec.nums,
   rec.units,
   pg_typeof(rec.nums->'num') as a,
@@ -213,7 +213,7 @@ select '{"a":"b"}'::jsonb ? 'a';
 select '["a","b"]'::jsonb @> '{"a"}'::jsonb;
 
 select refs from rec
-where 
+where
 
 ------------------------------------
 -- list of refs
@@ -226,11 +226,11 @@ where
 
 explain (analyze true, verbose true, buffers true)
 select rec.id from rec
-where 
+where
   (exists (select 1 from path_ref v1
-    where 
+    where
       v1.source = rec.id
-      and v1.path_ = 'midRef' 
+      and v1.path_ = 'midRef'
       and v1.target = 'mid-1'));
 
 ------------------------------------
@@ -238,7 +238,7 @@ where
 select rec.id, rec.brio
 from rec
   inner join path_ref v on v.source = r.id
-where 
+where
   (r.paths @> '{"haven"}'::text[])
 order by r.id, p.path_, p.target;
 
@@ -257,4 +257,28 @@ where
     and
     (not exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = 'id' and v1.target = 'z0'))
   )
+order by rec.id;
+
+------------------------------------
+
+explain (analyze true, verbose true, buffers true)
+select rec.brio from rec
+  inner join path_ref p1 on p1.source = rec.id
+  inner join rec      r1 on r1.id     = p1.target
+where
+  ((p1.path_ = 'midRef') and (r1.strs @> '{"dis":"Mid 1"}'::jsonb))
+order by rec.id;
+
+explain (analyze true, verbose true, buffers true)
+select r0.id from rec r0 where r0.id in
+(select rec.id from rec
+  inner join path_ref p1 on p1.source = rec.id
+  inner join rec      r1 on r1.id     = p1.target
+where
+  ((p1.path_ = 'midRef') and (r1.strs @> '{"dis":"Mid 1"}'::jsonb)));
+
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+where
+  (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = 'equipRef' and v1.target = 'a-0039'))
 order by rec.id;
