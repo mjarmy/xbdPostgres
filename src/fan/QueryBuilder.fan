@@ -169,8 +169,15 @@ internal class QueryBuilder {
     // Ref
     else if (val is Ref)
     {
-      x := eqParam(path, ((Ref) val).id)
-      return "(${alias}.refs @> @$x::jsonb)"
+      valRefs++
+      xp := addParam(path)
+      xv := addParam(((Ref) val).id)
+      return [
+        "(exists (select 1 from path_ref v$valRefs ",
+        "where v${valRefs}.source = ${alias}.id ",
+        "and v${valRefs}.path_ = @$xp ",
+        "and v${valRefs}.target = @$xv))"
+      ].join()
     }
     // Num
     else if (val is Number)
@@ -209,12 +216,29 @@ internal class QueryBuilder {
   ** add the parameters for a 'ne' Filter
   private Str ne(Str alias, Str path, Obj? val)
   {
-    hasClause := has(alias, path)
-    eqClause := eq(alias, path, val)
-    col := columnNames[val.typeof]
+    // Ref
+    if (val is Ref)
+    {
+      valRefs++
+      xp := addParam(path)
+      xv := addParam(((Ref) val).id)
+      return [
+        "(not exists (select 1 from path_ref v$valRefs ",
+        "where v${valRefs}.source = ${alias}.id ",
+        "and v${valRefs}.path_ = @$xp ",
+        "and v${valRefs}.target = @$xv))"
+      ].join()
+    }
+    // anything else
+    else
+    {
+      hasClause := has(alias, path)
+      eqClause := eq(alias, path, val)
+      col := columnNames[val.typeof]
 
-    // beware of 3-Value booleans
-    return "($hasClause and ((${alias}.$col is null) or (not $eqClause)))"
+      // beware of 3-Value booleans
+      return "($hasClause and ((${alias}.$col is null) or (not $eqClause)))"
+    }
   }
 
   ** 'cmp' AST node >,>=,<,<=
@@ -310,9 +334,9 @@ internal class QueryBuilder {
   internal Str where
   internal Str:Obj params := Str:Obj[:]
   internal Int joins := 0
+  internal Int valRefs := 0
 
   internal static const Type:Str columnNames := Type:Str[
-    Ref#:"refs",
     Uri#:"uris",
     Str#:"strs",
     Number#:"nums",

@@ -67,7 +67,7 @@ class QueryTest : Test
       ])
   }
 
-  Void testSelectHaven()
+  Void testHaven()
   {
     echo("==============================================================")
 
@@ -77,9 +77,10 @@ class QueryTest : Test
     doSelect(
       Filter("haven"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           (rec.paths @> @x0::text[]);",
+           (rec.paths @> @x0::text[])
+         order by rec.id;",
         Str:Obj[
           "x0": "{\"haven\"}"
         ]))
@@ -87,13 +88,14 @@ class QueryTest : Test
     doSelect(
       Filter("haven and e"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              (rec.paths @> @x1::text[])
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"e\"}",
           "x1":"{\"haven\"}"
@@ -102,7 +104,7 @@ class QueryTest : Test
     doSelect(
       Filter("haven and (str or num)"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
@@ -112,7 +114,8 @@ class QueryTest : Test
                or
                (rec.paths @> @x2::text[])
              )
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"num\"}",
@@ -125,32 +128,151 @@ class QueryTest : Test
     doSelect(
       Filter("haven and id == @z0"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
-             (rec.refs @> @x1::jsonb)
-           );",
+             (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x1 and v1.target = @x2))
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
-          "x1":"{\"id\":\"z0\"}",
+          "x1":"id",
+          "x2":"z0",
         ]))
 
     doSelect(
       Filter("haven and id != @z0"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
-             ((rec.paths @> @x1::text[]) and ((rec.refs is null) or (not (rec.refs @> @x2::jsonb))))
-           );",
+             (not exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x1 and v1.target = @x2))
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
-          "x1":"{\"id\"}",
-          "x2":"{\"id\":\"z0\"}",
+          "x1":"id",
+          "x2":"z0",
+        ]))
+
+    doSelect(
+      Filter("midRef == @mid-1"),
+      Query(
+        "select rec.id, rec.brio from rec
+         where
+           (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"mid-1",
+        ]))
+
+    doSelect(
+      Filter("midRef == @mid-2"),
+      Query(
+        "select rec.id, rec.brio from rec
+         where
+           (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"mid-2",
+        ]))
+
+    doSelect(
+      Filter("midRef->dis == \"Mid 1\""),
+      Query(
+        "select rec.id, rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"{\"dis\":\"Mid 1\"}",
+        ]))
+
+    doSelect(
+      Filter("midRef->dis == \"Mid 2\""),
+      Query(
+        "select rec.id, rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"{\"dis\":\"Mid 2\"}",
+        ]))
+
+    doSelect(
+      Filter("midRef->topRef == @top-1"),
+      Query(
+        "select rec.id, rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (exists (select 1 from path_ref v1 where v1.source = r1.id and v1.path_ = @x1 and v1.target = @x2)))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"topRef",
+          "x2":"top-1",
+        ]))
+
+    doSelect(
+      Filter("midRef->topRef == @top-2"),
+      Query(
+        "select rec.id, rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+         where
+           ((p1.path_ = @x0) and (exists (select 1 from path_ref v1 where v1.source = r1.id and v1.path_ = @x1 and v1.target = @x2)))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"topRef",
+          "x2":"top-2",
+        ]))
+
+    doSelect(
+      Filter("midRef->topRef->dis == \"Top 1\""),
+      Query(
+        "select rec.id, rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+           inner join path_ref p2 on p2.source = r1.id
+           inner join rec      r2 on r2.id     = p2.target
+         where
+           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"topRef",
+          "x2":"{\"dis\":\"Top 1\"}",
+        ]))
+
+    doSelect(
+      Filter("midRef->topRef->dis == \"Top 2\""),
+      Query(
+        "select rec.id, rec.brio from rec
+           inner join path_ref p1 on p1.source = rec.id
+           inner join rec      r1 on r1.id     = p1.target
+           inner join path_ref p2 on p2.source = r1.id
+           inner join rec      r2 on r2.id     = p2.target
+         where
+           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb))
+         order by rec.id;",
+        Str:Obj[
+          "x0":"midRef",
+          "x1":"topRef",
+          "x2":"{\"dis\":\"Top 2\"}",
         ]))
 
     //-----------------
@@ -159,13 +281,14 @@ class QueryTest : Test
     doSelect(
       Filter("haven and b == `https://project-haystack.org/`"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              (rec.uris @> @x1::jsonb)
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"b\":\"https://project-haystack.org/\"}",
@@ -174,13 +297,14 @@ class QueryTest : Test
     doSelect(
       Filter("haven and b != `https://project-haystack.org/`"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              ((rec.paths @> @x1::text[]) and ((rec.uris is null) or (not (rec.uris @> @x2::jsonb))))
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"b\"}",
@@ -196,13 +320,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and $arrows == \"y\""),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                (rec.strs @> @x1::jsonb)
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"$dotted\":\"y\"}",
@@ -212,13 +337,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and $arrows != \"y\""),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                ((rec.paths @> @x1::text[]) and ((rec.strs is null) or (not (rec.strs @> @x2::jsonb))))
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"$dotted\"}",
@@ -231,13 +357,14 @@ class QueryTest : Test
         doSelect(
           Filter("haven and $arrows $op \"y\""),
           Query(
-            "select rec.brio from rec
+            "select rec.id, rec.brio from rec
              where
                (
                  (rec.paths @> @x0::text[])
                  and
                  ((rec.paths @> @x1::text[]) and ((rec.strs ->> @x2) $op @x3))
-               );",
+               )
+             order by rec.id;",
             Str:Obj[
               "x0":"{\"haven\"}",
               "x1":"{\"$dotted\"}",
@@ -260,13 +387,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and num == $num"),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"num\":${num.toFloat}}",
@@ -277,13 +405,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and num != $num"),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                ((rec.paths @> @x1::text[]) and ((rec.nums is null) or (not ((rec.nums @> @x2::jsonb) and (rec.units @> @x3::jsonb)))))
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"num\"}",
@@ -297,13 +426,14 @@ class QueryTest : Test
         doSelect(
           Filter("haven and num $op $num"),
           Query(
-            "select rec.brio from rec
+            "select rec.id, rec.brio from rec
              where
                (
                  (rec.paths @> @x0::text[])
                  and
                  ((rec.paths @> @x1::text[]) and (((rec.nums -> @x2)::real) $op @x3) and (rec.units @> @x4::jsonb))
-               );",
+               )
+             order by rec.id;",
             Str:Obj[
               "x0":"{\"haven\"}",
               "x1":"{\"num\"}",
@@ -321,13 +451,14 @@ class QueryTest : Test
     doSelect(
       Filter("haven and bool == true"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              (rec.bools @> @x1::jsonb)
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"bool\":true}",
@@ -337,13 +468,14 @@ class QueryTest : Test
     doSelect(
       Filter("haven and bool != true"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              ((rec.paths @> @x1::text[]) and ((rec.bools is null) or (not (rec.bools @> @x2::jsonb))))
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"bool\"}",
@@ -356,13 +488,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and bool $op true"),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                ((rec.paths @> @x1::text[]) and (((rec.bools -> @x2)::boolean) $op @x3))
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"bool\"}",
@@ -381,13 +514,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and $arrows == 2021-03-22"),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                (rec.dates @> @x1::jsonb)
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"$dotted\":\"2021-03-22\"}",
@@ -397,13 +531,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and $arrows != 2021-03-22"),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                ((rec.paths @> @x1::text[]) and ((rec.dates is null) or (not (rec.dates @> @x2::jsonb))))
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"$dotted\"}",
@@ -416,13 +551,14 @@ class QueryTest : Test
         doSelect(
           Filter("haven and $arrows $op 2021-03-22"),
           Query(
-            "select rec.brio from rec
+            "select rec.id, rec.brio from rec
              where
                (
                  (rec.paths @> @x0::text[])
                  and
                  ((rec.paths @> @x1::text[]) and ((rec.dates ->> @x2) $op @x3))
-               );",
+               )
+             order by rec.id;",
             Str:Obj[
               "x0":"{\"haven\"}",
               "x1":"{\"$dotted\"}",
@@ -441,13 +577,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and $arrows == 17:19:23"),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                (rec.times @> @x1::jsonb)
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"$dotted\":\"17:19:23\"}",
@@ -457,13 +594,14 @@ class QueryTest : Test
       doSelect(
         Filter("haven and $arrows != 17:19:23"),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                ((rec.paths @> @x1::text[]) and ((rec.times is null) or (not (rec.times @> @x2::jsonb))))
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"$dotted\"}",
@@ -476,13 +614,14 @@ class QueryTest : Test
         doSelect(
           Filter("haven and $arrows $op 17:19:23"),
           Query(
-            "select rec.brio from rec
+            "select rec.id, rec.brio from rec
              where
                (
                  (rec.paths @> @x0::text[])
                  and
                  ((rec.paths @> @x1::text[]) and ((rec.times ->> @x2) $op @x3))
-               );",
+               )
+             order by rec.id;",
             Str:Obj[
               "x0":"{\"haven\"}",
               "x1":"{\"$dotted\"}",
@@ -501,13 +640,14 @@ class QueryTest : Test
     doSelect(
       Filter.has("haven").and(Filter.eq("quux", ts)),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              (rec.dateTimes @> @x1::jsonb)
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"quux\":669763163000}",
@@ -517,13 +657,14 @@ class QueryTest : Test
     doSelect(
       Filter.has("haven").and(Filter.ne("quux", ts)),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              ((rec.paths @> @x1::text[]) and ((rec.dateTimes is null) or (not (rec.dateTimes @> @x2::jsonb))))
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"quux\"}",
@@ -541,13 +682,14 @@ class QueryTest : Test
       doSelect(
         Filter.has("haven").and(f),
         Query(
-          "select rec.brio from rec
+          "select rec.id, rec.brio from rec
            where
              (
                (rec.paths @> @x0::text[])
                and
                ((rec.paths @> @x1::text[]) and (((rec.dateTimes -> @x2)::bigint) $op @x3))
-             );",
+             )
+           order by rec.id;",
           Str:Obj[
             "x0":"{\"haven\"}",
             "x1":"{\"quux\"}",
@@ -586,13 +728,14 @@ class QueryTest : Test
     doSelect(
       Filter("haven and str == 2"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"haven\"}",
           "x1":"{\"str\":2.0}",
@@ -607,19 +750,21 @@ class QueryTest : Test
     doSelect(
       Filter("ahu"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           (rec.paths @> @x0::text[]);",
+           (rec.paths @> @x0::text[])
+         order by rec.id;",
         Str:Obj["x0": "{\"ahu\"}"]))
 
     doSelect(
       Filter("chilledWaterRef->chilled"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
+         order by rec.id;",
         Str:Obj[
           "x0":"chilledWaterRef",
           "x1":"{\"chilled\"}"]))
@@ -627,13 +772,14 @@ class QueryTest : Test
     doSelect(
       Filter("ahu and elec"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
            (
              (rec.paths @> @x0::text[])
              and
              (rec.paths @> @x1::text[])
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"ahu\"}",
           "x1":"{\"elec\"}"]))
@@ -641,7 +787,7 @@ class QueryTest : Test
     doSelect(
       Filter("chilled and pump and sensor and equipRef->siteRef->site"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
            inner join path_ref p2 on p2.source = r1.id
@@ -659,7 +805,8 @@ class QueryTest : Test
              )
              and
              (rec.paths @> @x5::text[])
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"chilled\"}",
           "x1":"equipRef",
@@ -671,9 +818,10 @@ class QueryTest : Test
     doSelect(
       Filter("custom->description == \"Clg_Valve_Cmd\""),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           (rec.strs @> @x0::jsonb);",
+           (rec.strs @> @x0::jsonb)
+         order by rec.id;",
         Str:Obj[
           "x0": """{"custom.description":"Clg_Valve_Cmd"}"""
         ]))
@@ -681,18 +829,20 @@ class QueryTest : Test
     doSelect(
       Filter("dis == \"Alpha Airside AHU-4\""),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           (rec.strs @> @x0::jsonb);",
+           (rec.strs @> @x0::jsonb)
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"dis\":\"Alpha Airside AHU-4\"}"]))
 
     doSelect(
       Filter("geoElevation == 2956m"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb));",
+           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb))
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"geoElevation\":2956.0}",
           "x1":"{\"geoElevation\":\"m\"}"
@@ -701,21 +851,24 @@ class QueryTest : Test
     doSelect(
       Filter("equipRef == @a-0039"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           (rec.refs @> @x0::jsonb);",
+           (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))
+         order by rec.id;",
         Str:Obj[
-          "x0":"{\"equipRef\":\"a-0039\"}"
+          "x0":"equipRef",
+          "x1":"a-0039"
         ]))
 
     doSelect(
       Filter("equipRef->dis == \"Alpha Airside AHU-4\""),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
          where
-           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb));",
+           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb))
+         order by rec.id;",
         Str:Obj[
           "x0":"equipRef",
           "x1":"{\"dis\":\"Alpha Airside AHU-4\"}"
@@ -724,11 +877,12 @@ class QueryTest : Test
     doSelect(
       Filter("id->area"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
+         order by rec.id;",
         Str:Obj[
           "x0":"id",
           "x1":"{\"area\"}"]))
@@ -741,9 +895,10 @@ class QueryTest : Test
     doSelect(
       Filter("not point"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           (not (rec.paths @> @x0::text[]));",
+           (not (rec.paths @> @x0::text[]))
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"point\"}"]),
         true)
@@ -756,19 +911,21 @@ class QueryTest : Test
     doSelect(
       Filter("facets->min"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           (rec.paths @> @x0::text[]);",
+           (rec.paths @> @x0::text[])
+         order by rec.id;",
         Str:Obj["x0": "{\"facets.min\"}"]))
 
     doSelect(
       Filter("links->in4->fromRef->meta->inA->flags->linkTarget"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]));",
+           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
+         order by rec.id;",
         Str:Obj[
           "x0":"links.in4.fromRef",
           "x1":"{\"meta.inA.flags.linkTarget\"}"]))
@@ -776,7 +933,7 @@ class QueryTest : Test
     doSelect(
       Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
            inner join path_ref p2 on p2.source = r1.id
@@ -788,7 +945,8 @@ class QueryTest : Test
              ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
              and
              ((p2.path_ = @x2) and (p3.path_ = @x3) and (r3.paths @> @x4::text[]))
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"links.in4.fromRef",
           "x1":"{\"meta.inA.flags.linkTarget\"}",
@@ -799,13 +957,14 @@ class QueryTest : Test
     doSelect(
       Filter("parentRef->parentRef->slotPath == \"slot:/AHUSystem/vavs\""),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
            inner join path_ref p2 on p2.source = r1.id
            inner join rec      r2 on r2.id     = p2.target
          where
-           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb));",
+           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb))
+         order by rec.id;",
         Str:Obj[
           "x0":"parentRef",
           "x1":"parentRef",
@@ -814,68 +973,14 @@ class QueryTest : Test
     doSelect(
       Filter("facets->precision == 1"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
          where
-           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb));",
+           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb))
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"facets.precision\":1.0}",
           "x1":"{\"facets.precision\":null}",
         ]))
-  }
-
-  Void testListOfRefs()
-  {
-    echo("==============================================================")
-
-    f := Filter("midRef == @mid-1")
-    expected := testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    f = Filter("midRef == @mid-2")
-    expected = testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    f = Filter("midRef->dis == \"Mid 1\"")
-    expected = testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    f = Filter("midRef->dis == \"Mid 2\"")
-    expected = testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    f = Filter("midRef->topRef == @top-1")
-    expected = testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    f = Filter("midRef->topRef == @top-2")
-    expected = testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    f = Filter("midRef->topRef->dis == \"Top 1\"")
-    expected = testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    f = Filter("midRef->topRef->dis == \"Top 2\"")
-    expected = testData.filter(f)
-    echo("--------------")
-    echo(f)
-    echo(expected.map |Dict v->Ref| { v.id })
-
-    echo()
   }
 
   Void testDemogen()
@@ -885,7 +990,7 @@ class QueryTest : Test
     doSelect(
       Filter("elec and sensor and equipRef->siteRef->area < 10000ft²"),
       Query(
-        "select rec.brio from rec
+        "select rec.id, rec.brio from rec
            inner join path_ref p1 on p1.source = rec.id
            inner join rec      r1 on r1.id     = p1.target
            inner join path_ref p2 on p2.source = r1.id
@@ -899,7 +1004,8 @@ class QueryTest : Test
              )
              and
              ((p1.path_ = @x2) and (p2.path_ = @x3) and ((r2.paths @> @x4::text[]) and (((r2.nums -> @x5)::real) < @x6) and (r2.units @> @x7::jsonb)))
-           );",
+           )
+         order by rec.id;",
         Str:Obj[
           "x0":"{\"elec\"}",
           "x1":"{\"sensor\"}",
@@ -918,29 +1024,41 @@ class QueryTest : Test
     Bool allowSequential := false)
   {
     echo("--------------------------------------------------------------")
-    echo(filter)
+    echo("Filter: '$filter'")
+    echo
 
-    // Fetch the expected test data
-    expected := testData.filter(filter)
-    echo("expected ${expected.size} rows")
-    //echo(expected.map |Dict v->Ref| { v.id })
-
-    // Construct the Query and make sure it matches the expected query
-    query := Query.fromFilter(haven, filter)
-    echo("--------------")
+    // Dump the expected query
+    echo("-------------------------------------")
+    echo("expected query")
+    echo
     dumpQuery(expectedQuery)
-    echo("--------------")
+    echo
+
+    // Construct the Query and dump it
+    query := Query.fromFilter(haven, filter)
+    echo("-------------------------------------")
+    echo("found query")
+    echo
     dumpQuery(query)
-    echo("--------------")
+    echo
+
+    // dump the raw sql
+    raw := rawSql(query)
+    echo("-------------------------------------")
+    echo("explain (analyze true, verbose true, buffers true) ")
+    echo(raw)
+    echo
+
+    // make sure the queries are equal
+    echo("-------------------------------------")
     echo("sql eq ${expectedQuery.sql == query.sql}")
     echo("params eq ${expectedQuery.params == query.params}")
-    echo("--------------")
+    echo
     verifyEq(expectedQuery, query)
 
     // Explain the Query's raw sql to make sure its not a sequential scan
-    explained := explain(rawSql(query))
-    echo("explain (analyze true, verbose true, buffers true) ")
-    echo(rawSql(query))
+    echo("-------------------------------------")
+    explained := explain(raw)
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
     if (!allowSequential)
@@ -949,13 +1067,16 @@ class QueryTest : Test
       if (s.startsWith("Execution Time:"))
         echo(s)
     }
+    echo
+
+    // Fetch the expected data
+    expected := testData.filter(filter)
 
     // Perfom the query in the database
     found := haven.select(query)
-    echo("found ${found.size} rows")
-    //echo(found.map |Dict v->Ref| { v.id })
 
     // Make sure the results match the test data
+    echo("-------------------------------------")
     verifyDictsEq(expected, found)
   }
 
@@ -967,23 +1088,6 @@ class QueryTest : Test
     verifyFalse(a.date == b.date)
     verifyFalse(a.time == b.time)
   }
-
-//  Void testExplain()
-//  {
-//    exp := haven.explain("select * from rec")
-//    //exp.each |s| { echo(s) }
-//    verifyTrue(isSeqScan(exp))
-//
-//    exp = haven.explain(
-//      "select * from rec
-//         inner join path_ref p1 on p1.source = rec.id
-//         inner join rec     r1 on r1.id     = p1.target
-//       where
-//         (p1.path_ = 'chilledWaterRef') and
-//         (r1.paths @> '{\"chilled\"}'::text[])")
-//    //exp.each |s| { echo(s) }
-//    verifyFalse(isSeqScan(exp))
-//  }
 
   **
   ** Explain a select
@@ -1027,22 +1131,28 @@ class QueryTest : Test
     return res;
   }
 
-  private Void verifyDictsEq(Dict[] a, Dict[] b)
+  private Void verifyDictsEq(Dict[] expected, Dict[] found)
   {
-    verifyEq(a.size, a.size)
+    expected.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+    found.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
 
-    a.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
-    b.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+    echo("expected ${expected.size} rows")
+    //echo(expected.map |Dict v->Ref| { v.id })
+    echo("found ${found.size} rows")
+    //echo(found.map |Dict v->Ref| { v.id })
 
-    a.each |dict, i|
+    verifyEq(expected.size, found.size)
+    expected.each |dict, i|
     {
-      verifyTrue(Etc.dictEq(a[i], b[i]))
+      //echo("$i ${expected[i]}, ${found[i]} --> ${expected[i] == found[i]}")
+      verifyTrue(Etc.dictEq(expected[i], found[i]))
     }
   }
 
   private static Void dumpQuery(Query query)
   {
-    echo("'${query.sql}'")
+    echo(query.sql)
+    echo
     query.params.each | val, key |
     {
       echo("$key: ${val.typeof} $val")

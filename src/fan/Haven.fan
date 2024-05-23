@@ -177,12 +177,22 @@ class Haven
   Dict[] select(Query q)
   {
     res := Dict[,]
+    Str? prevId := null
 
     // TODO cache these?
     stmt := conn.sql(q.sql).prepare
     stmt.query(q.params).each |r|
     {
-      res.add(BrioReader(((Buf)r->brio).in).readDict)
+      // The queries are always ordered by rec.id, so we can use this mechanism
+      // to discard duplicate records.
+      id := r->id
+      if (id != prevId)
+      {
+        res.add(BrioReader(((Buf)r->brio).in).readDict)
+      }
+
+      // Save the last id
+      prevId = id
     }
     stmt.close
 

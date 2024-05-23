@@ -27,7 +27,7 @@ const class Query
     qb := QueryBuilder(haven, f)
 
     sql := StrBuf()
-    sql.add("select rec.brio from rec\n")
+    sql.add("select rec.id, rec.brio from rec\n")
     for (i := 1; i <= qb.joins; i++)
     {
       prev := (i == 1) ? "rec" : "r${i-1}"
@@ -35,8 +35,8 @@ const class Query
       sql.add("  inner join rec      r$i on r${i}.id     = p${i}.target\n")
     }
     sql.add("where\n")
-    sql.add(qb.where)
-    sql.add(";")
+    sql.add(qb.where).add("\n")
+    sql.add("order by rec.id;")
 
     return Query(sql.toStr, qb.params)
   }

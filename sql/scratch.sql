@@ -226,15 +226,35 @@ where
 
 explain (analyze true, verbose true, buffers true)
 select rec.id from rec
-where exists 
-(select 1 from path_ref 
 where 
-  source = rec.id
-  and path_ = 'midRef' 
-  and target = 'mid-1');
+  (exists (select 1 from path_ref v1
+    where 
+      v1.source = rec.id
+      and v1.path_ = 'midRef' 
+      and v1.target = 'mid-1'));
 
-select id, refs
-from rec where (paths @> '{"haven"}'::text[]);
+------------------------------------
 
-select * from path_ref where path_ = 'midRef';
+select rec.id, rec.brio
+from rec
+  inner join path_ref v on v.source = r.id
+where 
+  (r.paths @> '{"haven"}'::text[])
+order by r.id, p.path_, p.target;
 
+select rec.id from rec
+where
+  (exists (select 1 from path_ref v0
+where
+  v0.source = rec.id
+  and v0.path_ = 'midRef'
+  and v0.target = 'mid-1'));
+
+select rec.id from rec
+where
+  (
+    (rec.paths @> '{"haven"}'::text[])
+    and
+    (not exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = 'id' and v1.target = 'z0'))
+  )
+order by rec.id;
