@@ -19,7 +19,7 @@ internal const class Rec
   internal new make(
     Str       id,
     Str[]     paths,
-    Str:Str   refs,
+    Str:Str[] refs,
     Str:Str   strs,
     Str:Float nums,
     Str:Str?  units,
@@ -48,7 +48,7 @@ internal const class Rec
   internal static new fromDict(Dict dict)
   {
     paths := Str[,]
-    refs  := Str:Str[:]
+    refs  := Str:Str[][:]
     strs  := Str:Str[:]
     nums  := Str:Float[:]
     units := Str:Str?[:]
@@ -73,7 +73,7 @@ internal const class Rec
       Dict d,
       Str[] curPath,
       Str[] paths,
-      Str:Str refs,
+      Str:Str[] refs,
       Str:Str strs,
       Str:Float nums,
       Str:Str? units,
@@ -100,7 +100,15 @@ internal const class Rec
       // Ref
       else if (val is Ref)
       {
-        refs.add(dotted, ((Ref) val).id)
+        refs.add(dotted, [((Ref) val).id])
+      }
+      // List of Refs
+      else if ((val is List) && (((List) val).all |Obj v->Bool| { v is Ref }))
+      {
+        vl := (List) val
+        rl := Str[,]
+        vl.each |v| { rl.add(((Ref) v).id) }
+        refs.add(dotted, rl)
       }
       // Str
       else if (val is Str)
@@ -189,6 +197,7 @@ internal const class Rec
   override Str toStr() {
     return Str[
       "Rec:",
+      "    id:        $id",
       "    paths:     $paths",
       "    refs:      $refs",
       "    strs:      $strs",
@@ -208,8 +217,8 @@ internal const class Rec
 
   internal const Str id
   internal const Str[] paths
+  internal const Str:Str[] refs
 
-  internal const Str:Str   refs
   internal const Str:Str   strs
   internal const Str:Float nums
   internal const Str:Str?  units

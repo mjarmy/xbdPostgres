@@ -85,6 +85,9 @@ const class TestData
         "haven": M,
         "a": true,
         "b": `https://project-haystack.org/`,
+        "c": Date.fromStr("2021-03-22"),
+        "d": Time.fromStr("17:19:23"),
+        "e": DateTime.fromIso("2021-03-22T13:57:00.381-04:00")
       ]),
       Etc.dictFromMap([
         "id": ref("z4"),
@@ -120,7 +123,7 @@ const class TestData
       Etc.dict3("id", ref("dateTime-1"), "haven", M, "quux", DateTime.fromIso("2021-03-22T17:19:23.000-04:00")),
       Etc.dict3("id", ref("dateTime-2"), "haven", M, "quux", DateTime.fromIso("2021-03-23T17:19:24.000-04:00")),
 
-      Etc.dict4("id", ref("top-1"), "haven", M, "top", M, "dis", "Top 1"),
+      Etc.dict5("id", ref("top-1"), "haven", M, "top", M, "dis", "Top 1", "bogus", [ref("abc"), 42]),
       Etc.dict4("id", ref("top-2"), "haven", M, "top", M, "dis", "Top 2"),
       Etc.dict5("id", ref("mid-1"), "haven", M, "mid", M, "dis", "Mid 1", "topRef",  ref("top-1")),
       Etc.dict5("id", ref("mid-2"), "haven", M, "mid", M, "dis", "Mid 2", "topRef", [ref("top-1"), ref("top-2")]),
