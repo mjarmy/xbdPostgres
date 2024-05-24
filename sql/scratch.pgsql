@@ -293,11 +293,15 @@ where
 select rec.id from rec
   inner join spec s1 on s1.qname = rec.spec
 where
-  (s1.inherits_from @> '{"ph::Sensor"}');
+  (s1.inherits_from @> '{"ph::Sensor"}'::text[]);
 
 select rec.id from rec
   inner join spec s1 on s1.qname = rec.spec
 where
   (s1.inherits_from @> '{"ph::Equip"}');
 
-
+explain (analyze true, verbose true, buffers true)
+select rec.id from rec
+  inner join spec s1 on s1.qname = rec.spec
+where
+  (s1.inherits_from @> '{"ph::Sensor"}'::text[]);

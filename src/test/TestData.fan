@@ -20,7 +20,7 @@ internal class TestData
   {
     this.recs = initRecs
     this.xetoNs = initXeto
-    this.context = TestContext(recs)
+    this.context = TestContext(recs, xetoNs)
   }
 
   **
@@ -190,8 +190,8 @@ internal class TestData
 //////////////////////////////////////////////////////////////////////////
 
   internal const Ref:Dict recs
-  internal HaystackContext context
   internal LibNamespace xetoNs
+  internal HaystackContext context
 }
 
 **
@@ -199,22 +199,32 @@ internal class TestData
 **
 internal class TestContext : HaystackContext
 {
-  new make(Ref:Dict recs)
+  new make(Ref:Dict recs, LibNamespace xetoNs)
   {
     this.recs = recs
+    this.xetoNs = xetoNs
   }
 
   override Dict? deref(Ref id) { recs.get(id) }
   override FilterInference inference() { FilterInference.nil }
   override Dict toDict() { Etc.emptyDict }
 
-//  override Bool xetoIsSpec(Str specName, xeto::Dict rec)
-//  {
-//    spec := specName.contains("::") ?
-//      xeto.type(specName) :
-//      xeto.unqualifiedType(specName)
-//    return xeto.specOf(rec).isa(spec)
-//  }
+  override Bool xetoIsSpec(Str specName, xeto::Dict rec)
+  {
+    spec := specName.contains("::") ?
+      xetoNs.type(specName) :
+      xetoNs.unqualifiedType(specName)
+
+    try
+    {
+      return xetoNs.specOf(rec).isa(spec)
+    }
+    catch (UnknownSpecErr e)
+    {
+      return false
+    }
+  }
 
   internal const Ref:Dict recs
+  internal LibNamespace xetoNs
 }

@@ -76,6 +76,9 @@ internal class QueryBuilder {
         |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">=") },
         indent)
 
+    else if (f.type == FilterType.isSpec)
+      return visitIsSpec((Str)f.argA, indent)
+
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
@@ -140,6 +143,14 @@ internal class QueryBuilder {
       sb.add(")")
       return pad + sb.toStr
     }
+  }
+
+  private Str visitIsSpec(Str spec, Int indent)
+  {
+    pad := doIndent(indent)
+    specs++
+    x := addParam("{\"$spec\"}")
+    return pad + "(s${specs}.inherits_from @> @$x::text[])"
   }
 
   ** 'has' AST node
@@ -335,6 +346,7 @@ internal class QueryBuilder {
   internal Str:Obj params := Str:Obj[:]
   internal Int joins := 0
   internal Int valRefs := 0
+  internal Int specs := 0
 
   internal static const Type:Str columnNames := Type:Str[
     Uri#:"uris",

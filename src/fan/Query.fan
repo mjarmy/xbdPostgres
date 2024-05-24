@@ -39,6 +39,12 @@ const class Query
         sql.add("  inner join path_ref p$i on p${i}.source = ${prev}.id\n")
         sql.add("  inner join rec      r$i on r${i}.id     = p${i}.target\n")
       }
+
+      for (i := 1; i <= qb.specs; i++)
+      {
+        sql.add("  inner join spec s$i on s${i}.qname = rec.spec\n")
+      }
+
       sql.add("where\n")
       sql.add(qb.where).add("\n")
 
@@ -48,6 +54,12 @@ const class Query
     else
     {
       sql.add("select rec.brio from rec\n")
+
+      for (i := 1; i <= qb.specs; i++)
+      {
+        sql.add("  inner join spec s$i on s${i}.qname = rec.spec\n")
+      }
+
       sql.add("where\n")
       sql.add(qb.where)
     }

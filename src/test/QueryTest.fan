@@ -985,19 +985,32 @@ class QueryTest : Test
   {
     echo("==============================================================")
 
-    doTestSpec(Filter("ph::Sensor"))
+    //doTestSpec(Filter("point and ph::Sensor"))
+    //doTestSpec(Filter("equipRef->ph::AcElecMeter"))
+
+    doSelect(
+      Filter("ph::Sensor"),
+      Query(
+        "select rec.brio from rec
+           inner join spec s1 on s1.qname = rec.spec
+         where
+           (s1.inherits_from @> @x0::text[])",
+        Str:Obj[
+          "x0":"{\"ph::Sensor\"}",
+        ]),
+        true)
   }
 
-  Void doTestSpec(Filter filter)
-  {
-    echo("--------------------------------------------------------------")
-    echo("Filter: '$filter'")
-    echo
-
-    expected := testData.filter(filter)
-    echo("expected ${expected.size} rows")
-    echo(expected.map |Dict v->Ref| { v.id })
-  }
+//  Void doTestSpec(Filter filter)
+//  {
+//    echo("--------------------------------------------------------------")
+//    echo("Filter: '$filter'")
+//    echo
+//
+//    expected := testData.filter(filter)
+//    echo("expected ${expected.size} rows")
+//    echo(expected.map |Dict v->Ref| { v.id })
+//  }
 
   private Void doSelect(
     Filter filter,
