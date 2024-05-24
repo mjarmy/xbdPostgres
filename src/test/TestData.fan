@@ -157,6 +157,18 @@ const class TestData
     Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))
   }
 
-  const Ref:Dict recs
+  internal const Ref:Dict recs
+  internal const HaystackContext context := TestContext(recs)
 }
 
+internal const class TestContext : HaystackContext
+{
+  new make TestContext(Ref:Dict recs)
+  {
+    this.recs = recs
+  }
+
+  override Dict? deref(Ref id) { recs.get(r) }
+  override FilterInference inference() { FilterInference.nil }
+  override Dict toDict() { Etc.emptyDict }
+}

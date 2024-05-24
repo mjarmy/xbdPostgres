@@ -23,17 +23,25 @@ class Haven
     conn = SqlConn.open(uri, username, password)
     conn.autoCommit = false
 
+    specInsert = conn.sql(
+      "insert into spec
+         (qname, inherits_from)
+       values
+         (@qname, @inheritsFrom)").prepare
+
     recInsert = conn.sql(
       "insert into rec (
          id, brio, paths,
          strs, nums, units,
          bools, uris,
-         dates, times, dateTimes)
+         dates, times, dateTimes,
+         spec)
        values (
          @id, @brio, @paths,
          @strs::jsonb, @nums::jsonb, @units::jsonb,
          @bools::jsonb, @uris::jsonb,
-         @dates::jsonb, @times::jsonb, @dateTimes::jsonb)"
+         @dates::jsonb, @times::jsonb, @dateTimes::jsonb,
+         @spec)"
      ).prepare
 
     pathRefInsert = conn.sql(
@@ -66,6 +74,7 @@ class Haven
   **
   Void close()
   {
+    specInsert.close
     recInsert.close
     pathRefInsert.close
     refTagInsert.close
@@ -73,6 +82,18 @@ class Haven
 
     conn.close
     conn = null
+  }
+
+  **
+  ** Insert a Spec
+  **
+  Void insertSpec(Str qname, Str[] inheritsFrom)
+  {
+    specInsert.execute([
+      "qname":qname,
+      "inheritsFrom": inheritsFrom
+    ])
+    conn.commit
   }
 
   **
@@ -93,7 +114,8 @@ class Haven
       "uris":      (rec.uris      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.uris),
       "dates":     (rec.dates     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dates),
       "times":     (rec.times     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.times),
-      "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes)
+      "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes),
+      "spec":      rec.spec
     ])
 
     rec.refs.each |targets, path|
@@ -238,6 +260,7 @@ class Haven
   // N.B. we use the connection internally in the test suite
   internal SqlConn? conn
 
+  private Statement? specInsert
   private Statement? recInsert
   private Statement? pathRefInsert
   private Statement? refTagInsert

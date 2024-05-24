@@ -981,6 +981,24 @@ class QueryTest : Test
         ]))
   }
 
+  Void testSpec()
+  {
+    echo("==============================================================")
+
+    doTestSpec(Filter("ph::Sensor"))
+  }
+
+  Void doTestSpec(Filter filter)
+  {
+    echo("--------------------------------------------------------------")
+    echo("Filter: '$filter'")
+    echo
+
+    expected := testData.filter(filter)
+    echo("expected ${expected.size} rows")
+    echo(expected.map |Dict v->Ref| { v.id })
+  }
+
   private Void doSelect(
     Filter filter,
     Query expectedQuery,

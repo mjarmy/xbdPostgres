@@ -27,7 +27,8 @@ internal const class Rec
     Str:Str   uris,
     Str:Str   dates,
     Str:Str   times,
-    Str:Int   dateTimes)
+    Str:Int   dateTimes,
+    Str? spec)
   {
     this.id    = id
     this.paths = paths
@@ -40,6 +41,7 @@ internal const class Rec
     this.dates = dates
     this.times = times
     this.dateTimes = dateTimes
+    this.spec = spec
   }
 
   **
@@ -63,10 +65,15 @@ internal const class Rec
       refs, strs, nums, units, bools, uris,
       dates, times, dateTimes)
 
+    Str? spec := null
+    obj := dict.get("spec", null)
+    if ((obj != null) && (obj is Ref))
+      spec = ((Ref) obj).id
+
     return Rec(
       dict.id.id, paths,
       refs, strs, nums, units, bools, uris,
-      dates, times, dateTimes)
+      dates, times, dateTimes, spec)
   }
 
   private static Void traverseDict(
@@ -190,7 +197,8 @@ internal const class Rec
       (uris  == x.uris)  &&
       (dates == x.dates) &&
       (times == x.times) &&
-      (dateTimes == x.dateTimes)
+      (dateTimes == x.dateTimes) &&
+      (spec  == x.spec)
     )
   }
 
@@ -208,6 +216,7 @@ internal const class Rec
       "    dates:     $dates",
       "    times:     $times",
       "    dateTimes: $dateTimes",
+      "    spec:      $spec",
     ].join("\n")
   }
 
@@ -227,4 +236,6 @@ internal const class Rec
   internal const Str:Str   dates
   internal const Str:Str   times
   internal const Str:Int   dateTimes
+
+  internal const Str? spec
 }

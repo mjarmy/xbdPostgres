@@ -282,3 +282,22 @@ select rec.id from rec
 where
   (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = 'equipRef' and v1.target = 'a-0039'))
 order by rec.id;
+
+------------------------------------
+
+select rec.id from rec
+  inner join spec s1 on s1.qname = rec.spec
+where
+  (s1.inherits_from @> '{"ph.points::AirFlowSensor"}');
+
+select rec.id from rec
+  inner join spec s1 on s1.qname = rec.spec
+where
+  (s1.inherits_from @> '{"ph::Sensor"}');
+
+select rec.id from rec
+  inner join spec s1 on s1.qname = rec.spec
+where
+  (s1.inherits_from @> '{"ph::Equip"}');
+
+

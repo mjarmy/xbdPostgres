@@ -28,7 +28,8 @@ class RecTest : Test
         Str:Str[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Int[:]
+        Str:Int[:],
+        null
       ))
 
     verifyEq(
@@ -44,7 +45,8 @@ class RecTest : Test
         Str:Str[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Int[:]
+        Str:Int[:],
+        null
       )
     )
 
@@ -61,7 +63,8 @@ class RecTest : Test
         Str:Str[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Int[:]
+        Str:Int[:],
+        null
       )
     )
 
@@ -78,7 +81,8 @@ class RecTest : Test
         Str:Str["b":"https://project-haystack.org/"],
         Str:Str["c":"2021-03-22", "e.date":"2021-03-22"],
         Str:Str["d":"17:19:23","e.time":"13:57:00.381"],
-        Str:Int["e":669751020381]
+        Str:Int["e":669751020381],
+        null
       )
     )
 
@@ -95,7 +99,8 @@ class RecTest : Test
         Str:Str[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Int[:]
+        Str:Int[:],
+        null
       ))
 
     verifyEq(
@@ -111,7 +116,8 @@ class RecTest : Test
         Str:Str[:],
         Str:Str[:],
         Str:Str[:],
-        Str:Int[:]
+        Str:Int[:],
+        null
       ))
   }
 

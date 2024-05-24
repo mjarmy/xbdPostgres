@@ -4,6 +4,13 @@ alter role xbd with login;
 create schema authorization xbd;
 set search_path to xbd;
 
+-- Specs
+create table spec (
+  qname text primary key,
+  inherits_from text[]
+);
+create index spec_inherits_from on spec using gin (inherits_from);
+
 -- Ref_tag is the set of every tag that contains a ref
 create table ref_tag (
   name text primary key
@@ -14,6 +21,7 @@ create table rec (
   id text   primary key,
   brio      bytea  not null,
   paths     text[] not null,
+
   strs      jsonb,
   nums      jsonb,
   units     jsonb,
@@ -21,7 +29,9 @@ create table rec (
   uris      jsonb,
   dates     jsonb,
   times     jsonb,
-  dateTimes jsonb
+  dateTimes jsonb,
+
+  spec text -- nullable, no foreign key to spec(qname), since it could be dangling
 );
 create index rec_paths     on rec using gin (paths);
 create index rec_strs      on rec using gin (strs      jsonb_path_ops);
