@@ -49,6 +49,13 @@ class HavenTest : Test
       ["equipRef", "siteRef", "area"])
   }
 
+  Void testLastTag()
+  {
+    verifyEq(Haven.lastTag("a"), "a")
+    verifyEq(Haven.lastTag("a.b"), "b")
+    verifyEq(Haven.lastTag("aa.bb.cc.dd"), "dd")
+  }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////

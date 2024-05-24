@@ -14,12 +14,59 @@ using util
 **
 internal class QueryBuilder {
 
+  ** construct from filter
   internal new make(Haven haven, Filter f)
   {
     this.haven = haven
     this.where = visit(f, 1)
   }
 
+  ** create the query
+  internal Query toQuery()
+  {
+    sql := StrBuf()
+
+    if (joins > 0)
+    {
+      // We have to order the records if we are doing a join, so we include
+      // the id in the ResultSet.
+      sql.add("select rec.id, rec.brio from rec\n")
+
+      for (i := 1; i <= joins; i++)
+      {
+        prev := (i == 1) ? "rec" : "r${i-1}"
+        sql.add("  inner join path_ref p$i on p${i}.source = ${prev}.id\n")
+        sql.add("  inner join rec      r$i on r${i}.id     = p${i}.target\n")
+      }
+
+      for (i := 1; i <= specs; i++)
+      {
+        sql.add("  inner join spec s$i on s${i}.qname = rec.spec\n")
+      }
+
+      sql.add("where\n")
+      sql.add(where).add("\n")
+
+      // we have to order the records if we are doing a join
+      sql.add("order by rec.id")
+    }
+    else
+    {
+      sql.add("select rec.brio from rec\n")
+
+      for (i := 1; i <= specs; i++)
+      {
+        sql.add("  inner join spec s$i on s${i}.qname = rec.spec\n")
+      }
+
+      sql.add("where\n")
+      sql.add(where)
+    }
+
+    return Query(sql.toStr, params)
+  }
+
+  ** visit AST node
   private Str visit(Filter f, Int indent)
   {
     if (f.type == FilterType.and)
@@ -82,6 +129,7 @@ internal class QueryBuilder {
     else throw Err("Encountered unknown FilterType ${f.type}")
   }
 
+  ** visit 'and'
   private Str visitAnd(Filter a, Filter b, Int indent)
   {
     pad := doIndent(indent)
@@ -95,6 +143,7 @@ internal class QueryBuilder {
     ].join("\n")
   }
 
+  ** visit 'or'
   private Str visitOr(Filter a, Filter b, Int indent)
   {
     pad := doIndent(indent)
@@ -108,12 +157,15 @@ internal class QueryBuilder {
     ].join("\n")
   }
 
+  ** visit a leaf AST node
   private Str visitLeaf(
     FilterPath fp,
     |Str alias, Str path-> Str| nodeFunc,
     Int indent)
   {
     pad := doIndent(indent)
+
+    // Create the paths using Haven's whitelisted ref paths
     paths := haven.refPaths(fp)
 
     // no joins
@@ -145,6 +197,7 @@ internal class QueryBuilder {
     }
   }
 
+  ** visit 'isSpec'
   private Str visitIsSpec(Str spec, Int indent)
   {
     pad := doIndent(indent)
@@ -180,15 +233,7 @@ internal class QueryBuilder {
     // Ref
     else if (val is Ref)
     {
-      valRefs++
-      xp := addParam(path)
-      xv := addParam(((Ref) val).id)
-      return [
-        "(exists (select 1 from path_ref v$valRefs ",
-        "where v${valRefs}.source = ${alias}.id ",
-        "and v${valRefs}.path_ = @$xp ",
-        "and v${valRefs}.target = @$xv))"
-      ].join()
+      return refEq(alias, path, val)
     }
     // Num
     else if (val is Number)
@@ -217,28 +262,13 @@ internal class QueryBuilder {
       return "false";
   }
 
-  private Str eqParam(Str path, Obj? val)
-  {
-    return addParam(
-      JsonOutStream.writeJsonToStr(
-        Str:Obj?[path:val]))
-  }
-
-  ** add the parameters for a 'ne' Filter
+  ** 'ne' AST node
   private Str ne(Str alias, Str path, Obj? val)
   {
     // Ref
     if (val is Ref)
     {
-      valRefs++
-      xp := addParam(path)
-      xv := addParam(((Ref) val).id)
-      return [
-        "(not exists (select 1 from path_ref v$valRefs ",
-        "where v${valRefs}.source = ${alias}.id ",
-        "and v${valRefs}.path_ = @$xp ",
-        "and v${valRefs}.target = @$xv))"
-      ].join()
+      return "(not " + refEq(alias, path, val) + ")"
     }
     // anything else
     else
@@ -247,14 +277,31 @@ internal class QueryBuilder {
       eqClause := eq(alias, path, val)
       col := columnNames[val.typeof]
 
-      // beware of 3-Value booleans
+      // We have to check if the column is null because of 3-Value booleans
       return "($hasClause and ((${alias}.$col is null) or (not $eqClause)))"
     }
+  }
+
+  ** test a ref for equality using a nested-subquery
+  private Str refEq(Str alias, Str path, Ref ref)
+  {
+    valRefs++
+    xp := addParam(path)
+    xv := addParam(ref.id)
+    return [
+      "(exists (select 1 from path_ref v$valRefs ",
+      "where v${valRefs}.source = ${alias}.id ",
+      "and v${valRefs}.path_ = @$xp ",
+      "and v${valRefs}.target = @$xv))"
+    ].join()
   }
 
   ** 'cmp' AST node >,>=,<,<=
   private Str cmp(Str alias, Str path, Obj? val, Str op)
   {
+    // https://hashrocket.com/blog/posts/dealing-with-nested-json-objects-in-postgresql
+    // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
+
     // Misc toStr()
     if ((val is Str) || (val is Date) || (val is Time))
     {
@@ -262,7 +309,6 @@ internal class QueryBuilder {
       col := columnNames[val.typeof]
 
       // double-stabby gives us '::text'
-      // https://hashrocket.com/blog/posts/dealing-with-nested-json-objects-in-postgresql
       xp := addParam(path)
       xv := addParam(val.toStr)
       cmpClause := "((${alias}.$col ->> @$xp) $op @$xv)";
@@ -277,7 +323,6 @@ internal class QueryBuilder {
       hasClause := has(alias, path)
 
       // single-stabby plus cast
-      // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
       xp := addParam(path)
       xv := addParam(n.toFloat)
       cmpClause := "(((${alias}.nums -> @$xp)::real) $op @$xv)";
@@ -293,7 +338,6 @@ internal class QueryBuilder {
       hasClause := has(alias, path)
 
       // single-stabby plus cast
-      // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
       xp := addParam(path)
       xv := addParam(val)
       cmpClause := "(((${alias}.bools -> @$xp)::boolean) $op @$xv)";
@@ -308,7 +352,6 @@ internal class QueryBuilder {
       hasClause := has(alias, path)
 
       // single-stabby plus cast
-      // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
       xp := addParam(path)
       xv := addParam(Duration(ts.ticks).toMillis)
       cmpClause := "(((${alias}.dateTimes -> @$xp)::bigint) $op @$xv)";
@@ -321,6 +364,23 @@ internal class QueryBuilder {
       return "false";
   }
 
+  ** add a param that tests for equality
+  private Str eqParam(Str path, Obj? val)
+  {
+    return addParam(
+      JsonOutStream.writeJsonToStr(
+        Str:Obj?[path:val]))
+  }
+
+  ** add a param
+  private Str addParam(Obj val)
+  {
+    name := "x${params.size}"
+    params.add(name, val)
+    return name
+  }
+
+  ** create some indentation padding
   private static Str doIndent(Int indent)
   {
     sb := StrBuf()
@@ -329,34 +389,28 @@ internal class QueryBuilder {
     return sb.toStr
   }
 
-  internal Str addParam(Obj val)
-  {
-    name := "x${params.size}"
-    params.add(name, val)
-    return name
-  }
-
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
+  private static const Type:Str columnNames := Type:Str[
+    Uri#:      "uris",
+    Str#:      "strs",
+    Number#:   "nums",
+    Bool#:     "bools",
+    Date#:     "dates",
+    Time#:     "times",
+    DateTime#: "dateTimes",
+  ]
+
   private Haven haven
 
-  internal Str where
-  internal Str:Obj params := Str:Obj[:]
-  internal Int joins := 0
-  internal Int valRefs := 0
-  internal Int specs := 0
+  private Str where
+  private Str:Obj params := Str:Obj[:]
+  private Int joins := 0
+  private Int specs := 0
 
-  internal static const Type:Str columnNames := Type:Str[
-    Uri#:"uris",
-    Str#:"strs",
-    Number#:"nums",
-    Bool#:"bools",
-    Date#:"dates",
-    Time#:"times",
-    DateTime#:"dateTimes",
-  ]
+  private  Int valRefs := 0
 }
 
 

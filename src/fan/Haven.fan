@@ -64,7 +64,7 @@ class Haven
     stmt.query.each |r|
     {
       name := r->name
-      refTagSet[name] = name
+      refTags[name] = name
     }
     stmt.close
   }
@@ -120,13 +120,13 @@ class Haven
 
     rec.refs.each |targets, path|
     {
-      // update ref tags if need be
-      n := path.indexr(".")
-      lastTag := (n == null) ? path : path[(n+1)..-1]
-      if (!refTagSet.containsKey(lastTag))
+      // The last tag in a ref path always contains a Ref
+      // Update ref tags if need be.
+      lt := lastTag(path)
+      if (!refTags.containsKey(lt))
       {
-        refTagInsert.execute(["name": lastTag])
-        refTagSet[lastTag] = lastTag
+        refTagInsert.execute(["name": lt])
+        refTags[lt] = lt
       }
 
       // insert path refs
@@ -240,7 +240,7 @@ class Haven
       tag := fp.get(i)
       cur.add(tag)
 
-      if (refTagSet.containsKey(tag))
+      if (refTags.containsKey(tag))
       {
         result.add(cur.join("."))
         cur.clear
@@ -253,11 +253,17 @@ class Haven
     return result
   }
 
+  internal static Str lastTag(Str path)
+  {
+    n := path.indexr(".")
+    return (n == null) ? path : path[(n+1)..-1]
+  }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
-  // N.B. we use the connection internally in the test suite
+  // We use the connection internally in the test suite
   internal SqlConn? conn
 
   private Statement? specInsert
@@ -266,7 +272,7 @@ class Haven
   private Statement? refTagInsert
   private Statement? byIdSelect
 
-  // Always mirrors the records in the ref_tag table
-  private Str:Str refTagSet := Str:Str[:]
+  // A Set that mirrors the records in the ref_tag table
+  private Str:Str refTags := Str:Str[:]
 }
 

@@ -146,7 +146,7 @@ class QueryTest : Test
            (
              (rec.paths @> @x0::text[])
              and
-             (not exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x1 and v1.target = @x2))
+             (not (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x1 and v1.target = @x2)))
            )",
         Str:Obj[
           "x0":"{\"haven\"}",
