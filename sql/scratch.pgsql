@@ -305,3 +305,13 @@ select rec.id from rec
   inner join spec s1 on s1.qname = rec.spec
 where
   (s1.inherits_from @> '{"ph::Sensor"}'::text[]);
+
+
+explain (analyze true, verbose true, buffers true)
+select count(*) from spec
+where (spec.inherits_from @> '{"ph::Sensor"}'::text[]);
+
+explain (analyze true, verbose true, buffers true)
+select * from spec
+where (spec.inherits_from @> '{"ph.points::AirFlowSensor"}'::text[]);
+

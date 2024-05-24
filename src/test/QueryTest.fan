@@ -985,9 +985,7 @@ class QueryTest : Test
   {
     echo("==============================================================")
 
-    //doTestSpec(Filter("point and ph::Sensor"))
-    //doTestSpec(Filter("equipRef->ph::AcElecMeter"))
-
+    // There are so many Sensor specs that this ends up being a scan
     doSelect(
       Filter("ph::Sensor"),
       Query(
@@ -999,18 +997,35 @@ class QueryTest : Test
           "x0":"{\"ph::Sensor\"}",
         ]),
         true)
-  }
 
-//  Void doTestSpec(Filter filter)
-//  {
-//    echo("--------------------------------------------------------------")
-//    echo("Filter: '$filter'")
-//    echo
-//
-//    expected := testData.filter(filter)
-//    echo("expected ${expected.size} rows")
-//    echo(expected.map |Dict v->Ref| { v.id })
-//  }
+    doSelect(
+      Filter("ph.points::AirFlowSensor"),
+      Query(
+        "select rec.brio from rec
+           inner join spec s1 on s1.qname = rec.spec
+         where
+           (s1.inherits_from @> @x0::text[])",
+        Str:Obj[
+          "x0":"{\"ph.points::AirFlowSensor\"}",
+        ]))
+
+    doSelect(
+      Filter("ph.points::AirPressureSensor and equipRef == @p:demo:r:2de0dfb5-6e04b073"),
+      Query(
+        "select rec.brio from rec
+           inner join spec s1 on s1.qname = rec.spec
+         where
+           (
+             (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))
+             and
+             (s1.inherits_from @> @x2::text[])
+           )",
+        Str:Obj[
+          "x0":"equipRef",
+          "x1":"p:demo:r:2de0dfb5-6e04b073",
+          "x2":"{\"ph.points::AirPressureSensor\"}",
+        ]))
+  }
 
   private Void doSelect(
     Filter filter,
@@ -1056,7 +1071,9 @@ class QueryTest : Test
 
     seq := isSeqScan(explained)
     if (seq) echo("************ SEQUENTIAL ************")
-    if (!allowSequential)
+    if (allowSequential)
+      verifyTrue(seq)
+    else
       verifyFalse(seq)
 
     explained.each |s| {
