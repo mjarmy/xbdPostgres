@@ -7,13 +7,26 @@
 //
 
 using haystack
+using haystack::Ref
+using haystack::Dict
+using xeto
 
 **
 ** TestData
 **
-const class TestData
+internal class TestData
 {
   new make()
+  {
+    this.recs = initRecs
+    this.xetoNs = initXeto
+    this.context = TestContext(recs)
+  }
+
+  **
+  ** initRecs
+  **
+  private static Ref:Dict initRecs()
   {
     recs := Ref:Dict[:]
 
@@ -132,18 +145,33 @@ const class TestData
     ]
     extra.each |d| { recs.add(d->id, d) }
 
-    this.recs = recs
+    return recs
   }
 
-  // Run a filter against the recs
-  Dict[] filter(Filter f)
+  **
+  ** initXeto
+  **
+  private static LibNamespace initXeto()
+  {
+    repo    := LibRepo.cur
+    depends := repo.libs.map |n->LibDepend| { LibDepend(n) }
+    vers    := repo.solveDepends(depends)
+    ns      := repo.createNamespace(vers)
+    return ns
+  }
+
+  **
+  ** Run a filter against the recs
+  **
+  internal Dict[] filter(Filter f)
   {
     res := Dict[,]
 
-    pather := |Ref r->Dict?| { recs.get(r) }
+    //pather := |Ref r->Dict?| { recs.get(r) }
     recs.each |r|
     {
-      if (f.matches(r, PatherContext(pather)))
+      //if (f.matches(r, PatherContext(pather)))
+      if (f.matches(r, context))
         res.add(r)
     }
 
@@ -157,18 +185,36 @@ const class TestData
     Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))
   }
 
+//////////////////////////////////////////////////////////////////////////
+// Fields
+//////////////////////////////////////////////////////////////////////////
+
   internal const Ref:Dict recs
-  internal const HaystackContext context := TestContext(recs)
+  internal HaystackContext context
+  internal LibNamespace xetoNs
 }
 
-internal const class TestContext : HaystackContext
+**
+** TestContext
+**
+internal class TestContext : HaystackContext
 {
-  new make TestContext(Ref:Dict recs)
+  new make(Ref:Dict recs)
   {
     this.recs = recs
   }
 
-  override Dict? deref(Ref id) { recs.get(r) }
+  override Dict? deref(Ref id) { recs.get(id) }
   override FilterInference inference() { FilterInference.nil }
   override Dict toDict() { Etc.emptyDict }
+
+//  override Bool xetoIsSpec(Str specName, xeto::Dict rec)
+//  {
+//    spec := specName.contains("::") ?
+//      xeto.type(specName) :
+//      xeto.unqualifiedType(specName)
+//    return xeto.specOf(rec).isa(spec)
+//  }
+
+  internal const Ref:Dict recs
 }

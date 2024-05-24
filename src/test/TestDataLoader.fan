@@ -31,22 +31,18 @@ class TestDataLoader
     haven.conn.sql("delete from path_ref").execute
     haven.conn.sql("delete from rec").execute
 
-    loadSpecs()
-    loadRecs()
+    td := TestData()
+    loadSpecs(td)
+    loadRecs(td)
 
     haven.close()
   }
 
   ** load all the specs
-  Void loadSpecs()
+  internal Void loadSpecs(TestData td)
   {
-    repo    := LibRepo.cur
-    depends := repo.libs.map |n->LibDepend| { LibDepend(n) }
-    vers    := repo.solveDepends(depends)
-    ns      := repo.createNamespace(vers)
-
     n := 0
-    ns.libs.each |lib|
+    td.xetoNs.libs.each |lib|
     {
       lib.specs.each |s| {
         loadSpec(s)
@@ -89,10 +85,10 @@ class TestDataLoader
     }
   }
 
-  private Void loadRecs()
+  ** load the recs from the testdata
+  private Void loadRecs(TestData td)
   {
     n := 0
-    td := TestData()
     td.recs.each |dict|
     {
       haven.insertRec(dict)

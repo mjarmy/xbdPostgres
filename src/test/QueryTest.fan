@@ -1006,39 +1006,39 @@ class QueryTest : Test
   {
     echo("--------------------------------------------------------------")
     echo("Filter: '$filter'")
-    //echo
+    echo
 
     // Dump the expected query
-    //echo("-------------------------------------")
-    //echo("expected query")
-    //echo
-    //dumpQuery(expectedQuery)
-    //echo
+    echo("-------------------------------------")
+    echo("expected query")
+    echo
+    dumpQuery(expectedQuery)
+    echo
 
     // Construct the Query
     query := Query.fromFilter(haven, filter)
-    //echo("-------------------------------------")
-    //echo("found query")
-    //echo
-    //dumpQuery(query)
-    //echo
+    echo("-------------------------------------")
+    echo("found query")
+    echo
+    dumpQuery(query)
+    echo
 
     // get the raw sql
     raw := rawSql(query)
-    //echo("-------------------------------------")
-    //echo("explain (analyze true, verbose true, buffers true) ")
-    //echo(raw)
-    //echo
+    echo("-------------------------------------")
+    echo("explain (analyze true, verbose true, buffers true) ")
+    echo(raw)
+    echo
 
     // make sure the queries are equal
-    //echo("-------------------------------------")
-    //echo("sql eq ${expectedQuery.sql == query.sql}")
-    //echo("params eq ${expectedQuery.params == query.params}")
-    //echo
+    echo("-------------------------------------")
+    echo("sql eq ${expectedQuery.sql == query.sql}")
+    echo("params eq ${expectedQuery.params == query.params}")
+    echo
     verifyEq(expectedQuery, query)
 
     // Explain the Query's raw sql to make sure its not a sequential scan
-    //echo("-------------------------------------")
+    echo("-------------------------------------")
     explained := explain(raw)
 
     seq := isSeqScan(explained)
@@ -1050,7 +1050,7 @@ class QueryTest : Test
       if (s.startsWith("Execution Time:"))
         echo(s)
     }
-    //echo
+    echo
 
     // Fetch the expected data
     expected := testData.filter(filter)
@@ -1059,7 +1059,7 @@ class QueryTest : Test
     found := haven.select(query)
 
     // Make sure the results match the test data
-    //echo("-------------------------------------")
+    echo("-------------------------------------")
     verifyDictsEq(expected, found)
   }
 
