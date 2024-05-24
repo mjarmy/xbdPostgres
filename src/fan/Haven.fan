@@ -214,6 +214,9 @@ class Haven
       }
       // Otherwise, the result is ordered by id, so we track the previous id
       // to discard duplicate records.
+      //
+      // This is necessary because list-of-refs will cause duplicate records to
+      // be returned when doing joins via path_ref.
       else
       {
         id := r.get(idCol)

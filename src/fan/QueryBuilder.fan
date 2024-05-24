@@ -30,6 +30,10 @@ internal class QueryBuilder {
     {
       // We have to order the records if we are doing a join, so we include
       // the id in the ResultSet.
+      //
+      // This is necessary because list-of-refs will cause duplicate records to
+      // be returned. We remove them in Haven by comparing ids as we process
+      // each Row.
       sql.add("select rec.id, rec.brio from rec\n")
 
       for (i := 1; i <= joins; i++)
