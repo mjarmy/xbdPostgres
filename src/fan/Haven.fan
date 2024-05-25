@@ -89,10 +89,14 @@ class Haven
   **
   Void insertSpec(Str qname, Str[] inheritsFrom)
   {
-    specInsert.execute([
-      "qname":qname,
-      "inheritsFrom": inheritsFrom
-    ])
+    inheritsFrom.each |inhFrom|
+    {
+      specInsert.execute([
+        "qname":qname,
+        "inheritsFrom": inhFrom
+      ])
+    }
+
     conn.commit
   }
 

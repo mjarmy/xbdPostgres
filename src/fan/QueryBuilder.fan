@@ -43,11 +43,6 @@ internal class QueryBuilder {
         sql.add("  inner join rec      r$i on r${i}.id     = p${i}.target\n")
       }
 
-      for (i := 1; i <= specs; i++)
-      {
-        sql.add("  inner join spec s$i on s${i}.qname = rec.spec\n")
-      }
-
       sql.add("where\n")
       sql.add(where).add("\n")
 
@@ -57,12 +52,6 @@ internal class QueryBuilder {
     else
     {
       sql.add("select rec.brio from rec\n")
-
-      for (i := 1; i <= specs; i++)
-      {
-        sql.add("  inner join spec s$i on s${i}.qname = rec.spec\n")
-      }
-
       sql.add("where\n")
       sql.add(where)
     }
@@ -204,10 +193,14 @@ internal class QueryBuilder {
   ** visit 'isSpec'
   private Str visitIsSpec(Str spec, Int indent)
   {
-    pad := doIndent(indent)
     specs++
-    x := addParam("{\"$spec\"}")
-    return pad + "(s${specs}.inherits_from @> @$x::text[])"
+    x := addParam(spec)
+
+    return [
+      doIndent(indent),
+      "(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ",
+      "and s${specs}.inherits_from = @$x))"
+    ].join()
   }
 
   ** 'has' AST node
@@ -412,8 +405,8 @@ internal class QueryBuilder {
   private Str where
   private Str:Obj params := Str:Obj[:]
   private Int joins := 0
-  private Int specs := 0
 
+  private Int specs := 0
   private  Int valRefs := 0
 }
 

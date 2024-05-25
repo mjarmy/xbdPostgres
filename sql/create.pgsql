@@ -6,10 +6,11 @@ set search_path to xbd;
 
 -- Specs
 create table spec (
-  qname         text primary key,
-  inherits_from text[] not null
+  qname         text not null,
+  inherits_from text not null,
+  constraint spec_pkey primary key (qname, inherits_from)
 );
-create index spec_inherits_from on spec using gin (inherits_from);
+create index spec_inherits_from on spec (inherits_from);
 
 -- Ref_tag is the set of every tag that contains a ref
 create table ref_tag (
@@ -34,7 +35,6 @@ create table rec (
   spec text -- nullable, no foreign key to spec(qname), since it could be dangling
 );
 create index rec_paths     on rec using gin (paths);
-
 create index rec_strs      on rec using gin (strs      jsonb_path_ops);
 create index rec_nums      on rec using gin (nums      jsonb_path_ops);
 create index rec_units     on rec using gin (units     jsonb_path_ops);
@@ -43,8 +43,7 @@ create index rec_uris      on rec using gin (uris      jsonb_path_ops);
 create index rec_dates     on rec using gin (dates     jsonb_path_ops);
 create index rec_times     on rec using gin (times     jsonb_path_ops);
 create index rec_dateTimes on rec using gin (dateTimes jsonb_path_ops);
-
-create index rec_spec on rec (spec);
+create index rec_spec      on rec (spec);
 
 -- Ref lookups via self-join
 create table path_ref (

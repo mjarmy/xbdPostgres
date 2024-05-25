@@ -990,40 +990,36 @@ class QueryTest : Test
       Filter("ph::Sensor"),
       Query(
         "select rec.brio from rec
-           inner join spec s1 on s1.qname = rec.spec
          where
-           (s1.inherits_from @> @x0::text[])",
+           (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x0))",
         Str:Obj[
-          "x0":"{\"ph::Sensor\"}",
-        ]),
-        true)
+          "x0":"ph::Sensor",
+        ]))
 
     doSelect(
       Filter("ph.points::AirFlowSensor"),
       Query(
         "select rec.brio from rec
-           inner join spec s1 on s1.qname = rec.spec
          where
-           (s1.inherits_from @> @x0::text[])",
+           (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x0))",
         Str:Obj[
-          "x0":"{\"ph.points::AirFlowSensor\"}",
+          "x0":"ph.points::AirFlowSensor",
         ]))
 
     doSelect(
       Filter("ph.points::AirPressureSensor and equipRef == @p:demo:r:2de0dfb5-6e04b073"),
       Query(
         "select rec.brio from rec
-           inner join spec s1 on s1.qname = rec.spec
          where
            (
              (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))
              and
-             (s1.inherits_from @> @x2::text[])
+             (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x2))
            )",
         Str:Obj[
           "x0":"equipRef",
           "x1":"p:demo:r:2de0dfb5-6e04b073",
-          "x2":"{\"ph.points::AirPressureSensor\"}",
+          "x2":"ph.points::AirPressureSensor",
         ]))
   }
 
