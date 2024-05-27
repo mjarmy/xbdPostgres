@@ -184,7 +184,7 @@ class Haven
       sql.add("@x$i")
       params.add("x$i", id.id)
     }
-    sql.add(");")
+    sql.add(")")
 
     stmt := conn.sql(sql.toStr).prepare
     stmt.query(params).each |r|
@@ -260,18 +260,21 @@ class Haven
     return result
   }
 
+  ** find the last tag in a dotted path
   internal static Str lastTag(Str path)
   {
     n := path.indexr(".")
     return (n == null) ? path : path[(n+1)..-1]
   }
 
+  ** We use the connection internally in the test suite
+  internal SqlConn? testConn() { conn }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
-  // We use the connection internally in the test suite
-  internal SqlConn? conn
+  private SqlConn? conn
 
   private Statement? specInsert
   private Statement? recInsert
@@ -279,7 +282,7 @@ class Haven
   private Statement? refTagInsert
   private Statement? byIdSelect
 
-  // A Set that mirrors the records in the ref_tag table
+  ** refTags is a Set that mirrors the records in the ref_tag table
   private Str:Str refTags := Str:Str[:]
 }
 

@@ -165,17 +165,7 @@ internal class TestData
   **
   internal Dict[] filter(Filter f)
   {
-    res := Dict[,]
-
-    //pather := |Ref r->Dict?| { recs.get(r) }
-    recs.each |r|
-    {
-      //if (f.matches(r, PatherContext(pather)))
-      if (f.matches(r, context))
-        res.add(r)
-    }
-
-    return res
+    return recs.vals.findAll(|Dict r->Bool| { f.matches(r, context) })
   }
 
   private static Marker M() { Marker.val }
@@ -190,8 +180,9 @@ internal class TestData
 //////////////////////////////////////////////////////////////////////////
 
   internal const Ref:Dict recs
-  internal LibNamespace xetoNs
-  internal HaystackContext context
+  internal const LibNamespace xetoNs
+
+  private HaystackContext context
 }
 
 **
@@ -209,6 +200,7 @@ internal class TestContext : HaystackContext
   override FilterInference inference() { FilterInference.nil }
   override Dict toDict() { Etc.emptyDict }
 
+  ** Return true if the given rec is nominally an instance of the given spec.
   override Bool xetoIsSpec(Str specName, xeto::Dict rec)
   {
     spec := specName.contains("::") ?
@@ -225,6 +217,6 @@ internal class TestContext : HaystackContext
     }
   }
 
-  internal const Ref:Dict recs
-  internal LibNamespace xetoNs
+  private const Ref:Dict recs
+  private LibNamespace xetoNs
 }

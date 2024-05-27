@@ -1114,7 +1114,7 @@ class QueryTest : Test
   {
     res := Str[,]
 
-    stmt := haven.conn.sql(
+    stmt := haven.testConn.sql(
         "explain (analyze true, verbose true, buffers true) " +
         rawSql)
     stmt.query().each |row|

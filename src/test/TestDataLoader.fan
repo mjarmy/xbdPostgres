@@ -26,10 +26,10 @@ class TestDataLoader
       "xbd",
       "s3crkEt")
 
-    haven.conn.sql("delete from spec").execute
-    haven.conn.sql("delete from ref_tag").execute
-    haven.conn.sql("delete from path_ref").execute
-    haven.conn.sql("delete from rec").execute
+    haven.testConn.sql("delete from spec").execute
+    haven.testConn.sql("delete from ref_tag").execute
+    haven.testConn.sql("delete from path_ref").execute
+    haven.testConn.sql("delete from rec").execute
 
     td := TestData()
     loadSpecs(td)
