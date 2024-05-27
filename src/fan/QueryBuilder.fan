@@ -62,64 +62,68 @@ internal class QueryBuilder {
   ** visit AST node
   private Str visit(Filter f, Int indent)
   {
-    if (f.type == FilterType.and)
+    switch (f.type)
+    {
+    case FilterType.and:
       return visitAnd(f.argA, f.argB, indent)
 
-    else if (f.type == FilterType.or)
+    case FilterType.or:
       return visitOr(f.argA, f.argB, indent)
 
-    else if (f.type == FilterType.has)
+    case FilterType.isSpec:
+      return visitIsSpec((Str)f.argA, indent)
+
+    case FilterType.has:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { has(alias, path) },
         indent)
 
-    else if (f.type == FilterType.missing)
+    case FilterType.missing:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { missing(alias, path) },
         indent)
 
-    else if (f.type == FilterType.eq)
+    case FilterType.eq:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { eq(alias, path, f.argB) },
         indent)
 
-    else if (f.type == FilterType.ne)
+    case FilterType.ne:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { ne(alias, path, f.argB) },
         indent)
 
-    else if (f.type == FilterType.lt)
+    case FilterType.lt:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<") },
         indent)
 
-    else if (f.type == FilterType.le)
+    case FilterType.le:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<=") },
         indent)
 
-    else if (f.type == FilterType.gt)
+    case FilterType.gt:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">") },
         indent)
 
-    else if (f.type == FilterType.ge)
+    case FilterType.ge:
       return visitLeaf(
         (FilterPath)f.argA,
         |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">=") },
         indent)
 
-    else if (f.type == FilterType.isSpec)
-      return visitIsSpec((Str)f.argA, indent)
-
-    else throw Err("Encountered unknown FilterType ${f.type}")
+    default:
+        throw Err("Encountered unknown FilterType ${f.type}")
+    }
   }
 
   ** visit 'and'
@@ -148,6 +152,20 @@ internal class QueryBuilder {
       visit(b, indent+1),
       pad + ")",
     ].join("\n")
+  }
+
+  ** visit 'isSpec'
+  private Str visitIsSpec(Str spec, Int indent)
+  {
+    specs++
+    x := addParam(spec)
+
+    // use a nested subquery
+    return [
+      doIndent(indent),
+      "(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ",
+      "and s${specs}.inherits_from = @$x))"
+    ].join()
   }
 
   ** visit a leaf AST node
@@ -190,19 +208,6 @@ internal class QueryBuilder {
     }
   }
 
-  ** visit 'isSpec'
-  private Str visitIsSpec(Str spec, Int indent)
-  {
-    specs++
-    x := addParam(spec)
-
-    return [
-      doIndent(indent),
-      "(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ",
-      "and s${specs}.inherits_from = @$x))"
-    ].join()
-  }
-
   ** 'has' AST node
   private Str has(Str alias, Str path)
   {
@@ -223,7 +228,7 @@ internal class QueryBuilder {
     // Misc toStr()
     if ((val is Str) || (val is Uri) || (val is Date) || (val is Time))
     {
-      x := eqParam(path, val.toStr)
+      x := addJsonParam(path, val.toStr)
       col := columnNames[val.typeof]
       return "(${alias}.$col @> @$x::jsonb)"
     }
@@ -236,21 +241,21 @@ internal class QueryBuilder {
     else if (val is Number)
     {
       Number n := (Number) val
-      xn := eqParam(path, n.toFloat)
-      xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
+      xn := addJsonParam(path, n.toFloat)
+      xu := addJsonParam(path, n.unit == null ? null : n.unit.toStr)
       return "((${alias}.nums @> @$xn::jsonb) and (${alias}.units @> @$xu::jsonb))"
     }
     // Bool
     else if (val is Bool)
     {
-      x := eqParam(path, val)
+      x := addJsonParam(path, val)
       return "(${alias}.bools @> @$x::jsonb)"
     }
     // DateTime
     else if (val is DateTime)
     {
       DateTime ts := (DateTime) val
-      xn := eqParam(path, Duration(ts.ticks).toMillis)
+      xn := addJsonParam(path, Duration(ts.ticks).toMillis)
       return "(${alias}.dateTimes @> @$xn::jsonb)"
     }
 
@@ -279,7 +284,7 @@ internal class QueryBuilder {
     }
   }
 
-  ** test a ref for equality using a nested-subquery
+  ** test a ref for equality using a nested subquery
   private Str refEq(Str alias, Str path, Ref ref)
   {
     valRefs++
@@ -324,7 +329,7 @@ internal class QueryBuilder {
       xv := addParam(n.toFloat)
       cmpClause := "(((${alias}.nums -> @$xp)::real) $op @$xv)";
 
-      xu := eqParam(path, n.unit == null ? null : n.unit.toStr)
+      xu := addJsonParam(path, n.unit == null ? null : n.unit.toStr)
       unitEqClause := "(${alias}.units @> @$xu::jsonb)"
 
       return "($hasClause and $cmpClause and $unitEqClause)"
@@ -361,8 +366,8 @@ internal class QueryBuilder {
       return "false";
   }
 
-  ** add a param that tests for equality
-  private Str eqParam(Str path, Obj? val)
+  ** add a JSON param for a path:val pair
+  private Str addJsonParam(Str path, Obj? val)
   {
     return addParam(
       JsonOutStream.writeJsonToStr(
@@ -407,7 +412,7 @@ internal class QueryBuilder {
   private Int joins := 0
 
   private Int specs := 0
-  private  Int valRefs := 0
+  private Int valRefs := 0
 }
 
 
