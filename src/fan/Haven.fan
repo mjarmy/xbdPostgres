@@ -148,7 +148,7 @@ class Haven
   }
 
   **
-  ** select by id
+  ** Select by id
   **
   Dict? selectById(Ref id)
   {
@@ -166,7 +166,7 @@ class Haven
   }
 
   **
-  ** select by list of ids
+  ** Select by list of ids
   **
   Dict[] selectByIds(Ref[] ids)
   {
@@ -211,12 +211,12 @@ class Haven
     {
       idCol := r.col("id", false)
 
-      // If there is no id column, then the resulset is not ordered
+      // If there is no id column, then the Resultset is not ordered.
       if (idCol == null)
       {
         res.add(BrioReader(((Buf)r->brio).in).readDict)
       }
-      // Otherwise, the result is ordered by id, so we track the previous id
+      // Otherwise, the Resultset is ordered by id, so we track the previous id
       // to discard duplicate records.
       //
       // This is necessary because list-of-refs will cause duplicate records to
@@ -236,7 +236,8 @@ class Haven
     return res
   }
 
-  ** make a List of dotted Paths ending in Refs, using the refTag whitelist
+  ** Make a List of dotted Paths ending in Refs, using the refTag whitelist.
+  ** This will be used to construct a series of inner joins.
   internal Str[] refPaths(FilterPath fp)
   {
     result := Str[,]
@@ -260,14 +261,14 @@ class Haven
     return result
   }
 
-  ** find the last tag in a dotted path
+  ** Find the last tag in a dotted path.
   internal static Str lastTag(Str path)
   {
     n := path.indexr(".")
     return (n == null) ? path : path[(n+1)..-1]
   }
 
-  ** We use the connection internally in the test suite
+  ** We use the connection internally in the test suite.
   internal SqlConn? testConn() { conn }
 
 //////////////////////////////////////////////////////////////////////////
@@ -282,7 +283,7 @@ class Haven
   private Statement? refTagInsert
   private Statement? byIdSelect
 
-  ** refTags is a Set that mirrors the records in the ref_tag table
+  ** refTags is a Set that mirrors the records in the ref_tag table.
   private Str:Str refTags := Str:Str[:]
 }
 
