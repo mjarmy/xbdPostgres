@@ -985,7 +985,6 @@ class QueryTest : Test
   {
     echo("==============================================================")
 
-    // There are so many Sensor specs that this ends up being a scan
     doSelect(
       Filter("ph::Sensor"),
       Query(
@@ -1092,7 +1091,7 @@ class QueryTest : Test
   private Void verifyDictsEq(Dict[] expected, Dict[] found)
   {
     expected.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
-    found.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
+    found.sort    |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
 
     //echo("expected ${expected.size} rows")
     //echo(expected.map |Dict v->Ref| { v.id })
