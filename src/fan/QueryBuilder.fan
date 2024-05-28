@@ -228,7 +228,7 @@ internal class QueryBuilder {
     // Misc toStr()
     if ((val is Str) || (val is Uri) || (val is Date) || (val is Time))
     {
-      x := addJsonParam(path, val.toStr)
+      x := addObjParam(path, val.toStr)
       col := columnNames[val.typeof]
       return "(${alias}.$col @> @$x::jsonb)"
     }
@@ -241,21 +241,21 @@ internal class QueryBuilder {
     else if (val is Number)
     {
       Number n := (Number) val
-      xn := addJsonParam(path, n.toFloat)
-      xu := addJsonParam(path, n.unit == null ? null : n.unit.toStr)
+      xn := addObjParam(path, n.toFloat)
+      xu := addObjParam(path, n.unit == null ? null : n.unit.toStr)
       return "((${alias}.nums @> @$xn::jsonb) and (${alias}.units @> @$xu::jsonb))"
     }
     // Bool
     else if (val is Bool)
     {
-      x := addJsonParam(path, val)
+      x := addObjParam(path, val)
       return "(${alias}.bools @> @$x::jsonb)"
     }
     // DateTime
     else if (val is DateTime)
     {
       DateTime ts := (DateTime) val
-      xn := addJsonParam(path, Duration(ts.ticks).toMillis)
+      xn := addObjParam(path, Duration(ts.ticks).toMillis)
       return "(${alias}.dateTimes @> @$xn::jsonb)"
     }
 
@@ -329,7 +329,7 @@ internal class QueryBuilder {
       xv := addParam(n.toFloat)
       cmpClause := "(((${alias}.nums -> @$xp)::real) $op @$xv)";
 
-      xu := addJsonParam(path, n.unit == null ? null : n.unit.toStr)
+      xu := addObjParam(path, n.unit == null ? null : n.unit.toStr)
       unitEqClause := "(${alias}.units @> @$xu::jsonb)"
 
       return "($hasClause and $cmpClause and $unitEqClause)"
@@ -366,8 +366,8 @@ internal class QueryBuilder {
       return "false";
   }
 
-  ** add a JSON param for a path:val pair
-  private Str addJsonParam(Str path, Obj? val)
+  ** add a JSON Object param for a path:val pair
+  private Str addObjParam(Str path, Obj? val)
   {
     return addParam(
       JsonOutStream.writeJsonToStr(
