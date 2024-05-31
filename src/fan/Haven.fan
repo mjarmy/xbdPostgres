@@ -171,13 +171,15 @@ class Haven
     }
   }
 
-  **
-  ** Select by list of ids
-  **
-  Dict[] selectByIds(Ref[] ids)
+  ** Read a list of records by id.  The resulting list matches
+  ** the list of ids by index (null if record not found).
+  Dict?[] readByIds(Ref[] ids, Bool checked := true)
   {
     if (ids.isEmpty)
       return Dict[,]
+
+    refMap := Ref:Int[:]
+    res := Dict?[,]
 
     // create query
     sql := StrBuf()
@@ -185,6 +187,9 @@ class Haven
     params := Str:Obj?[:]
     ids.each |id, i|
     {
+      refMap[id] = i
+      res.add(null)
+
       if (i > 0)
         sql.add(", ")
       sql.add("@x$i")
@@ -193,12 +198,11 @@ class Haven
     sql.add(")")
 
     // run query
-    res := Dict[,]
     stmt := conn.sql(sql.toStr).prepare
     stmt.query(params).each |r|
     {
-      Buf brio := r->brio
-      res.add(BrioReader(brio.in).readDict)
+      d := BrioReader(((Buf)r->brio).in).readDict
+      res[refMap[d->id]] = d
     }
     stmt.close
 
@@ -210,12 +214,10 @@ class Haven
   **
   Dict[] select(Query q)
   {
-    res := Dict[,]
-
     stmt := conn.sql(q.sql).prepare
-    stmt.query(q.params).each |r|
+    res := stmt.query(q.params).map |r->Dict|
     {
-      res.add(BrioReader(((Buf)r->brio).in).readDict)
+      BrioReader(((Buf)r->brio).in).readDict
     }
     stmt.close
 

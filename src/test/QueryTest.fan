@@ -26,7 +26,7 @@ class QueryTest : Test
     haven.close()
   }
 
-  Void testSelectById()
+  Void testReadById()
   {
     verifyTrue(
       Etc.dictEq(
@@ -37,34 +37,27 @@ class QueryTest : Test
     verifyTrue(haven.readById(ref("bogus"), false) == null)
   }
 
-  Void testSelectByIds()
+  Void testReadByIds()
   {
-    verifyDictsEq(
-      haven.selectByIds(Ref[,]),
-      Dict[,])
+    verifyTrue(haven.readByIds(Ref[,]).isEmpty)
 
-    verifyDictsEq(
-      haven.selectByIds(Ref[
-        ref("bogus"),
-        ref("z0")
-      ]),
-      Dict[
-        testData.recs[ref("z0")]
-      ])
+    r := haven.readByIds(Ref[
+      ref("bogus"),
+      ref("z0")])
+    verifyTrue(r.size == 2)
+    verifyTrue(r[0] == null)
+    verifyTrue(Etc.dictEq(r[1], testData.recs[ref("z0")]))
 
-    verifyDictsEq(
-      haven.selectByIds(Ref[
-        ref("z0"),
-        ref("z1"),
-        ref("z2"),
-        ref("z3")
-      ]),
-      Dict[
-        testData.recs[ref("z0")],
-        testData.recs[ref("z1")],
-        testData.recs[ref("z2")],
-        testData.recs[ref("z3")]
-      ])
+    r = haven.readByIds(Ref[
+      ref("z3"),
+      ref("z2"),
+      ref("z1"),
+      ref("z0")])
+    verifyTrue(r.size == 4)
+    verifyTrue(Etc.dictEq(r[0], testData.recs[ref("z3")]))
+    verifyTrue(Etc.dictEq(r[1], testData.recs[ref("z2")]))
+    verifyTrue(Etc.dictEq(r[2], testData.recs[ref("z1")]))
+    verifyTrue(Etc.dictEq(r[3], testData.recs[ref("z0")]))
   }
 
   Void testHaven()
