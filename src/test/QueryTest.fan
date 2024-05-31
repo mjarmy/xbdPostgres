@@ -944,8 +944,10 @@ class QueryTest : Test
   {
     echo("==============================================================")
 
+    filter := Filter("elec and sensor and equipRef->siteRef->area < 10000ft²")
+
     doSelect(
-      Filter("elec and sensor and equipRef->siteRef->area < 10000ft²"),
+      filter,
       Query(
         "select rec.brio from rec
          where
@@ -973,6 +975,10 @@ class QueryTest : Test
           "x6":10000.0f,
           "x7":"{\"area\":\"ft\\u00b2\"}"
         ]))
+
+    verifyEq(haven.readAll(filter).size, 10)
+    verifyEq(haven.readAll(filter, Etc.dict1("limit", 5)).size, 5)
+    verifyEq(haven.readAll(filter, Etc.dict1("limit", 0)).size, 0)
   }
 
   Void testSpec()
@@ -1075,7 +1081,7 @@ class QueryTest : Test
     expected := testData.filter(filter)
 
     // Perfom the query in the database
-    found := haven.select(query)
+    found := haven.readAll(filter)
 
     // Make sure the results match the test data
     verbose("-------------------------------------")

@@ -152,6 +152,10 @@ class Haven
     conn.commit
   }
 
+//////////////////////////////////////////////////////////////////////////
+// Reads
+//////////////////////////////////////////////////////////////////////////
+
   ** Read single record by its id
   Dict? readById(Ref? id, Bool checked := true)
   {
@@ -209,20 +213,30 @@ class Haven
     return res
   }
 
-  **
-  ** Execute a query
-  **
-  Dict[] select(Query q)
+  ** Match all the records against given filter.
+  Dict[] readAll(Filter filter, Dict? opts := null)
   {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    res := Dict[,]
     stmt := conn.sql(q.sql).prepare
-    res := stmt.query(q.params).map |r->Dict|
+    rows := stmt.query(q.params)
+    i := 0
+    while ((i < rows.size) && (i < limit))
     {
-      BrioReader(((Buf)r->brio).in).readDict
+      res.add(BrioReader(((Buf)rows[i++]->brio).in).readDict)
     }
     stmt.close
 
     return res
   }
+
+//////////////////////////////////////////////////////////////////////////
+// Misc
+//////////////////////////////////////////////////////////////////////////
 
   ** Make a List of dotted Paths ending in Refs, using the refTag whitelist.
   ** This will be used to construct a series of inner joins in

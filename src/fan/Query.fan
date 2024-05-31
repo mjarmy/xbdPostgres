@@ -11,7 +11,7 @@ using haystack
 **
 ** Query is a haystack Filter that has been translated to parameterized SQL
 **
-const class Query
+internal const class Query
 {
   **
   ** Only used for unit tests
@@ -25,7 +25,7 @@ const class Query
   **
   ** Create a Query from a Filter
   **
-  static new fromFilter(Haven haven, Filter f)
+  internal static new fromFilter(Haven haven, Filter f)
   {
      return QueryBuilder(haven, f).toQuery
   }
@@ -52,10 +52,10 @@ const class Query
   **
   ** The parameterized SQL
   **
-  const Str sql
+  internal const Str sql
 
   **
   ** The parameter name-to-value Map.
   **
-  const Str:Obj params
+  internal const Str:Obj params
 }
