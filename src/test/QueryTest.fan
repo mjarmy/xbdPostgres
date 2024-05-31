@@ -1030,39 +1030,39 @@ class QueryTest : Test
   {
     echo("--------------------------------------------------------------")
     echo("Filter: '$filter'")
-    echo
+    verbose
 
     // Dump the expected query
-    echo("-------------------------------------")
-    echo("expected query")
-    echo
+    verbose("-------------------------------------")
+    verbose("expected query")
+    verbose
     dumpQuery(expectedQuery)
-    echo
+    verbose
 
     // Construct the Query
     query := Query.fromFilter(haven, filter)
-    echo("-------------------------------------")
-    echo("found query")
-    echo
+    verbose("-------------------------------------")
+    verbose("found query")
+    verbose
     dumpQuery(query)
-    echo
+    verbose
 
     // get the raw sql
     raw := rawSql(query)
-    echo("-------------------------------------")
-    echo("explain (analyze true, verbose true, buffers true) ")
-    echo(raw)
-    echo
+    verbose("-------------------------------------")
+    verbose("explain (analyze true, verbose true, buffers true) ")
+    verbose(raw)
+    verbose
 
     // make sure the queries are equal
-    echo("-------------------------------------")
-    echo("sql eq ${expectedQuery.sql == query.sql}")
-    echo("params eq ${expectedQuery.params == query.params}")
-    echo
+    verbose("-------------------------------------")
+    verbose("sql eq ${expectedQuery.sql == query.sql}")
+    verbose("params eq ${expectedQuery.params == query.params}")
+    verbose
     verifyEq(expectedQuery, query)
 
     // Explain the Query's raw sql to make sure its not a sequential scan
-    echo("-------------------------------------")
+    verbose("-------------------------------------")
     explained := explain(raw)
 
     seq := isSeqScan(explained)
@@ -1076,7 +1076,7 @@ class QueryTest : Test
       if (s.startsWith("Execution Time:"))
         echo(s)
     }
-    echo
+    verbose
 
     // Fetch the expected data
     expected := testData.filter(filter)
@@ -1085,7 +1085,7 @@ class QueryTest : Test
     found := haven.select(query)
 
     // Make sure the results match the test data
-    echo("-------------------------------------")
+    verbose("-------------------------------------")
     verifyDictsEq(expected, found)
   }
 
@@ -1094,15 +1094,15 @@ class QueryTest : Test
     expected.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
     found.sort    |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
 
-    //echo("expected ${expected.size} rows")
-    //echo(expected.map |Dict v->Ref| { v.id })
-    //echo("found ${found.size} rows")
-    //echo(found.map |Dict v->Ref| { v.id })
+    //verbose("expected ${expected.size} rows")
+    //verbose(expected.map |Dict v->Ref| { v.id })
+    //verbose("found ${found.size} rows")
+    //verbose(found.map |Dict v->Ref| { v.id })
 
     verifyEq(expected.size, found.size)
     expected.each |dict, i|
     {
-      //echo("$i ${expected[i]}, ${found[i]} --> ${expected[i] == found[i]}")
+      //verbose("$i ${expected[i]}, ${found[i]} --> ${expected[i] == found[i]}")
       verifyTrue(Etc.dictEq(expected[i], found[i]))
     }
   }
@@ -1151,13 +1151,15 @@ class QueryTest : Test
 
   private static Void dumpQuery(Query query)
   {
-    echo(query.sql)
-    echo
+    verbose(query.sql)
+    verbose
     query.params.each | val, key |
     {
-      echo("$key: ${val.typeof} $val")
+      verbose("$key: ${val.typeof} $val")
     }
   }
+
+  private static Void verbose(Str s := "") { /*echo(s)*/ }
 
   private static Ref ref(Str str) { Ref.fromStr(str) }
 
