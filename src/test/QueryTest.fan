@@ -35,6 +35,7 @@ class QueryTest : Test
       ))
 
     verifyTrue(haven.readById(ref("bogus"), false) == null)
+    verifyErr(UnknownRecErr#) { haven.readById(ref("bogus")) }
   }
 
   Void testReadByIds()
@@ -43,10 +44,12 @@ class QueryTest : Test
 
     r := haven.readByIds(Ref[
       ref("bogus"),
-      ref("z0")])
+      ref("z0")], false)
     verifyTrue(r.size == 2)
     verifyTrue(r[0] == null)
     verifyTrue(Etc.dictEq(r[1], testData.recs[ref("z0")]))
+
+    verifyErr(UnknownRecErr#) { haven.readByIds(Ref[ref("bogus"), ref("z0")]) }
 
     r = haven.readByIds(Ref[
       ref("z3"),
@@ -58,6 +61,16 @@ class QueryTest : Test
     verifyTrue(Etc.dictEq(r[1], testData.recs[ref("z2")]))
     verifyTrue(Etc.dictEq(r[2], testData.recs[ref("z1")]))
     verifyTrue(Etc.dictEq(r[3], testData.recs[ref("z0")]))
+  }
+
+  Void testRead()
+  {
+    verifyTrue(Etc.dictEq(
+      haven.read(Filter("id == @z0")),
+      testData.recs[ref("z0")]))
+
+    verifyTrue(haven.read(Filter("id == @bogus"), false) == null)
+    verifyErr(UnknownRecErr#) { haven.read(Filter("id == @bogus")) }
   }
 
   Void testHaven()

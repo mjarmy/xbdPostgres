@@ -160,19 +160,7 @@ class Haven
   Dict? readById(Ref? id, Bool checked := true)
   {
     rows := byIdSelect.query(["id": id.id])
-
-    if (rows.isEmpty)
-    {
-      if (checked)
-        throw UnknownRecErr(id.toStr)
-      else
-        return null;
-    }
-    else
-    {
-      Buf brio := rows[0]->brio
-      return BrioReader(brio.in).readDict
-    }
+    return doReadSingle(rows, checked, id.toStr)
   }
 
   ** Read a list of records by id.  The resulting list matches
@@ -183,7 +171,7 @@ class Haven
       return Dict[,]
 
     refMap := Ref:Int[:]
-    res := Dict?[,]
+    res := Dict?[,].fill(null, ids.size)
 
     // create query
     sql := StrBuf()
@@ -192,7 +180,6 @@ class Haven
     ids.each |id, i|
     {
       refMap[id] = i
-      res.add(null)
 
       if (i > 0)
         sql.add(", ")
@@ -210,7 +197,10 @@ class Haven
     }
     stmt.close
 
-    return res
+    if (checked && res.any |Dict? d->Bool| { d == null})
+      throw UnknownRecErr("missing ids")
+    else
+      return res
   }
 
   ** Return the number of records which match the given filter.
@@ -227,6 +217,19 @@ class Haven
     stmt.close
 
     return res < limit ? res : limit
+  }
+
+  ** Find the first record which matches the given filter.
+  ** Throw UnknownRecErr or return null based on checked flag.
+  Dict? read(Filter filter, Bool checked := true)
+  {
+    q := Query.fromFilter(this, filter)
+
+    stmt := conn.sql(q.sql).prepare
+    rows := stmt.query(q.params)
+    stmt.close
+
+    return doReadSingle(rows, checked, filter.toStr)
   }
 
   ** Match all the records against given filter.
@@ -248,6 +251,23 @@ class Haven
     stmt.close
 
     return res
+  }
+
+  ** Read a single value from a ResultSet
+  private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
+  {
+    if (rows.isEmpty)
+    {
+      if (checked)
+        throw UnknownRecErr(errMsg)
+      else
+        return null;
+    }
+    else
+    {
+      Buf brio := rows[0]->brio
+      return BrioReader(brio.in).readDict
+    }
   }
 
 //////////////////////////////////////////////////////////////////////////
