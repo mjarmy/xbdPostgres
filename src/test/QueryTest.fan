@@ -179,12 +179,12 @@ class QueryTest : Test
     doSelect(
       Filter("midRef->dis == \"Mid 1\""),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.strs @> @x1::jsonb)))",
         Str:Obj[
           "x0":"midRef",
           "x1":"{\"dis\":\"Mid 1\"}",
@@ -193,12 +193,12 @@ class QueryTest : Test
     doSelect(
       Filter("midRef->dis == \"Mid 2\""),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.strs @> @x1::jsonb)))",
         Str:Obj[
           "x0":"midRef",
           "x1":"{\"dis\":\"Mid 2\"}",
@@ -207,12 +207,12 @@ class QueryTest : Test
     doSelect(
       Filter("midRef->topRef == @top-1"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (exists (select 1 from path_ref v1 where v1.source = r1.id and v1.path_ = @x1 and v1.target = @x2)))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (exists (select 1 from path_ref v1 where v1.source = r1.id and v1.path_ = @x1 and v1.target = @x2))))",
         Str:Obj[
           "x0":"midRef",
           "x1":"topRef",
@@ -222,12 +222,12 @@ class QueryTest : Test
     doSelect(
       Filter("midRef->topRef == @top-2"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (exists (select 1 from path_ref v1 where v1.source = r1.id and v1.path_ = @x1 and v1.target = @x2)))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (exists (select 1 from path_ref v1 where v1.source = r1.id and v1.path_ = @x1 and v1.target = @x2))))",
         Str:Obj[
           "x0":"midRef",
           "x1":"topRef",
@@ -237,14 +237,14 @@ class QueryTest : Test
     doSelect(
       Filter("midRef->topRef->dis == \"Top 1\""),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
-           inner join path_ref p2 on p2.source = r1.id
-           inner join rec      r2 on r2.id     = p2.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             inner join path_ref p2 on p2.source = r1.id
+             inner join rec r2 on r2.id = p2.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb)))",
         Str:Obj[
           "x0":"midRef",
           "x1":"topRef",
@@ -254,14 +254,14 @@ class QueryTest : Test
     doSelect(
       Filter("midRef->topRef->dis == \"Top 2\""),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
-           inner join path_ref p2 on p2.source = r1.id
-           inner join rec      r2 on r2.id     = p2.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             inner join path_ref p2 on p2.source = r1.id
+             inner join rec r2 on r2.id = p2.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb)))",
         Str:Obj[
           "x0":"midRef",
           "x1":"topRef",
@@ -730,12 +730,12 @@ class QueryTest : Test
     doSelect(
       Filter("chilledWaterRef->chilled"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
         Str:Obj[
           "x0":"chilledWaterRef",
           "x1":"{\"chilled\"}"]))
@@ -757,26 +757,26 @@ class QueryTest : Test
     doSelect(
       Filter("chilled and pump and sensor and equipRef->siteRef->site"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
-           inner join path_ref p2 on p2.source = r1.id
-           inner join rec      r2 on r2.id     = p2.target
+        "select rec.brio from rec
          where
            (
              (
                (
                  (rec.paths @> @x0::text[])
                  and
-                 ((p1.path_ = @x1) and (p2.path_ = @x2) and (r2.paths @> @x3::text[]))
+                 (exists (
+                   select 1 from path_ref p1
+                   inner join rec r1 on r1.id = p1.target
+                   inner join path_ref p2 on p2.source = r1.id
+                   inner join rec r2 on r2.id = p2.target
+                   where (p1.source = rec.id) and (p1.path_ = @x1) and (p2.path_ = @x2) and (r2.paths @> @x3::text[])))
                )
                and
                (rec.paths @> @x4::text[])
              )
              and
              (rec.paths @> @x5::text[])
-           )
-         order by rec.id",
+           )",
         Str:Obj[
           "x0":"{\"chilled\"}",
           "x1":"equipRef",
@@ -829,12 +829,12 @@ class QueryTest : Test
     doSelect(
       Filter("equipRef->dis == \"Alpha Airside AHU-4\""),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (r1.strs @> @x1::jsonb))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.strs @> @x1::jsonb)))",
         Str:Obj[
           "x0":"equipRef",
           "x1":"{\"dis\":\"Alpha Airside AHU-4\"}"
@@ -843,12 +843,12 @@ class QueryTest : Test
     doSelect(
       Filter("id->area"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
         Str:Obj[
           "x0":"id",
           "x1":"{\"area\"}"]))
@@ -884,12 +884,12 @@ class QueryTest : Test
     doSelect(
       Filter("links->in4->fromRef->meta->inA->flags->linkTarget"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
         Str:Obj[
           "x0":"links.in4.fromRef",
           "x1":"{\"meta.inA.flags.linkTarget\"}"]))
@@ -897,20 +897,21 @@ class QueryTest : Test
     doSelect(
       Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
-           inner join path_ref p2 on p2.source = r1.id
-           inner join rec      r2 on r2.id     = p2.target
-           inner join path_ref p3 on p3.source = r2.id
-           inner join rec      r3 on r3.id     = p3.target
+        "select rec.brio from rec
          where
            (
-             ((p1.path_ = @x0) and (r1.paths @> @x1::text[]))
+             (exists (
+               select 1 from path_ref p1
+               inner join rec r1 on r1.id = p1.target
+               where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))
              and
-             ((p2.path_ = @x2) and (p3.path_ = @x3) and (r3.paths @> @x4::text[]))
-           )
-         order by rec.id",
+             (exists (
+               select 1 from path_ref p2
+               inner join rec r2 on r2.id = p2.target
+               inner join path_ref p3 on p3.source = r2.id
+               inner join rec r3 on r3.id = p3.target
+               where (p2.source = rec.id) and (p2.path_ = @x2) and (p3.path_ = @x3) and (r3.paths @> @x4::text[])))
+           )",
         Str:Obj[
           "x0":"links.in4.fromRef",
           "x1":"{\"meta.inA.flags.linkTarget\"}",
@@ -921,14 +922,14 @@ class QueryTest : Test
     doSelect(
       Filter("parentRef->parentRef->slotPath == \"slot:/AHUSystem/vavs\""),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
-           inner join path_ref p2 on p2.source = r1.id
-           inner join rec      r2 on r2.id     = p2.target
+        "select rec.brio from rec
          where
-           ((p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb))
-         order by rec.id",
+           (exists (
+             select 1 from path_ref p1
+             inner join rec r1 on r1.id = p1.target
+             inner join path_ref p2 on p2.source = r1.id
+             inner join rec r2 on r2.id = p2.target
+             where (p1.source = rec.id) and (p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb)))",
         Str:Obj[
           "x0":"parentRef",
           "x1":"parentRef",
@@ -953,11 +954,7 @@ class QueryTest : Test
     doSelect(
       Filter("elec and sensor and equipRef->siteRef->area < 10000ft²"),
       Query(
-        "select rec.id, rec.brio from rec
-           inner join path_ref p1 on p1.source = rec.id
-           inner join rec      r1 on r1.id     = p1.target
-           inner join path_ref p2 on p2.source = r1.id
-           inner join rec      r2 on r2.id     = p2.target
+        "select rec.brio from rec
          where
            (
              (
@@ -966,9 +963,13 @@ class QueryTest : Test
                (rec.paths @> @x1::text[])
              )
              and
-             ((p1.path_ = @x2) and (p2.path_ = @x3) and ((r2.paths @> @x4::text[]) and (((r2.nums -> @x5)::real) < @x6) and (r2.units @> @x7::jsonb)))
-           )
-         order by rec.id",
+             (exists (
+               select 1 from path_ref p1
+               inner join rec r1 on r1.id = p1.target
+               inner join path_ref p2 on p2.source = r1.id
+               inner join rec r2 on r2.id = p2.target
+               where (p1.source = rec.id) and (p1.path_ = @x2) and (p2.path_ = @x3) and ((r2.paths @> @x4::text[]) and (((r2.nums -> @x5)::real) < @x6) and (r2.units @> @x7::jsonb))))
+           )",
         Str:Obj[
           "x0":"{\"elec\"}",
           "x1":"{\"sensor\"}",

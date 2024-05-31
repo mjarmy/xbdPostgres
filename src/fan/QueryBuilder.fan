@@ -26,35 +26,9 @@ internal class QueryBuilder {
   {
     sql := StrBuf()
 
-    if (joins > 0)
-    {
-      // We have to order the records if we are doing a join, so we include
-      // the id in the ResultSet.
-      //
-      // This is necessary because list-of-refs will cause duplicate records to
-      // be returned. We remove them in Haven by comparing ids as we process
-      // each Row.
-      sql.add("select rec.id, rec.brio from rec\n")
-
-      for (i := 1; i <= joins; i++)
-      {
-        prev := (i == 1) ? "rec" : "r${i-1}"
-        sql.add("  inner join path_ref p$i on p${i}.source = ${prev}.id\n")
-        sql.add("  inner join rec      r$i on r${i}.id     = p${i}.target\n")
-      }
-
-      sql.add("where\n")
-      sql.add(where).add("\n")
-
-      // we have to order the records if we are doing a join
-      sql.add("order by rec.id")
-    }
-    else
-    {
-      sql.add("select rec.brio from rec\n")
-      sql.add("where\n")
-      sql.add(where)
-    }
+    sql.add("select rec.brio from rec\n")
+    sql.add("where\n")
+    sql.add(where)
 
     return Query(sql.toStr, params)
   }
@@ -188,23 +162,32 @@ internal class QueryBuilder {
     // joins
     else
     {
-      sb := StrBuf()
-      sb.add("(")
+      a := joins + 1
+      joins += paths.size-1
 
-      // add the join where clauses
-      last := paths.size-1
-      for (i := 0; i < last; i++)
+      sb := StrBuf()
+      sb.add(pad + "(exists (\n")
+      sb.add(pad + "  select 1 from path_ref p${a}\n")
+      sb.add(pad + "  inner join rec r${a} on r${a}.id = p${a}.target\n")
+
+      for (i := a+1; i <= joins; i++)
       {
-        joins++
-        x := addParam(paths[i])
-        sb.add("(p${joins}.path_ = @$x) and ")
+        sb.add(pad + "  inner join path_ref p$i on p${i}.source = r${i-1}.id\n")
+        sb.add(pad + "  inner join rec r$i on r${i}.id = p${i}.target\n")
       }
 
+      sb.add(pad + "  where (p${a}.source = rec.id) and ")
+      for (i := 0; i < paths.size-1; i++)
+      {
+        x := addParam(paths[i])
+        sb.add("(p${a+i}.path_ = @$x) and ")
+      }
       // process the node
       sb.add(nodeFunc("r${joins}", paths[-1]))
 
-      sb.add(")")
-      return pad + sb.toStr
+      sb.add("))")
+
+      return sb.toStr
     }
   }
 
@@ -409,8 +392,8 @@ internal class QueryBuilder {
 
   private Str where
   private Str:Obj params := Str:Obj[:]
-  private Int joins := 0
 
+  private Int joins := 0
   private Int specs := 0
   private Int valRefs := 0
 }

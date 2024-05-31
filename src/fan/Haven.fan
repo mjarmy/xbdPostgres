@@ -203,33 +203,11 @@ class Haven
   Dict[] select(Query q)
   {
     res := Dict[,]
-    Str? prevId := null
 
-    // TODO cache these?
     stmt := conn.sql(q.sql).prepare
     stmt.query(q.params).each |r|
     {
-      idCol := r.col("id", false)
-
-      // If there is no id column, then the Resultset is not ordered.
-      if (idCol == null)
-      {
-        res.add(BrioReader(((Buf)r->brio).in).readDict)
-      }
-      // Otherwise, the Resultset is ordered by id, so we track the previous id
-      // to discard duplicate records.
-      //
-      // This is necessary because list-of-refs will cause duplicate records to
-      // be returned when doing joins via path_ref.
-      else
-      {
-        id := r.get(idCol)
-        if (id != prevId)
-        {
-          res.add(BrioReader(((Buf)r->brio).in).readDict)
-        }
-        prevId = id
-      }
+      res.add(BrioReader(((Buf)r->brio).in).readDict)
     }
     stmt.close
 
@@ -237,7 +215,8 @@ class Haven
   }
 
   ** Make a List of dotted Paths ending in Refs, using the refTag whitelist.
-  ** This will be used to construct a series of inner joins.
+  ** This will be used to construct a series of inner joins in
+  ** QueryBuilder.visitLeaf().
   internal Str[] refPaths(FilterPath fp)
   {
     result := Str[,]
