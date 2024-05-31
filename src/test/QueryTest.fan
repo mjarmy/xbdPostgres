@@ -979,6 +979,10 @@ class QueryTest : Test
     verifyEq(haven.readAll(filter).size, 10)
     verifyEq(haven.readAll(filter, Etc.dict1("limit", 5)).size, 5)
     verifyEq(haven.readAll(filter, Etc.dict1("limit", 0)).size, 0)
+
+    verifyEq(haven.readCount(filter), 10)
+    verifyEq(haven.readCount(filter, Etc.dict1("limit", 5)), 5)
+    verifyEq(haven.readCount(filter, Etc.dict1("limit", 0)), 0)
   }
 
   Void testSpec()

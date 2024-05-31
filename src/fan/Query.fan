@@ -25,9 +25,9 @@ internal const class Query
   **
   ** Create a Query from a Filter
   **
-  internal static new fromFilter(Haven haven, Filter f)
+  internal static new fromFilter(Haven haven, Filter f, Bool isCount := false)
   {
-     return QueryBuilder(haven, f).toQuery
+     return QueryBuilder(haven, f).toQuery(isCount)
   }
 
 //////////////////////////////////////////////////////////////////////////

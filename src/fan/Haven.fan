@@ -213,6 +213,22 @@ class Haven
     return res
   }
 
+  ** Return the number of records which match the given filter.
+  Int readCount(Filter filter, Dict? opts := null)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter, true)
+
+    stmt := conn.sql(q.sql).prepare
+    rows := stmt.query(q.params)
+    Int res := rows[0]->count
+    stmt.close
+
+    return res < limit ? res : limit
+  }
+
   ** Match all the records against given filter.
   Dict[] readAll(Filter filter, Dict? opts := null)
   {

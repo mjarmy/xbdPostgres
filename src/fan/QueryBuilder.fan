@@ -22,11 +22,15 @@ internal class QueryBuilder {
   }
 
   ** create the query
-  internal Query toQuery()
+  internal Query toQuery(Bool isCount)
   {
     sql := StrBuf()
 
-    sql.add("select rec.brio from rec\n")
+    if (isCount)
+      sql.add("select count(*) as count from rec\n")
+    else
+      sql.add("select rec.brio from rec\n")
+
     sql.add("where\n")
     sql.add(where)
 
