@@ -15,7 +15,7 @@ class HavenTest : Test
 {
   override Void setup()
   {
-    haven.open(
+    haven = Haven.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -60,5 +60,5 @@ class HavenTest : Test
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
-  private Haven haven := Haven()
+  private Haven? haven
 }

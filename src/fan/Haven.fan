@@ -18,18 +18,23 @@ class Haven
   **
   ** Open the connection to Postgres
   **
-  Void open(Str uri, Str? username, Str? password)
+  static Haven open(Str uri, Str? username, Str? password)
   {
-    conn = SqlConn.open(uri, username, password)
+    return Haven(uri, username, password)
+  }
+
+  private new make(Str uri, Str? username, Str? password)
+  {
+    this.conn = SqlConn.open(uri, username, password)
     conn.autoCommit = false
 
-    specInsert = conn.sql(
+    this.specInsert = conn.sql(
       "insert into spec
          (qname, inherits_from)
        values
          (@qname, @inheritsFrom)").prepare
 
-    recInsert = conn.sql(
+    this.recInsert = conn.sql(
       "insert into rec (
          id, brio, paths,
          strs, nums, units,
@@ -44,18 +49,18 @@ class Haven
          @spec)"
      ).prepare
 
-    pathRefInsert = conn.sql(
+    this.pathRefInsert = conn.sql(
       "insert into path_ref
          (source, path_, target)
        values
          (@source, @path, @target)"
      ).prepare
 
-    refTagInsert = conn.sql(
+    this.refTagInsert = conn.sql(
       "insert into ref_tag (name) values (@name)"
      ).prepare
 
-    byIdSelect = conn.sql(
+    this.byIdSelect = conn.sql(
       "select brio from rec where id = @id"
     ).prepare;
 
@@ -147,16 +152,17 @@ class Haven
     conn.commit
   }
 
-  **
-  ** Select by id
-  **
-  Dict? selectById(Ref id)
+  ** Read single record by its id
+  Dict? readById(Ref? id, Bool checked := true)
   {
     rows := byIdSelect.query(["id": id.id])
 
     if (rows.isEmpty)
     {
-      return null;
+      if (checked)
+        throw UnknownRecErr(id.toStr)
+      else
+        return null;
     }
     else
     {
@@ -170,10 +176,10 @@ class Haven
   **
   Dict[] selectByIds(Ref[] ids)
   {
-    res := Dict[,]
     if (ids.isEmpty)
-      return res
+      return Dict[,]
 
+    // create query
     sql := StrBuf()
     sql.add("select brio from rec where id in (")
     params := Str:Obj?[:]
@@ -186,6 +192,8 @@ class Haven
     }
     sql.add(")")
 
+    // run query
+    res := Dict[,]
     stmt := conn.sql(sql.toStr).prepare
     stmt.query(params).each |r|
     {

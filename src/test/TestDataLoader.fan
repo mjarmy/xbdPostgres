@@ -21,7 +21,7 @@ class TestDataLoader
 
   Void load()
   {
-    haven.open(
+    haven = Haven.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -97,5 +97,5 @@ class TestDataLoader
     echo("loaded $n recs")
   }
 
-  private Haven haven := Haven()
+  private Haven? haven
 }

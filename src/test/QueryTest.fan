@@ -15,7 +15,7 @@ class QueryTest : Test
 {
   override Void setup()
   {
-    haven.open(
+    haven = Haven.open(
       "jdbc:postgresql://localhost/postgres",
       "xbd",
       "s3crkEt")
@@ -30,11 +30,11 @@ class QueryTest : Test
   {
     verifyTrue(
       Etc.dictEq(
-        haven.selectById(ref("z0")),
+        haven.readById(ref("z0")),
         testData.recs[ref("z0")]
       ))
 
-    verifyTrue(haven.selectById(ref("bogus")) == null)
+    verifyTrue(haven.readById(ref("bogus"), false) == null)
   }
 
   Void testSelectByIds()
@@ -1173,5 +1173,5 @@ class QueryTest : Test
 //////////////////////////////////////////////////////////////////////////
 
   private TestData testData := TestData()
-  private Haven haven := Haven()
+  private Haven? haven
 }
