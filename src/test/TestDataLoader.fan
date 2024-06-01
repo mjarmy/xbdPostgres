@@ -62,7 +62,7 @@ class TestDataLoader
 
     inherit := [Str:Str][:] /* Set */
     traverseHierarchy(spec, inherit)
-    haven.insertSpec(spec.qname, inherit.keys)
+    haven.createSpec(spec.qname, inherit.keys)
   }
 
   ** Recursively traverse the spec's inheritance hierarchy up to the root. If
@@ -91,7 +91,7 @@ class TestDataLoader
     n := 0
     td.recs.each |dict|
     {
-      haven.insertRec(dict)
+      haven.create(dict)
       n++
     }
     echo("loaded $n recs")

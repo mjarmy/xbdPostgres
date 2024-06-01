@@ -1023,8 +1023,6 @@ class QueryTest : Test
     res = haven.readEachWhile(filter, Etc.dict1("limit", 5),
       |d->Obj?| { return count++ == 8 ? 8 : null })
     verifyEq(res, null)
-
-    //id := Ref("p:demo:r:2de0dfb5-5a987758")
   }
 
   Void testSpec()
@@ -1066,6 +1064,60 @@ class QueryTest : Test
           "x1":"p:demo:r:2de0dfb5-6e04b073",
           "x2":"ph.points::AirPressureSensor",
         ]))
+  }
+
+  Void testCrud()
+  {
+    echo("==============================================================")
+
+    x0 := Ref("x0")
+
+    // create
+    verifyTrue(Etc.dictEq(
+      haven.create(Etc.dict1("id", x0)),
+      Etc.dict1("id", x0)))
+
+    // read
+    verifyTrue(Etc.dictEq(
+      haven.readById(x0),
+      Etc.dict1("id", x0)))
+
+    refs := pathRefs(x0)
+    echo(refs)
+    verifyEq(refs, ["id":["x0"]])
+
+    // delete
+    haven.delete(x0)
+    verifyNull(haven.readById(x0, false))
+  }
+
+  private Str:Str[] pathRefs(Ref source)
+  {
+    refs  := Str:Str[][:]
+
+    stmt := haven.testConn.sql(
+      "select path_, target from path_ref where source = @source"
+    ).prepare
+
+    stmt.query(["source": source.id]).each |r|
+    {
+      path := r->path_
+      target := r->target
+
+      if (refs.containsKey(path))
+      {
+        refs[path].add(target)
+        refs[path].sort
+      }
+      else
+      {
+        refs[path] = Str[target]
+      }
+    }
+
+    stmt.close
+
+    return refs
   }
 
   private Void doSelect(
@@ -1209,8 +1261,8 @@ class QueryTest : Test
     //echo(o.toStr)
   }
 
+  private static Marker M() { Marker.val }
   private static Ref ref(Str str) { Ref.fromStr(str) }
-
   private static Number n(Num val, Str? unit := null)
   {
     Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))

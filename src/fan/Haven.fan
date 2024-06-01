@@ -62,7 +62,15 @@ class Haven
 
     this.byIdSelect = conn.sql(
       "select brio from rec where id = @id"
-    ).prepare;
+    ).prepare
+
+    this.recDelete = conn.sql(
+      "delete from rec where id = @id"
+    ).prepare
+
+    this.pathRefDelete = conn.sql(
+      "delete from path_ref where source = @source"
+    ).prepare
 
     // load ref tags
     stmt := conn.sql("select name from ref_tag")
@@ -84,21 +92,214 @@ class Haven
     pathRefInsert.close
     refTagInsert.close
     byIdSelect.close
+    recDelete.close
+    pathRefDelete.close
 
     conn.close
     conn = null
   }
 
+//////////////////////////////////////////////////////////////////////////
+// Reads
+//////////////////////////////////////////////////////////////////////////
+
   **
-  ** Insert a Spec
+  ** Read single record by its id
   **
-  Void insertSpec(Str qname, Str[] inheritsFrom)
+  Dict? readById(Ref? id, Bool checked := true)
   {
-    inheritsFrom.each |inhFrom|
+    rows := byIdSelect.query(["id": id.id])
+    return doReadSingle(rows, checked, id.toStr)
+  }
+
+  **
+  ** Read a list of records by id.  The resulting list matches
+  ** the list of ids by index (null if record not found).
+  **
+  Dict?[] readByIds(Ref[] ids, Bool checked := true)
+  {
+    if (ids.isEmpty)
+      return Dict[,]
+
+    refMap := Ref:Int[:]
+    res := Dict?[,].fill(null, ids.size)
+
+    // create query
+    sql := StrBuf()
+    sql.add("select brio from rec where id in (")
+    params := Str:Obj?[:]
+    ids.each |id, i|
+    {
+      refMap[id] = i
+
+      if (i > 0)
+        sql.add(", ")
+      sql.add("@x$i")
+      params.add("x$i", id.id)
+    }
+    sql.add(")")
+
+    // run query
+    stmt := conn.sql(sql.toStr).prepare
+    stmt.query(params).each |r|
+    {
+      d := BrioReader(((Buf)r->brio).in).readDict
+      res[refMap[d->id]] = d
+    }
+    stmt.close
+
+    if (checked && res.any |Dict? d->Bool| { d == null})
+      throw UnknownRecErr("missing ids")
+    else
+      return res
+  }
+
+  **
+  ** Return the number of records which match the given filter.
+  **
+  Int readCount(Filter filter, Dict? opts := null)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter, true)
+
+    stmt := conn.sql(q.sql).prepare
+    rows := stmt.query(q.params)
+    Int res := rows[0]->count
+    stmt.close
+
+    return res < limit ? res : limit
+  }
+
+  **
+  ** Find the first record which matches the given filter.
+  ** Throw UnknownRecErr or return null based on checked flag.
+  **
+  Dict? read(Filter filter, Bool checked := true)
+  {
+    q := Query.fromFilter(this, filter)
+
+    stmt := conn.sql(q.sql).prepare
+    rows := stmt.query(q.params)
+    stmt.close
+
+    return doReadSingle(rows, checked, filter.toStr)
+  }
+
+  **
+  ** Match all the records against given filter.
+  **
+  Dict[] readAll(Filter filter, Dict? opts := null)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    res := Dict[,]
+    stmt := conn.sql(q.sql).prepare
+    rows := stmt.query(q.params)
+    i := 0
+    while ((i < rows.size) && (i < limit))
+    {
+      res.add(BrioReader(((Buf)rows[i++]->brio).in).readDict)
+    }
+    stmt.close
+
+    return res
+  }
+
+  **
+  ** Read all records matching filter
+  **
+  Void readEach(Filter filter, Dict? opts, |Dict| func)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    stmt := conn.sql(q.sql).prepare
+    try
+    {
+      i := 0
+      stmt.queryEach(q.params) |r|
+      {
+        if (i++ >= limit)
+          throw BreakErr()
+
+        func(BrioReader(((Buf)r->brio).in).readDict)
+      }
+    }
+    catch (BreakErr e) {}
+    stmt.close
+  }
+
+  **
+  ** Read all records matching filter until callback returns non-null
+  **
+  Obj? readEachWhile(Filter filter, Dict? opts, |Dict->Obj?| func)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    Obj? res := null
+    stmt := conn.sql(q.sql).prepare
+    try
+    {
+      i := 0
+      stmt.queryEach(q.params) |r|
+      {
+        if (i++ >= limit)
+          throw BreakErr()
+
+        res = func(BrioReader(((Buf)r->brio).in).readDict)
+        if (res != null)
+          throw BreakErr()
+      }
+    }
+    catch (BreakErr e) {}
+    stmt.close
+
+    return res
+  }
+
+  **
+  ** Read a single value from a ResultSet
+  **
+  private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
+  {
+    if (rows.isEmpty)
+    {
+      if (checked)
+        throw UnknownRecErr(errMsg)
+      else
+        return null
+    }
+    else
+    {
+      Buf brio := rows[0]->brio
+      return BrioReader(brio.in).readDict
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// Commits
+//////////////////////////////////////////////////////////////////////////
+
+  **
+  ** Create new Spec record in the database
+  **
+  Void createSpec(Str qname, Str[] inheritsFrom)
+  {
+    inheritsFrom.each |from|
     {
       specInsert.execute([
         "qname":qname,
-        "inheritsFrom": inhFrom
+        "inheritsFrom": from
       ])
     }
 
@@ -106,9 +307,9 @@ class Haven
   }
 
   **
-  ** Insert a Rec
+  ** Create new record in the database
   **
-  Void insertRec(Dict dict)
+  Dict create(Dict dict, Ref? id := null)
   {
     rec := Rec.fromDict(dict)
 
@@ -150,177 +351,21 @@ class Haven
     }
 
     conn.commit
+
+    return dict
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Reads
-//////////////////////////////////////////////////////////////////////////
+//  ** Update existing record in the database.  If is mod is non-null, then
+//  ** check mod timestamp to perform optimistic concurrency check.  If mod
+//  ** is null, force update with no concurrency check.
+//  abstract Dict update(Ref id, Dict tags, DateTime? mod)
 
-  ** Read single record by its id
-  Dict? readById(Ref? id, Bool checked := true)
+  ** Delete record from the database
+  Void delete(Ref id)
   {
-    rows := byIdSelect.query(["id": id.id])
-    return doReadSingle(rows, checked, id.toStr)
-  }
-
-  ** Read a list of records by id.  The resulting list matches
-  ** the list of ids by index (null if record not found).
-  Dict?[] readByIds(Ref[] ids, Bool checked := true)
-  {
-    if (ids.isEmpty)
-      return Dict[,]
-
-    refMap := Ref:Int[:]
-    res := Dict?[,].fill(null, ids.size)
-
-    // create query
-    sql := StrBuf()
-    sql.add("select brio from rec where id in (")
-    params := Str:Obj?[:]
-    ids.each |id, i|
-    {
-      refMap[id] = i
-
-      if (i > 0)
-        sql.add(", ")
-      sql.add("@x$i")
-      params.add("x$i", id.id)
-    }
-    sql.add(")")
-
-    // run query
-    stmt := conn.sql(sql.toStr).prepare
-    stmt.query(params).each |r|
-    {
-      d := BrioReader(((Buf)r->brio).in).readDict
-      res[refMap[d->id]] = d
-    }
-    stmt.close
-
-    if (checked && res.any |Dict? d->Bool| { d == null})
-      throw UnknownRecErr("missing ids")
-    else
-      return res
-  }
-
-  ** Return the number of records which match the given filter.
-  Int readCount(Filter filter, Dict? opts := null)
-  {
-    if (opts == null) opts = Etc.dict0
-    limit := opts.has("limit") ? opts->limit : Int.maxVal
-
-    q := Query.fromFilter(this, filter, true)
-
-    stmt := conn.sql(q.sql).prepare
-    rows := stmt.query(q.params)
-    Int res := rows[0]->count
-    stmt.close
-
-    return res < limit ? res : limit
-  }
-
-  ** Find the first record which matches the given filter.
-  ** Throw UnknownRecErr or return null based on checked flag.
-  Dict? read(Filter filter, Bool checked := true)
-  {
-    q := Query.fromFilter(this, filter)
-
-    stmt := conn.sql(q.sql).prepare
-    rows := stmt.query(q.params)
-    stmt.close
-
-    return doReadSingle(rows, checked, filter.toStr)
-  }
-
-  ** Match all the records against given filter.
-  Dict[] readAll(Filter filter, Dict? opts := null)
-  {
-    if (opts == null) opts = Etc.dict0
-    limit := opts.has("limit") ? opts->limit : Int.maxVal
-
-    q := Query.fromFilter(this, filter)
-
-    res := Dict[,]
-    stmt := conn.sql(q.sql).prepare
-    rows := stmt.query(q.params)
-    i := 0
-    while ((i < rows.size) && (i < limit))
-    {
-      res.add(BrioReader(((Buf)rows[i++]->brio).in).readDict)
-    }
-    stmt.close
-
-    return res
-  }
-
-  ** Read all records matching filter
-  Void readEach(Filter filter, Dict? opts, |Dict| func)
-  {
-    if (opts == null) opts = Etc.dict0
-    limit := opts.has("limit") ? opts->limit : Int.maxVal
-
-    q := Query.fromFilter(this, filter)
-
-    stmt := conn.sql(q.sql).prepare
-    try
-    {
-      i := 0
-      stmt.queryEach(q.params) |r|
-      {
-        if (i++ >= limit)
-          throw BreakErr()
-
-        func(BrioReader(((Buf)r->brio).in).readDict)
-      }
-    }
-    catch (BreakErr e) {}
-    stmt.close
-  }
-
-  ** Read all records matching filter until callback returns non-null
-  Obj? readEachWhile(Filter filter, Dict? opts, |Dict->Obj?| func)
-  {
-    if (opts == null) opts = Etc.dict0
-    limit := opts.has("limit") ? opts->limit : Int.maxVal
-
-    q := Query.fromFilter(this, filter)
-
-    Obj? res := null
-    stmt := conn.sql(q.sql).prepare
-    try
-    {
-      i := 0
-      stmt.queryEach(q.params) |r|
-      {
-        if (i++ >= limit)
-          throw BreakErr()
-
-        res = func(BrioReader(((Buf)r->brio).in).readDict)
-        if (res != null)
-          throw BreakErr()
-      }
-    }
-    catch (BreakErr e) {}
-    stmt.close
-
-    return res
-  }
-
-  ** Read a single value from a ResultSet
-  private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
-  {
-    if (rows.isEmpty)
-    {
-      if (checked)
-        throw UnknownRecErr(errMsg)
-      else
-        return null;
-    }
-    else
-    {
-      Buf brio := rows[0]->brio
-      return BrioReader(brio.in).readDict
-    }
+    pathRefDelete.execute(["source": id.id])
+    recDelete.execute(["id": id.id])
+    conn.commit
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -374,6 +419,8 @@ class Haven
   private Statement? pathRefInsert
   private Statement? refTagInsert
   private Statement? byIdSelect
+  private Statement? recDelete
+  private Statement? pathRefDelete
 
   ** refTags is a Set that mirrors the records in the ref_tag table.
   private Str:Str refTags := Str:Str[:]
