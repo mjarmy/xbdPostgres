@@ -1101,8 +1101,8 @@ class QueryTest : Test
 
     stmt.query(["source": source.id]).each |r|
     {
-      path := r->path_
-      target := r->target
+      Str path := r->path_
+      Str target := r->target
 
       if (refs.containsKey(path))
       {
@@ -1111,7 +1111,7 @@ class QueryTest : Test
       }
       else
       {
-        refs[path] = Str[target]
+        refs[path] = [target]
       }
     }
 
