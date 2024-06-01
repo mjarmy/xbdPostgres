@@ -253,6 +253,59 @@ class Haven
     return res
   }
 
+  ** Read all records matching filter
+  Void readEach(Filter filter, Dict? opts, |Dict| func)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    stmt := conn.sql(q.sql).prepare
+    try
+    {
+      i := 0
+      stmt.queryEach(q.params) |r|
+      {
+        if (i++ >= limit)
+          throw BreakErr()
+
+        func(BrioReader(((Buf)r->brio).in).readDict)
+      }
+    }
+    catch (BreakErr e) {}
+    stmt.close
+  }
+
+  ** Read all records matching filter until callback returns non-null
+  Obj? readEachWhile(Filter filter, Dict? opts, |Dict->Obj?| func)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    Obj? res := null
+    stmt := conn.sql(q.sql).prepare
+    try
+    {
+      i := 0
+      stmt.queryEach(q.params) |r|
+      {
+        if (i++ >= limit)
+          throw BreakErr()
+
+        res = func(BrioReader(((Buf)r->brio).in).readDict)
+        if (res != null)
+          throw BreakErr()
+      }
+    }
+    catch (BreakErr e) {}
+    stmt.close
+
+    return res
+  }
+
   ** Read a single value from a ResultSet
   private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
   {
@@ -326,3 +379,7 @@ class Haven
   private Str:Str refTags := Str:Str[:]
 }
 
+**
+** BreakErr is used to break out of an 'each' loop
+**
+internal const class BreakErr : Err { new make() : super() {} }

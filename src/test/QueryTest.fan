@@ -989,13 +989,42 @@ class QueryTest : Test
           "x7":"{\"area\":\"ft\\u00b2\"}"
         ]))
 
+    // readAll
     verifyEq(haven.readAll(filter).size, 10)
     verifyEq(haven.readAll(filter, Etc.dict1("limit", 5)).size, 5)
     verifyEq(haven.readAll(filter, Etc.dict1("limit", 0)).size, 0)
 
+    // readCount
     verifyEq(haven.readCount(filter), 10)
     verifyEq(haven.readCount(filter, Etc.dict1("limit", 5)), 5)
     verifyEq(haven.readCount(filter, Etc.dict1("limit", 0)), 0)
+
+    // readEach
+    found := Dict[,]
+    haven.readEach(filter, null, |d| { found.add(d) })
+    verifyDictsEq(testData.filter(filter), found)
+
+    count := 0
+    haven.readEach(filter, Etc.dict1("limit", 5), |d| { count++ })
+    verifyEq(count, 5)
+
+    // readEachWhile
+    found = Dict[,]
+    haven.readEachWhile(filter, null,
+      |d->Obj?| { found.add(d); return null })
+    verifyDictsEq(testData.filter(filter), found)
+
+    count = 0
+    res := haven.readEachWhile(filter, null,
+      |d->Obj?| { return count++ == 8 ? 8 : null })
+    verifyEq(res, 8)
+
+    count = 0
+    res = haven.readEachWhile(filter, Etc.dict1("limit", 5),
+      |d->Obj?| { return count++ == 8 ? 8 : null })
+    verifyEq(res, null)
+
+    //id := Ref("p:demo:r:2de0dfb5-5a987758")
   }
 
   Void testSpec()
@@ -1110,10 +1139,10 @@ class QueryTest : Test
     expected.sort |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
     found.sort    |Dict x, Dict y->Int| { return x.id.id <=> y.id.id }
 
-    //verbose("expected ${expected.size} rows")
-    //verbose(expected.map |Dict v->Ref| { v.id })
-    //verbose("found ${found.size} rows")
-    //verbose(found.map |Dict v->Ref| { v.id })
+    verbose("expected ${expected.size} rows")
+    verbose(expected.map |Dict v->Ref| { v.id })
+    verbose("found ${found.size} rows")
+    verbose(found.map |Dict v->Ref| { v.id })
 
     verifyEq(expected.size, found.size)
     expected.each |dict, i|
@@ -1175,7 +1204,10 @@ class QueryTest : Test
     }
   }
 
-  private static Void verbose(Str s := "") { /*echo(s)*/ }
+  private static Void verbose(Obj o := "")
+  {
+    //echo(o.toStr)
+  }
 
   private static Ref ref(Str str) { Ref.fromStr(str) }
 
