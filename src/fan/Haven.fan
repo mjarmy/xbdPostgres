@@ -309,13 +309,13 @@ class Haven
   **
   ** Create new record in the database
   **
-  Dict create(Dict dict, Ref? id := null)
+  Dict create(Dict tags/*, Ref? id := null*/)
   {
-    rec := Rec.fromDict(dict)
+    rec := Rec.fromDict(tags)
 
     recInsert.execute([
       "id":        rec.id,
-      "brio":      BrioWriter.valToBuf(dict),
+      "brio":      BrioWriter.valToBuf(tags),
       "paths":     rec.paths,
       "strs":      (rec.strs      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.strs),
       "nums":      (rec.nums      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.nums),
@@ -352,13 +352,16 @@ class Haven
 
     conn.commit
 
-    return dict
+    return tags
   }
 
 //  ** Update existing record in the database.  If is mod is non-null, then
 //  ** check mod timestamp to perform optimistic concurrency check.  If mod
 //  ** is null, force update with no concurrency check.
-//  abstract Dict update(Ref id, Dict tags, DateTime? mod)
+//  Dict update(Ref id, Dict tags/*, DateTime? mod*/)
+//  {
+//
+//  }
 
   ** Delete record from the database
   Void delete(Ref id)
