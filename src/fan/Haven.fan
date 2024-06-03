@@ -309,10 +309,23 @@ class Haven
   **
   ** Create new record in the database
   **
-  Dict create(Dict tags/*, Ref? id := null*/)
+  Dict create(Dict tags, Ref? id := null)
   {
+    // make sure there isn't already an id
+    if (tags.has("id"))
+      throw InvalidRecErr("tags cannot have 'id'")
+
+    // generate an id if need be
+    if (id == null)
+      id = Ref.gen
+
+    // add the id to the tags
+    tags = Etc.dictMerge(tags, Etc.dict1("id", id))
+
+    // convert to rec
     rec := Rec.fromDict(tags)
 
+    // insert main record
     recInsert.execute([
       "id":        rec.id,
       "brio":      BrioWriter.valToBuf(tags),
@@ -328,6 +341,7 @@ class Haven
       "spec":      rec.spec
     ])
 
+    // insert refs
     rec.refs.each |targets, path|
     {
       // The last tag in a ref path always contains a Ref

@@ -1072,9 +1072,11 @@ class QueryTest : Test
 
     x0 := Ref("x0")
 
+    verifyErr(InvalidRecErr#) { haven.create(Etc.dict1("id", x0)) }
+
     // create
     verifyTrue(Etc.dictEq(
-      haven.create(Etc.dict1("id", x0)),
+      haven.create(Etc.emptyDict, x0),
       Etc.dict1("id", x0)))
 
     // read
@@ -1082,7 +1084,7 @@ class QueryTest : Test
       haven.readById(x0),
       Etc.dict1("id", x0)))
 
-    refs := pathRefs(x0)
+    refs := selectPathRefs(x0)
     echo(refs)
     verifyEq(refs, ["id":["x0"]])
 
@@ -1091,7 +1093,7 @@ class QueryTest : Test
     verifyNull(haven.readById(x0, false))
   }
 
-  private Str:Str[] pathRefs(Ref source)
+  private Str:Str[] selectPathRefs(Ref source)
   {
     refs  := Str:Str[][:]
 

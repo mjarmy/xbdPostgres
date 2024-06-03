@@ -91,7 +91,8 @@ class TestDataLoader
     n := 0
     td.recs.each |dict|
     {
-      haven.create(dict)
+      id := dict->id
+      haven.create(Etc.dictRemove(dict, "id"), id)
       n++
     }
     echo("loaded $n recs")
