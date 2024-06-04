@@ -30,8 +30,13 @@ internal class TestData
   {
     recs := Ref:Dict[:]
 
+    prefix := "../xetobase/xb-play/data/test/haven/"
+    alphaFile := Env.cur.findFile(Uri(prefix + "alpha.json"))
+    demogenFile := Env.cur.findFile(Uri(prefix + "demogen.zinc"))
+    niagaraFile := Env.cur.findFile(Uri(prefix + "niagara.txt"))
+
     // alpha
-    Grid alpha := JsonReader(File(`test_data/alpha.json`).in).readVal
+    Grid alpha := JsonReader(alphaFile.in).readVal
     alpha.each |d, i|
     {
       if (recs.containsKey(d->id))
@@ -40,7 +45,7 @@ internal class TestData
     }
 
     // demogen
-    Grid demogen := ZincReader(File(`test_data/demogen.zinc`).in).readVal
+    Grid demogen := ZincReader(demogenFile.in).readVal
     demogen.each |d, i|
     {
       if (recs.containsKey(d->id))
@@ -48,10 +53,8 @@ internal class TestData
       recs.add(d->id, d)
     }
 
-    // TODO sys::IOErr: Unsupported JSON float literal: 'INF'
     // niagara
-    f := File(`test_data/jason.txt`)
-    f.eachLine |line|
+    niagaraFile.eachLine |line|
     {
       Dict d := JsonReader(line.in).readVal
 
