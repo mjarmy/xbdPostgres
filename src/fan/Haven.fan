@@ -64,6 +64,22 @@ class Haven
       "select brio from rec where id = @id"
     ).prepare
 
+    this.recUpdate = conn.sql(
+      "update rec set
+         brio      = @brio,
+         paths     = @paths,
+         strs      = @strs::jsonb,
+         nums      = @nums::jsonb,
+         units     = @units::jsonb,
+         bools     = @bools ::jsonb,
+         uris      = @uris::jsonb,
+         dates     = @dates ::jsonb,
+         times     = @times ::jsonb,
+         dateTimes = @dateTimes::jsonb,
+         spec      = @spec
+       where id = @id"
+    ).prepare
+
     this.recDelete = conn.sql(
       "delete from rec where id = @id"
     ).prepare
@@ -92,6 +108,7 @@ class Haven
     pathRefInsert.close
     refTagInsert.close
     byIdSelect.close
+    recUpdate.close
     recDelete.close
     pathRefDelete.close
 
@@ -322,10 +339,8 @@ class Haven
     // add the id to the tags
     tags = Etc.dictMerge(tags, Etc.dict1("id", id))
 
-    // convert to rec
-    rec := Rec.fromDict(tags)
-
     // insert main record
+    rec := Rec.fromDict(tags)
     recInsert.execute([
       "id":        rec.id,
       "brio":      BrioWriter.valToBuf(tags),
@@ -342,9 +357,67 @@ class Haven
     ])
 
     // insert refs
-    rec.refs.each |targets, path|
+    insertPathRefs(rec.id, rec.refs)
+
+    conn.commit
+    return tags
+  }
+
+  ** Update existing record in the database.  If is mod is non-null, then
+  ** check mod timestamp to perform optimistic concurrency check.  If mod
+  ** is null, force update with no concurrency check.
+  Dict update(Ref id, Dict tags, DateTime? mod /* TODO ignored for now */)
+  {
+    rows := byIdSelect.query(["id": id.id])
+    Dict before := doReadSingle(rows, true, id.toStr)
+    beforeRefs := Rec.findRefPaths(before)
+
+    after := Etc.dictMerge(before, tags)
+
+    // update main record
+    rec := Rec.fromDict(after)
+    recUpdate.execute([
+      "id":        rec.id,
+      "brio":      BrioWriter.valToBuf(after),
+      "paths":     rec.paths,
+      "strs":      (rec.strs      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.strs),
+      "nums":      (rec.nums      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.nums),
+      "units":     (rec.units     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.units),
+      "bools":     (rec.bools     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.bools),
+      "uris":      (rec.uris      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.uris),
+      "dates":     (rec.dates     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dates),
+      "times":     (rec.times     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.times),
+      "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes),
+      "spec":      rec.spec
+    ])
+
+    // re-create refs if need be
+    if (beforeRefs != rec.refs)
     {
-      // The last tag in a ref path always contains a Ref
+      pathRefDelete.execute(["source": id.id])
+      insertPathRefs(rec.id, rec.refs)
+    }
+
+    conn.commit
+    return after
+  }
+
+  ** Delete record from the database
+  Void delete(Ref id)
+  {
+    pathRefDelete.execute(["source": id.id])
+    recDelete.execute(["id": id.id])
+    conn.commit
+  }
+
+  ** Insert the path_ref records that go with a Rec
+  private Void insertPathRefs(Str id, Str:Str[] refs)
+  {
+    // insert refs
+    refs.each |targets, path|
+    {
+      // The last tag in a ref path always contains a Ref.
+
       // Update ref tags if need be.
       lt := lastTag(path)
       if (!refTags.containsKey(lt))
@@ -357,32 +430,12 @@ class Haven
       targets.each | target |
       {
         pathRefInsert.execute([
-          "source": rec.id,
+          "source": id,
           "path":   path,
           "target": target
         ])
       }
     }
-
-    conn.commit
-
-    return tags
-  }
-
-//  ** Update existing record in the database.  If is mod is non-null, then
-//  ** check mod timestamp to perform optimistic concurrency check.  If mod
-//  ** is null, force update with no concurrency check.
-//  Dict update(Ref id, Dict tags/*, DateTime? mod*/)
-//  {
-//
-//  }
-
-  ** Delete record from the database
-  Void delete(Ref id)
-  {
-    pathRefDelete.execute(["source": id.id])
-    recDelete.execute(["id": id.id])
-    conn.commit
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -436,6 +489,7 @@ class Haven
   private Statement? pathRefInsert
   private Statement? refTagInsert
   private Statement? byIdSelect
+  private Statement? recUpdate
   private Statement? recDelete
   private Statement? pathRefDelete
 

@@ -121,6 +121,33 @@ class RecTest : Test
       ))
   }
 
+  Void testRefPath()
+  {
+    verifyEq(
+      Rec.findRefPaths(testData.recs[ref("z0")]),
+      Str:Str[]["id":Str["z0"]])
+
+    verifyEq(
+      Rec.findRefPaths(testData.recs[ref("z1")]),
+      Str:Str[]["id":["z1"], "b.d":["z1"]])
+
+    verifyEq(
+      Rec.findRefPaths(testData.recs[ref("z2")]),
+      Str:Str[]["id":["z2"]])
+
+    verifyEq(
+      Rec.findRefPaths(testData.recs[ref("z3")]),
+      Str:Str[]["id":["z3"]])
+
+    verifyEq(
+      Rec.findRefPaths(testData.recs[ref("top-1")]),
+      Str:Str[]["id":Str["top-1"]])
+
+    verifyEq(
+      Rec.findRefPaths(testData.recs[ref("mid-2")]),
+      Str:Str[]["id":Str["mid-2"], "topRef":Str["top-1", "top-2"]])
+  }
+
   private static Ref ref(Str str) { Ref.fromStr(str) }
 
   private TestData testData := TestData()

@@ -1037,7 +1037,8 @@ class QueryTest : Test
            (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x0))",
         Str:Obj[
           "x0":"ph::Sensor",
-        ]))
+        ]),
+        true)
 
     doSelect(
       Filter("ph.points::AirFlowSensor"),
@@ -1084,9 +1085,40 @@ class QueryTest : Test
       haven.readById(x0),
       Etc.dict1("id", x0)))
 
-    refs := selectPathRefs(x0)
-    echo(refs)
-    verifyEq(refs, ["id":["x0"]])
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    // update (no refs)
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", "bar"), null),
+      Etc.dict2("id", x0, "foo", "bar")))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", Remove.val), null),
+      Etc.dict1("id", x0)))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    // update (ref)
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", ref("bar")), null),
+      Etc.dict2("id", x0, "foo", ref("bar"))))
+    verifyEq(selectPathRefs(x0), ["id":["x0"], "foo":["bar"]])
+
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", Remove.val), null),
+      Etc.dict1("id", x0)))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    // update (ref list)
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", [ref("bar"), ref("quux")]), null),
+      Etc.dict2("id", x0, "foo", [ref("bar"), ref("quux")])))
+    verifyEq(selectPathRefs(x0), ["id":["x0"], "foo":["bar", "quux"]])
+
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", Remove.val), null),
+      Etc.dict1("id", x0)))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
 
     // delete
     haven.delete(x0)
@@ -1172,7 +1204,7 @@ class QueryTest : Test
       verifyFalse(seq)
 
     explained.each |s| {
-      if (s.startsWith("Execution Time:"))
+      if (s.startsWith("Planning Time:") || s.startsWith("Execution Time:"))
         echo(s)
     }
     verbose

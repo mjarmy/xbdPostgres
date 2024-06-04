@@ -112,10 +112,8 @@ internal const class Rec
       // List of Refs
       else if ((val is List) && (((List) val).all |Obj v->Bool| { v is Ref }))
       {
-        vl := (List) val
-        rl := Str[,]
-        vl.each |v| { rl.add(((Ref) v).id) }
-        refs.add(dotted, rl)
+        strMap := ((List) val).map |Obj v->Str| { ((Ref) v).id }
+        refs.add(dotted, strMap)
       }
       // Str
       else if (val is Str)
@@ -167,6 +165,46 @@ internal const class Rec
 
       curPath.removeAt(-1)
     }
+  }
+
+  **
+  ** find the paths to each ref
+  **
+  internal static Str:Str[] findRefPaths(Dict dict)
+  {
+    return doFindRefPaths(dict, Str[,], Str:Str[][:])
+  }
+
+  private static Str:Str[] doFindRefPaths(
+      Dict d,
+      Str[] curPath,
+      Str:Str[] refs)
+  {
+    d.each |val, key|
+    {
+      curPath.add(key)
+
+      // dict
+      if (val is Dict)
+      {
+        doFindRefPaths(val, curPath, refs)
+      }
+      // Ref
+      else if (val is Ref)
+      {
+        refs.add(curPath.join("."), [((Ref) val).id])
+      }
+      // List of Refs
+      else if ((val is List) && (((List) val).all |Obj v->Bool| { v is Ref }))
+      {
+        strMap := ((List) val).map |Obj v->Str| { ((Ref) v).id }
+        refs.add(curPath.join("."), strMap)
+      }
+
+      curPath.removeAt(-1)
+    }
+
+    return refs
   }
 
 //////////////////////////////////////////////////////////////////////////
