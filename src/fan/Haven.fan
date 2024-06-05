@@ -96,6 +96,32 @@ class Haven
       return res
   }
 
+
+  **
+  ** Match all the records against given filter.
+  **
+  Dict[] readAll(Filter filter, Dict? opts := null)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    res := Dict[,]
+    pool.execute(|SqlConn conn| {
+      stmt := conn.sql(q.sql).prepare
+      rows := stmt.query(q.params)
+      i := 0
+      while ((i < rows.size) && (i < limit))
+      {
+        res.add(BrioReader(((Buf)rows[i++]->brio).in).readDict)
+      }
+      stmt.close
+    })
+
+    return res
+  }
+
   **
   ** Read a single value from a ResultSet
   **
