@@ -148,6 +148,13 @@ class RecTest : Test
       Str:Str[]["id":Str["mid-2"], "topRef":Str["top-1", "top-2"]])
   }
 
+  Void testLastTag()
+  {
+    verifyEq(Rec.lastTag("a"), "a")
+    verifyEq(Rec.lastTag("a.b"), "b")
+    verifyEq(Rec.lastTag("aa.bb.cc.dd"), "dd")
+  }
+
   private static Ref ref(Str str) { Ref.fromStr(str) }
 
   private TestData testData := TestData()

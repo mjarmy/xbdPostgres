@@ -258,6 +258,13 @@ internal const class Rec
     ].join("\n")
   }
 
+  ** Find the last tag in a dotted path.
+  internal static Str lastTag(Str path)
+  {
+    n := path.indexr(".")
+    return (n == null) ? path : path[(n+1)..-1]
+  }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
