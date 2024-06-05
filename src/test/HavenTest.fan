@@ -53,18 +53,18 @@ class HavenTest : Test
       ["equipRef", "siteRef", "area"])
   }
 
-//  Void testReadById()
-//  {
-//    verifyTrue(
-//      Etc.dictEq(
-//        haven.readById(ref("z0")),
-//        testData.recs[ref("z0")]
-//      ))
-//
-//    verifyTrue(haven.readById(ref("bogus"), false) == null)
-//    verifyErr(UnknownRecErr#) { haven.readById(ref("bogus")) }
-//  }
-//
+  Void testReadById()
+  {
+    verifyTrue(
+      Etc.dictEq(
+        haven.readById(ref("z0")),
+        testData.recs[ref("z0")]
+      ))
+
+    verifyTrue(haven.readById(ref("bogus"), false) == null)
+    verifyErr(UnknownRecErr#) { haven.readById(ref("bogus")) }
+  }
+
 //  Void testReadByIds()
 //  {
 //    verifyTrue(haven.readByIds(Ref[,]).isEmpty)
@@ -1321,19 +1321,19 @@ class HavenTest : Test
 //  {
 //    //echo(o.toStr)
 //  }
-//
-//  private static Marker M() { Marker.val }
-//  private static Ref ref(Str str) { Ref.fromStr(str) }
-//  private static Number n(Num val, Str? unit := null)
-//  {
-//    Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))
-//  }
+
+  private static Marker M() { Marker.val }
+  private static Ref ref(Str str) { Ref.fromStr(str) }
+  private static Number n(Num val, Str? unit := null)
+  {
+    Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))
+  }
 
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
-  //private TestData testData := TestData()
+  private TestData testData := TestData()
   private SqlConnPool? pool
   private Haven? haven
 }

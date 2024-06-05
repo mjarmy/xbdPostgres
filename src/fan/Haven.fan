@@ -32,6 +32,45 @@ class Haven
     })
   }
 
+//////////////////////////////////////////////////////////////////////////
+// Reads
+//////////////////////////////////////////////////////////////////////////
+
+  **
+  ** Read single record by its id
+  **
+  Dict? readById(Ref? id, Bool checked := true)
+  {
+    Dict? result := null
+
+    pool.execute(|SqlConn conn| {
+      stmt := fetch(conn, "#selectById", |->Str| { selectById })
+      rows := stmt.query(["id": id.id])
+      result = doReadSingle(rows, checked, id.toStr)
+    })
+
+    return result
+  }
+
+  **
+  ** Read a single value from a ResultSet
+  **
+  private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
+  {
+    if (rows.isEmpty)
+    {
+      if (checked)
+        throw UnknownRecErr(errMsg)
+      else
+        return null
+    }
+    else
+    {
+      Buf brio := rows[0]->brio
+      return BrioReader(brio.in).readDict
+    }
+  }
+
   ** Make a List of dotted Paths ending in Refs, using the refTag whitelist.
   ** This will be used to construct a series of inner joins in
   ** QueryBuilder.visitLeaf().
@@ -59,8 +98,31 @@ class Haven
   }
 
 //////////////////////////////////////////////////////////////////////////
+// Prepared Statements
+//////////////////////////////////////////////////////////////////////////
+
+  private Statement fetch(SqlConn conn, Str key, |->Str| sqlFunc)
+  {
+    if (conn.stash.containsKey(key))
+    {
+      echo("fetch: found $key")
+      return conn.stash[key]
+    }
+    else
+    {
+      echo("fetch: ------------> PREPARING $key")
+      stmt := conn.sql(sqlFunc()).prepare
+      conn.stash[key] = stmt
+      return stmt
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
+
+  const Str selectById :=
+    "select brio from rec where id = @id"
 
   private SqlConnPool pool
 
