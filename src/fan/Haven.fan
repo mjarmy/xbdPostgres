@@ -64,30 +64,36 @@ class Haven
     refMap := Ref:Int[:]
     res := Dict?[,].fill(null, ids.size)
 
-    // create query
-    sql := StrBuf()
-    sql.add("select brio from rec where id in (")
+    // params
     params := Str:Obj?[:]
     ids.each |id, i|
     {
       refMap[id] = i
-
-      if (i > 0)
-        sql.add(", ")
-      sql.add("@x$i")
       params.add("x$i", id.id)
     }
-    sql.add(")")
 
     // run query
     pool.execute(|SqlConn conn| {
-      stmt := conn.sql(sql.toStr).prepare
+
+      stmt := fetch(conn, "#selectByIds${ids.size}", |->Str| {
+        // create SQL
+        sb := StrBuf()
+        sb.add("select brio from rec where id in (")
+        ids.each |id, i|
+        {
+          if (i > 0)
+            sb.add(", ")
+          sb.add("@x$i")
+        }
+        sb.add(")")
+        return sb.toStr
+      })
+
       stmt.query(params).each |r|
       {
         d := BrioReader(((Buf)r->brio).in).readDict
         res[refMap[d->id]] = d
       }
-      stmt.close
     })
 
     if (checked && res.any |Dict? d->Bool| { d == null})
@@ -95,7 +101,6 @@ class Haven
     else
       return res
   }
-
 
   **
   ** Match all the records against given filter.
@@ -171,6 +176,8 @@ class Haven
 // Prepared Statements
 //////////////////////////////////////////////////////////////////////////
 
+  ** Fetch a prepared statement from the connection stash,
+  ** or create the prepared statement.
   private Statement fetch(SqlConn conn, Str key, |->Str| sqlFunc)
   {
     if (conn.stash.containsKey(key))

@@ -88,6 +88,17 @@ class HavenTest : Test
     verifyTrue(Etc.dictEq(r[1], testData.recs[ref("z2")]))
     verifyTrue(Etc.dictEq(r[2], testData.recs[ref("z1")]))
     verifyTrue(Etc.dictEq(r[3], testData.recs[ref("z0")]))
+
+    r = haven.readByIds(Ref[
+      ref("z0"),
+      ref("z1"),
+      ref("z2"),
+      ref("z3")])
+    verifyTrue(r.size == 4)
+    verifyTrue(Etc.dictEq(r[0], testData.recs[ref("z0")]))
+    verifyTrue(Etc.dictEq(r[1], testData.recs[ref("z1")]))
+    verifyTrue(Etc.dictEq(r[2], testData.recs[ref("z2")]))
+    verifyTrue(Etc.dictEq(r[3], testData.recs[ref("z3")]))
   }
 
 //  Void testRead()
