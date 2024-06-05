@@ -53,6 +53,50 @@ class Haven
   }
 
   **
+  ** Read a list of records by id.  The resulting list matches
+  ** the list of ids by index (null if record not found).
+  **
+  Dict?[] readByIds(Ref[] ids, Bool checked := true)
+  {
+    if (ids.isEmpty)
+      return Dict[,]
+
+    refMap := Ref:Int[:]
+    res := Dict?[,].fill(null, ids.size)
+
+    // create query
+    sql := StrBuf()
+    sql.add("select brio from rec where id in (")
+    params := Str:Obj?[:]
+    ids.each |id, i|
+    {
+      refMap[id] = i
+
+      if (i > 0)
+        sql.add(", ")
+      sql.add("@x$i")
+      params.add("x$i", id.id)
+    }
+    sql.add(")")
+
+    // run query
+    pool.execute(|SqlConn conn| {
+      stmt := conn.sql(sql.toStr).prepare
+      stmt.query(params).each |r|
+      {
+        d := BrioReader(((Buf)r->brio).in).readDict
+        res[refMap[d->id]] = d
+      }
+      stmt.close
+    })
+
+    if (checked && res.any |Dict? d->Bool| { d == null})
+      throw UnknownRecErr("missing ids")
+    else
+      return res
+  }
+
+  **
   ** Read a single value from a ResultSet
   **
   private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
