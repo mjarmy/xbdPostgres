@@ -21,7 +21,8 @@ class Haven
     this.pool = pool
 
     // load ref tags
-    pool.execute(|SqlConn conn| {
+    pool.execute(|SqlConn conn|
+    {
       stmt := conn.sql("select name from ref_tag")
 
       stmt.query.each |r|
@@ -44,9 +45,9 @@ class Haven
   {
     Dict? result := null
 
-    pool.execute(|SqlConn conn| {
+    pool.execute(|SqlConn conn|
+    {
       stmt := fetch(conn, selectById)
-
       rows := stmt.query(["id": id.id])
       result = doReadSingle(rows, checked, id.toStr)
     })
@@ -87,9 +88,9 @@ class Haven
     }
 
     // run query
-    pool.execute(|SqlConn conn| {
+    pool.execute(|SqlConn conn|
+    {
       stmt := fetch(conn, sql)
-
       stmt.query(params).each |r|
       {
         d := BrioReader(((Buf)r->brio).in).readDict
@@ -104,6 +105,26 @@ class Haven
   }
 
   **
+  ** Find the first record which matches the given filter.
+  ** Throw UnknownRecErr or return null based on checked flag.
+  **
+  Dict? read(Filter filter, Bool checked := true)
+  {
+    Dict? result := null
+
+    q := Query.fromFilter(this, filter)
+
+    pool.execute(|SqlConn conn|
+    {
+      stmt := fetch(conn, q.sql)
+      rows := stmt.query(q.params)
+      result =  doReadSingle(rows, checked, filter.toStr)
+    })
+
+    return result
+  }
+
+  **
   ** Match all the records against given filter.
   **
   Dict[] readAll(Filter filter, Dict? opts := null)
@@ -114,9 +135,9 @@ class Haven
     q := Query.fromFilter(this, filter)
 
     res := Dict[,]
-    pool.execute(|SqlConn conn| {
+    pool.execute(|SqlConn conn|
+    {
       stmt := fetch(conn, q.sql)
-
       rows := stmt.query(q.params)
       i := 0
       while ((i < rows.size) && (i < limit))

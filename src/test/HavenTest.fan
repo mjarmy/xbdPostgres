@@ -101,15 +101,15 @@ class HavenTest : Test
     verifyTrue(Etc.dictEq(r[3], testData.recs[ref("z3")]))
   }
 
-//  Void testRead()
-//  {
-//    verifyTrue(Etc.dictEq(
-//      haven.read(Filter("id == @z0")),
-//      testData.recs[ref("z0")]))
-//
-//    verifyTrue(haven.read(Filter("id == @bogus"), false) == null)
-//    verifyErr(UnknownRecErr#) { haven.read(Filter("id == @bogus")) }
-//  }
+  Void testRead()
+  {
+    verifyTrue(Etc.dictEq(
+      haven.read(Filter("id == @z0")),
+      testData.recs[ref("z0")]))
+
+    verifyTrue(haven.read(Filter("id == @bogus"), false) == null)
+    verifyErr(UnknownRecErr#) { haven.read(Filter("id == @bogus")) }
+  }
 
  Void testHaven()
  {
