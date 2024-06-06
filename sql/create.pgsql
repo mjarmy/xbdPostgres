@@ -1,6 +1,5 @@
 create role xbd with password 's3crkEt';
 alter role xbd with login;
-
 create schema authorization xbd;
 set search_path to xbd;
 

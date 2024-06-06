@@ -30,6 +30,35 @@ class HavenTest : Test
     pool.close()
   }
 
+  Void testQueryEach()
+  {
+    count := 0
+    pool.execute(|SqlConn conn|
+    {
+      stmt := conn.sql("select name from ref_tag")
+      stmt.queryEach([:]) |r|
+      {
+        count++
+      }
+      stmt.close
+    })
+    echo("count $count")
+    verifyTrue(count > 0)
+
+    id := null
+    pool.execute(|SqlConn conn|
+    {
+      stmt := conn.sql("select name from ref_tag")
+      id = stmt.queryEachWhile([:]) |r->Obj?|
+      {
+        return (r->name == "id") ? r->name : null
+      }
+      stmt.close
+    })
+    echo("id $id")
+    verifyEq(id, "id")
+  }
+
   Void testRefPaths()
   {
     verifyEq(
@@ -718,329 +747,329 @@ class HavenTest : Test
    echo("==============================================================")
  }
 
-//  Void testMismatchedType()
-//  {
-//    doReadAll(
-//      Filter("haven and str == 2"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
-//           )",
-//        Str:Obj[
-//          "x0":"{\"haven\"}",
-//          "x1":"{\"str\":2.0}",
-//          "x2":"{\"str\":null}",
-//        ]))
-//  }
-//
-//  Void testAlpha()
-//  {
-//    echo("==============================================================")
-//
-//    doReadAll(
-//      Filter("ahu"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (rec.paths @> @x0::text[])",
-//        Str:Obj["x0": "{\"ahu\"}"]))
-//
-//    doReadAll(
-//      Filter("chilledWaterRef->chilled"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (
-//             select 1 from path_ref p1
-//             inner join rec r1 on r1.id = p1.target
-//             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
-//        Str:Obj[
-//          "x0":"chilledWaterRef",
-//          "x1":"{\"chilled\"}"]))
-//
-//    doReadAll(
-//      Filter("ahu and elec"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (rec.paths @> @x0::text[])
-//             and
-//             (rec.paths @> @x1::text[])
-//           )",
-//        Str:Obj[
-//          "x0":"{\"ahu\"}",
-//          "x1":"{\"elec\"}"]))
-//
-//    doReadAll(
-//      Filter("chilled and pump and sensor and equipRef->siteRef->site"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (
-//               (
-//                 (rec.paths @> @x0::text[])
-//                 and
-//                 (exists (
-//                   select 1 from path_ref p1
-//                   inner join rec r1 on r1.id = p1.target
-//                   inner join path_ref p2 on p2.source = r1.id
-//                   inner join rec r2 on r2.id = p2.target
-//                   where (p1.source = rec.id) and (p1.path_ = @x1) and (p2.path_ = @x2) and (r2.paths @> @x3::text[])))
-//               )
-//               and
-//               (rec.paths @> @x4::text[])
-//             )
-//             and
-//             (rec.paths @> @x5::text[])
-//           )",
-//        Str:Obj[
-//          "x0":"{\"chilled\"}",
-//          "x1":"equipRef",
-//          "x2":"siteRef",
-//          "x3":"{\"site\"}",
-//          "x4":"{\"pump\"}",
-//          "x5":"{\"sensor\"}"]))
-//
-//    doReadAll(
-//      Filter("custom->description == \"Clg_Valve_Cmd\""),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (rec.strs @> @x0::jsonb)",
-//        Str:Obj[
-//          "x0": """{"custom.description":"Clg_Valve_Cmd"}"""
-//        ]))
-//
-//    doReadAll(
-//      Filter("dis == \"Alpha Airside AHU-4\""),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (rec.strs @> @x0::jsonb)",
-//        Str:Obj[
-//          "x0":"{\"dis\":\"Alpha Airside AHU-4\"}"]))
-//
-//    doReadAll(
-//      Filter("geoElevation == 2956m"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb))",
-//        Str:Obj[
-//          "x0":"{\"geoElevation\":2956.0}",
-//          "x1":"{\"geoElevation\":\"m\"}"
-//        ]))
-//
-//    doReadAll(
-//      Filter("equipRef == @a-0039"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))",
-//        Str:Obj[
-//          "x0":"equipRef",
-//          "x1":"a-0039"
-//        ]))
-//
-//    doReadAll(
-//      Filter("equipRef->dis == \"Alpha Airside AHU-4\""),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (
-//             select 1 from path_ref p1
-//             inner join rec r1 on r1.id = p1.target
-//             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.strs @> @x1::jsonb)))",
-//        Str:Obj[
-//          "x0":"equipRef",
-//          "x1":"{\"dis\":\"Alpha Airside AHU-4\"}"
-//        ]))
-//
-//    doReadAll(
-//      Filter("id->area"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (
-//             select 1 from path_ref p1
-//             inner join rec r1 on r1.id = p1.target
-//             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
-//        Str:Obj[
-//          "x0":"id",
-//          "x1":"{\"area\"}"]))
-//  }
-//
-//  Void testSeqScan()
-//  {
-//    echo("==============================================================")
-//
-//    doReadAll(
-//      Filter("not point"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (not (rec.paths @> @x0::text[]))",
-//        Str:Obj[
-//          "x0":"{\"point\"}"]),
-//        true)
-//  }
-//
-//  Void testNiagara()
-//  {
-//    echo("==============================================================")
-//
-//    doReadAll(
-//      Filter("facets->min"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (rec.paths @> @x0::text[])",
-//        Str:Obj["x0": "{\"facets.min\"}"]))
-//
-//    doReadAll(
-//      Filter("links->in4->fromRef->meta->inA->flags->linkTarget"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (
-//             select 1 from path_ref p1
-//             inner join rec r1 on r1.id = p1.target
-//             where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
-//        Str:Obj[
-//          "x0":"links.in4.fromRef",
-//          "x1":"{\"meta.inA.flags.linkTarget\"}"]))
-//
-//    doReadAll(
-//      Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (exists (
-//               select 1 from path_ref p1
-//               inner join rec r1 on r1.id = p1.target
-//               where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))
-//             and
-//             (exists (
-//               select 1 from path_ref p2
-//               inner join rec r2 on r2.id = p2.target
-//               inner join path_ref p3 on p3.source = r2.id
-//               inner join rec r3 on r3.id = p3.target
-//               where (p2.source = rec.id) and (p2.path_ = @x2) and (p3.path_ = @x3) and (r3.paths @> @x4::text[])))
-//           )",
-//        Str:Obj[
-//          "x0":"links.in4.fromRef",
-//          "x1":"{\"meta.inA.flags.linkTarget\"}",
-//          "x2":"parentRef",
-//          "x3":"parentRef",
-//          "x4":"{\"slotPath\"}"]))
-//
-//    doReadAll(
-//      Filter("parentRef->parentRef->slotPath == \"slot:/AHUSystem/vavs\""),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (
-//             select 1 from path_ref p1
-//             inner join rec r1 on r1.id = p1.target
-//             inner join path_ref p2 on p2.source = r1.id
-//             inner join rec r2 on r2.id = p2.target
-//             where (p1.source = rec.id) and (p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb)))",
-//        Str:Obj[
-//          "x0":"parentRef",
-//          "x1":"parentRef",
-//          "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
-//
-//    doReadAll(
-//      Filter("facets->precision == 1"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb))",
-//        Str:Obj[
-//          "x0":"{\"facets.precision\":1.0}",
-//          "x1":"{\"facets.precision\":null}",
-//        ]))
-//  }
-//
-//  Void testDemogen()
-//  {
-//    echo("==============================================================")
-//
-//    filter := Filter("elec and sensor and equipRef->siteRef->area < 10000ft²")
-//
-//    doReadAll(
-//      filter,
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (
-//               (rec.paths @> @x0::text[])
-//               and
-//               (rec.paths @> @x1::text[])
-//             )
-//             and
-//             (exists (
-//               select 1 from path_ref p1
-//               inner join rec r1 on r1.id = p1.target
-//               inner join path_ref p2 on p2.source = r1.id
-//               inner join rec r2 on r2.id = p2.target
-//               where (p1.source = rec.id) and (p1.path_ = @x2) and (p2.path_ = @x3) and ((r2.paths @> @x4::text[]) and (((r2.nums -> @x5)::real) < @x6) and (r2.units @> @x7::jsonb))))
-//           )",
-//        Str:Obj[
-//          "x0":"{\"elec\"}",
-//          "x1":"{\"sensor\"}",
-//          "x2":"equipRef",
-//          "x3":"siteRef",
-//          "x4":"{\"area\"}",
-//          "x5":"area",
-//          "x6":10000.0f,
-//          "x7":"{\"area\":\"ft\\u00b2\"}"
-//        ]))
-//
-//    // readAll
-//    verifyEq(haven.readAll(filter).size, 10)
-//    verifyEq(haven.readAll(filter, Etc.dict1("limit", 5)).size, 5)
-//    verifyEq(haven.readAll(filter, Etc.dict1("limit", 0)).size, 0)
-//
-//    // readCount
-//    verifyEq(haven.readCount(filter), 10)
-//    verifyEq(haven.readCount(filter, Etc.dict1("limit", 5)), 5)
-//    verifyEq(haven.readCount(filter, Etc.dict1("limit", 0)), 0)
-//
-//    // readEach
-//    found := Dict[,]
-//    haven.readEach(filter, null, |d| { found.add(d) })
-//    verifyDictsEq(testData.filter(filter), found)
-//
-//    count := 0
-//    haven.readEach(filter, Etc.dict1("limit", 5), |d| { count++ })
-//    verifyEq(count, 5)
-//
-//    // readEachWhile
-//    found = Dict[,]
-//    haven.readEachWhile(filter, null,
-//      |d->Obj?| { found.add(d); return null })
-//    verifyDictsEq(testData.filter(filter), found)
-//
-//    count = 0
-//    res := haven.readEachWhile(filter, null,
-//      |d->Obj?| { return count++ == 8 ? 8 : null })
-//    verifyEq(res, 8)
-//
-//    count = 0
-//    res = haven.readEachWhile(filter, Etc.dict1("limit", 5),
-//      |d->Obj?| { return count++ == 8 ? 8 : null })
-//    verifyEq(res, null)
-//  }
-//
+ Void testMismatchedType()
+ {
+   doReadAll(
+     Filter("haven and str == 2"),
+     Query(
+       "select rec.brio from rec
+        where
+          (
+            (rec.paths @> @x0::text[])
+            and
+            ((rec.nums @> @x1::jsonb) and (rec.units @> @x2::jsonb))
+          )",
+       Str:Obj[
+         "x0":"{\"haven\"}",
+         "x1":"{\"str\":2.0}",
+         "x2":"{\"str\":null}",
+       ]))
+ }
+
+ Void testAlpha()
+ {
+   echo("==============================================================")
+
+   doReadAll(
+     Filter("ahu"),
+     Query(
+       "select rec.brio from rec
+        where
+          (rec.paths @> @x0::text[])",
+       Str:Obj["x0": "{\"ahu\"}"]))
+
+   doReadAll(
+     Filter("chilledWaterRef->chilled"),
+     Query(
+       "select rec.brio from rec
+        where
+          (exists (
+            select 1 from path_ref p1
+            inner join rec r1 on r1.id = p1.target
+            where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
+       Str:Obj[
+         "x0":"chilledWaterRef",
+         "x1":"{\"chilled\"}"]))
+
+   doReadAll(
+     Filter("ahu and elec"),
+     Query(
+       "select rec.brio from rec
+        where
+          (
+            (rec.paths @> @x0::text[])
+            and
+            (rec.paths @> @x1::text[])
+          )",
+       Str:Obj[
+         "x0":"{\"ahu\"}",
+         "x1":"{\"elec\"}"]))
+
+   doReadAll(
+     Filter("chilled and pump and sensor and equipRef->siteRef->site"),
+     Query(
+       "select rec.brio from rec
+        where
+          (
+            (
+              (
+                (rec.paths @> @x0::text[])
+                and
+                (exists (
+                  select 1 from path_ref p1
+                  inner join rec r1 on r1.id = p1.target
+                  inner join path_ref p2 on p2.source = r1.id
+                  inner join rec r2 on r2.id = p2.target
+                  where (p1.source = rec.id) and (p1.path_ = @x1) and (p2.path_ = @x2) and (r2.paths @> @x3::text[])))
+              )
+              and
+              (rec.paths @> @x4::text[])
+            )
+            and
+            (rec.paths @> @x5::text[])
+          )",
+       Str:Obj[
+         "x0":"{\"chilled\"}",
+         "x1":"equipRef",
+         "x2":"siteRef",
+         "x3":"{\"site\"}",
+         "x4":"{\"pump\"}",
+         "x5":"{\"sensor\"}"]))
+
+   doReadAll(
+     Filter("custom->description == \"Clg_Valve_Cmd\""),
+     Query(
+       "select rec.brio from rec
+        where
+          (rec.strs @> @x0::jsonb)",
+       Str:Obj[
+         "x0": """{"custom.description":"Clg_Valve_Cmd"}"""
+       ]))
+
+   doReadAll(
+     Filter("dis == \"Alpha Airside AHU-4\""),
+     Query(
+       "select rec.brio from rec
+        where
+          (rec.strs @> @x0::jsonb)",
+       Str:Obj[
+         "x0":"{\"dis\":\"Alpha Airside AHU-4\"}"]))
+
+   doReadAll(
+     Filter("geoElevation == 2956m"),
+     Query(
+       "select rec.brio from rec
+        where
+          ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb))",
+       Str:Obj[
+         "x0":"{\"geoElevation\":2956.0}",
+         "x1":"{\"geoElevation\":\"m\"}"
+       ]))
+
+   doReadAll(
+     Filter("equipRef == @a-0039"),
+     Query(
+       "select rec.brio from rec
+        where
+          (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))",
+       Str:Obj[
+         "x0":"equipRef",
+         "x1":"a-0039"
+       ]))
+
+   doReadAll(
+     Filter("equipRef->dis == \"Alpha Airside AHU-4\""),
+     Query(
+       "select rec.brio from rec
+        where
+          (exists (
+            select 1 from path_ref p1
+            inner join rec r1 on r1.id = p1.target
+            where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.strs @> @x1::jsonb)))",
+       Str:Obj[
+         "x0":"equipRef",
+         "x1":"{\"dis\":\"Alpha Airside AHU-4\"}"
+       ]))
+
+   doReadAll(
+     Filter("id->area"),
+     Query(
+       "select rec.brio from rec
+        where
+          (exists (
+            select 1 from path_ref p1
+            inner join rec r1 on r1.id = p1.target
+            where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
+       Str:Obj[
+         "x0":"id",
+         "x1":"{\"area\"}"]))
+ }
+
+ Void testSeqScan()
+ {
+   echo("==============================================================")
+
+   doReadAll(
+     Filter("not point"),
+     Query(
+       "select rec.brio from rec
+        where
+          (not (rec.paths @> @x0::text[]))",
+       Str:Obj[
+         "x0":"{\"point\"}"]),
+       true)
+ }
+
+ Void testNiagara()
+ {
+   echo("==============================================================")
+
+   doReadAll(
+     Filter("facets->min"),
+     Query(
+       "select rec.brio from rec
+        where
+          (rec.paths @> @x0::text[])",
+       Str:Obj["x0": "{\"facets.min\"}"]))
+
+   doReadAll(
+     Filter("links->in4->fromRef->meta->inA->flags->linkTarget"),
+     Query(
+       "select rec.brio from rec
+        where
+          (exists (
+            select 1 from path_ref p1
+            inner join rec r1 on r1.id = p1.target
+            where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))",
+       Str:Obj[
+         "x0":"links.in4.fromRef",
+         "x1":"{\"meta.inA.flags.linkTarget\"}"]))
+
+   doReadAll(
+     Filter("links->in4->fromRef->meta->inA->flags->linkTarget and parentRef->parentRef->slotPath"),
+     Query(
+       "select rec.brio from rec
+        where
+          (
+            (exists (
+              select 1 from path_ref p1
+              inner join rec r1 on r1.id = p1.target
+              where (p1.source = rec.id) and (p1.path_ = @x0) and (r1.paths @> @x1::text[])))
+            and
+            (exists (
+              select 1 from path_ref p2
+              inner join rec r2 on r2.id = p2.target
+              inner join path_ref p3 on p3.source = r2.id
+              inner join rec r3 on r3.id = p3.target
+              where (p2.source = rec.id) and (p2.path_ = @x2) and (p3.path_ = @x3) and (r3.paths @> @x4::text[])))
+          )",
+       Str:Obj[
+         "x0":"links.in4.fromRef",
+         "x1":"{\"meta.inA.flags.linkTarget\"}",
+         "x2":"parentRef",
+         "x3":"parentRef",
+         "x4":"{\"slotPath\"}"]))
+
+   doReadAll(
+     Filter("parentRef->parentRef->slotPath == \"slot:/AHUSystem/vavs\""),
+     Query(
+       "select rec.brio from rec
+        where
+          (exists (
+            select 1 from path_ref p1
+            inner join rec r1 on r1.id = p1.target
+            inner join path_ref p2 on p2.source = r1.id
+            inner join rec r2 on r2.id = p2.target
+            where (p1.source = rec.id) and (p1.path_ = @x0) and (p2.path_ = @x1) and (r2.strs @> @x2::jsonb)))",
+       Str:Obj[
+         "x0":"parentRef",
+         "x1":"parentRef",
+         "x2":"{\"slotPath\":\"slot:/AHUSystem/vavs\"}"]))
+
+   doReadAll(
+     Filter("facets->precision == 1"),
+     Query(
+       "select rec.brio from rec
+        where
+          ((rec.nums @> @x0::jsonb) and (rec.units @> @x1::jsonb))",
+       Str:Obj[
+         "x0":"{\"facets.precision\":1.0}",
+         "x1":"{\"facets.precision\":null}",
+       ]))
+ }
+
+ Void testDemogen()
+ {
+   echo("==============================================================")
+
+   filter := Filter("elec and sensor and equipRef->siteRef->area < 10000ft²")
+
+   doReadAll(
+     filter,
+     Query(
+       "select rec.brio from rec
+        where
+          (
+            (
+              (rec.paths @> @x0::text[])
+              and
+              (rec.paths @> @x1::text[])
+            )
+            and
+            (exists (
+              select 1 from path_ref p1
+              inner join rec r1 on r1.id = p1.target
+              inner join path_ref p2 on p2.source = r1.id
+              inner join rec r2 on r2.id = p2.target
+              where (p1.source = rec.id) and (p1.path_ = @x2) and (p2.path_ = @x3) and ((r2.paths @> @x4::text[]) and (((r2.nums -> @x5)::real) < @x6) and (r2.units @> @x7::jsonb))))
+          )",
+       Str:Obj[
+         "x0":"{\"elec\"}",
+         "x1":"{\"sensor\"}",
+         "x2":"equipRef",
+         "x3":"siteRef",
+         "x4":"{\"area\"}",
+         "x5":"area",
+         "x6":10000.0f,
+         "x7":"{\"area\":\"ft\\u00b2\"}"
+       ]))
+
+   // readAll
+   verifyEq(haven.readAll(filter).size, 10)
+   verifyEq(haven.readAll(filter, Etc.dict1("limit", 5)).size, 5)
+   verifyEq(haven.readAll(filter, Etc.dict1("limit", 0)).size, 0)
+
+   // readCount
+   verifyEq(haven.readCount(filter), 10)
+   verifyEq(haven.readCount(filter, Etc.dict1("limit", 5)), 5)
+   verifyEq(haven.readCount(filter, Etc.dict1("limit", 0)), 0)
+
+   // readEach
+   found := Dict[,]
+   haven.readEach(filter, null, |d| { found.add(d) })
+   verifyDictsEq(testData.filter(filter), found)
+
+   count := 0
+   haven.readEach(filter, Etc.dict1("limit", 5), |d| { count++ })
+   verifyEq(count, 5)
+
+   // readEachWhile
+   found = Dict[,]
+   haven.readEachWhile(filter, null,
+     |d->Obj?| { found.add(d); return null })
+   verifyDictsEq(testData.filter(filter), found)
+
+   count = 0
+   res := haven.readEachWhile(filter, null,
+     |d->Obj?| { return count++ == 8 ? 8 : null })
+   verifyEq(res, 8)
+
+   count = 0
+   res = haven.readEachWhile(filter, Etc.dict1("limit", 5),
+     |d->Obj?| { return count++ == 8 ? 8 : null })
+   verifyEq(res, null)
+ }
+
 //  Void testSpec()
 //  {
 //    echo("==============================================================")

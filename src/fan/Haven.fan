@@ -105,6 +105,27 @@ class Haven
   }
 
   **
+  ** Return the number of records which match the given filter.
+  **
+  Int readCount(Filter filter, Dict? opts := null)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+    res := 0
+
+    q := Query.fromFilter(this, filter, true)
+
+    pool.execute(|SqlConn conn|
+    {
+      stmt := fetch(conn, q.sql)
+      rows := stmt.query(q.params)
+      res = rows[0]->count
+    })
+
+    return res < limit ? res : limit
+  }
+
+  **
   ** Find the first record which matches the given filter.
   ** Throw UnknownRecErr or return null based on checked flag.
   **
@@ -150,6 +171,59 @@ class Haven
   }
 
   **
+  ** Read all records matching filter
+  **
+  Void readEach(Filter filter, Dict? opts, |Dict| func)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    pool.execute(|SqlConn conn|
+    {
+      stmt := fetch(conn, q.sql)
+      i := 0
+      stmt.queryEachWhile(q.params) |r|
+      {
+        if (i++ >= limit)
+          return LimitReached.val
+
+        func(BrioReader(((Buf)r->brio).in).readDict)
+        return null
+      }
+    })
+  }
+
+  **
+  ** Read all records matching filter until callback returns non-null
+  **
+  Obj? readEachWhile(Filter filter, Dict? opts, |Dict->Obj?| func)
+  {
+    if (opts == null) opts = Etc.dict0
+    limit := opts.has("limit") ? opts->limit : Int.maxVal
+
+    q := Query.fromFilter(this, filter)
+
+    Obj? res := null
+    pool.execute(|SqlConn conn|
+    {
+      stmt := fetch(conn, q.sql)
+      i := 0
+      stmt.queryEachWhile(q.params) |r|
+      {
+        if (i++ >= limit)
+          return LimitReached.val
+
+        res = func(BrioReader(((Buf)r->brio).in).readDict)
+        return res
+      }
+    })
+
+    return (res === LimitReached.val) ? null : res
+  }
+
+  **
   ** Read a single value from a ResultSet
   **
   private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
@@ -167,6 +241,10 @@ class Haven
       return BrioReader(brio.in).readDict
     }
   }
+
+//////////////////////////////////////////////////////////////////////////
+// QueryBuilder
+//////////////////////////////////////////////////////////////////////////
 
   ** Make a List of dotted Paths ending in Refs, using the refTag whitelist.
   ** This will be used to construct a series of inner joins in
@@ -208,8 +286,8 @@ class Haven
     }
     else
     {
-      debug := sql.replace("\n", " ")
-      echo("fetch: ------------> PREPARING '$debug'")
+      //debug := sql.replace("\n", " ")
+      //echo("fetch: ------------> PREPARING '$debug'")
       stmt := conn.sql(sql).prepare
       conn.stash[sql] = stmt
       return stmt
@@ -227,6 +305,19 @@ class Haven
 
   ** refTags is a Set that mirrors the records in the ref_tag table.
   private ConcurrentMap refTags := ConcurrentMap()
+}
+
+**************************************************************************
+** LimitReached is a singleton that represents the fact that we have
+** reached the limit inside of a queryEachWhile()
+**************************************************************************
+
+internal const final class LimitReached
+{
+  ** Singleton value
+  const static LimitReached val := LimitReached()
+
+  private new make() {}
 }
 
 
