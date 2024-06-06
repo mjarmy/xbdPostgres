@@ -273,6 +273,140 @@ class Haven
   }
 
 //////////////////////////////////////////////////////////////////////////
+// Commits
+//////////////////////////////////////////////////////////////////////////
+
+  **
+  ** Create new record in the database
+  **
+  Dict create(Dict tags, Ref? id := null)
+  {
+    // add an id to the tags
+    if (tags.has("id"))
+      throw Err("tags cannot have 'id'")
+    tags = Etc.dictMerge(tags, Etc.dict1("id", id ?: Ref.gen))
+
+    // build params
+    rec := Rec.fromDict(tags)
+    params := Str:Obj?[
+      "id":        rec.id,
+      "brio":      BrioWriter.valToBuf(tags),
+      "paths":     rec.paths,
+      "strs":      (rec.strs      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.strs),
+      "nums":      (rec.nums      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.nums),
+      "units":     (rec.units     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.units),
+      "bools":     (rec.bools     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.bools),
+      "uris":      (rec.uris      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.uris),
+      "dates":     (rec.dates     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dates),
+      "times":     (rec.times     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.times),
+      "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes),
+      "spec":      rec.spec
+    ]
+
+    pool.execute(|SqlConn conn|
+    {
+      fetch(conn, insertRec).execute(params)
+      insertPathRefs(conn, rec.id, rec.refs)
+      conn.commit
+    })
+
+    return tags
+  }
+
+  ** Update existing record in the database.  If is mod is non-null, then
+  ** check mod timestamp to perform optimistic concurrency check.  If mod
+  ** is null, force update with no concurrency check.
+  Dict update(Ref id, Dict tags, DateTime? mod /* TODO ignored for now */)
+  {
+    Dict? after := null
+
+    pool.execute(|SqlConn conn|
+    {
+      // fetch the current row
+      rows := fetch(conn, selectById).query(["id": id.id])
+      Dict before := doReadSingle(rows, true, id.toStr)
+      beforeRefs := Rec.findRefPaths(before)
+
+      // construct the new row
+      after = Etc.dictMerge(before, tags)
+
+      // Build params.  It would be nice for efficiency's sake if we could do
+      // this outside of the execute() closure, but sadly we cannot, since we
+      // have to read the 'before' row as part of this transaction.
+      rec := Rec.fromDict(after)
+      params := Str:Obj?[
+        "id":        rec.id,
+        "brio":      BrioWriter.valToBuf(after),
+        "paths":     rec.paths,
+        "strs":      (rec.strs      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.strs),
+        "nums":      (rec.nums      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.nums),
+        "units":     (rec.units     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.units),
+        "bools":     (rec.bools     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.bools),
+        "uris":      (rec.uris      .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.uris),
+        "dates":     (rec.dates     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dates),
+        "times":     (rec.times     .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.times),
+        "dateTimes": (rec.dateTimes .isEmpty) ? null : JsonOutStream.writeJsonToStr(rec.dateTimes),
+        "spec":      rec.spec
+      ]
+
+      // update main record
+      fetch(conn, updateRec).execute(params)
+
+      // re-create refs if need be
+      if (beforeRefs != rec.refs)
+      {
+        fetch(conn, deletePathRef).execute(["source": id.id])
+        insertPathRefs(conn, rec.id, rec.refs)
+      }
+
+      conn.commit
+    })
+
+    return after
+  }
+
+  ** Delete record from the database
+  Void delete(Ref id)
+  {
+    pool.execute(|SqlConn conn|
+    {
+      fetch(conn, deletePathRef).execute(["source": id.id])
+      fetch(conn, deleteRec).execute(["id": id.id])
+      conn.commit
+    })
+  }
+
+  ** Insert the path_ref records that go with a Rec.
+  ** Also insert any needed ref_tag records.
+  private Void insertPathRefs(SqlConn conn, Str id, Str:Str[] refs)
+  {
+    pathRefInsert := fetch(conn, insertPathRef)
+    refTagInsert := fetch(conn, insertRefTag)
+
+    // insert refs
+    refs.each |targets, path|
+    {
+      // Update ref tags if need be.
+      lt := Rec.lastTag(path)
+      if (!refTags.containsKey(lt))
+      {
+        refTagInsert.execute(["name": lt])
+        refTags[lt] = lt
+      }
+
+      // insert path refs
+      targets.each | target |
+      {
+        pathRefInsert.execute([
+          "source": id,
+          "path":   path,
+          "target": target
+        ])
+      }
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
 // Prepared Statements
 //////////////////////////////////////////////////////////////////////////
 
@@ -300,6 +434,50 @@ class Haven
 
   const Str selectById :=
     "select brio from rec where id = @id"
+
+  const Str insertRec :=
+    "insert into rec (
+       id, brio, paths,
+       strs, nums, units,
+       bools, uris,
+       dates, times, dateTimes,
+       spec)
+     values (
+       @id, @brio, @paths,
+       @strs::jsonb, @nums::jsonb, @units::jsonb,
+       @bools::jsonb, @uris::jsonb,
+       @dates::jsonb, @times::jsonb, @dateTimes::jsonb,
+       @spec)"
+
+  const Str insertPathRef :=
+    "insert into path_ref
+       (source, path_, target)
+     values
+       (@source, @path, @target)"
+
+  const Str insertRefTag :=
+    "insert into ref_tag (name) values (@name)"
+
+  const Str updateRec :=
+    "update rec set
+       brio      = @brio,
+       paths     = @paths,
+       strs      = @strs::jsonb,
+       nums      = @nums::jsonb,
+       units     = @units::jsonb,
+       bools     = @bools ::jsonb,
+       uris      = @uris::jsonb,
+       dates     = @dates ::jsonb,
+       times     = @times ::jsonb,
+       dateTimes = @dateTimes::jsonb,
+       spec      = @spec
+     where id = @id"
+
+  const Str deleteRec :=
+    "delete from rec where id = @id"
+
+  const Str deletePathRef :=
+    "delete from path_ref where source = @source"
 
   private HavenPool pool
 

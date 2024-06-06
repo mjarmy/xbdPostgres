@@ -17,8 +17,8 @@ const class HavenPool : SqlConnPool
 
   protected override Void onOpen(SqlConn c)
   {
-    // Turn on auto-commit for new connections.
-    c.autoCommit = true
+    // Turn off auto-commit for new connections.
+    c.autoCommit = false
   }
 
   protected override Void onClose(SqlConn c)

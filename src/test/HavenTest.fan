@@ -1110,92 +1110,95 @@ class HavenTest : Test
         ]))
   }
 
-//  Void testCrud()
-//  {
-//    echo("==============================================================")
-//
-//    x0 := Ref("x0")
-//
-//    verifyErr(InvalidRecErr#) { haven.create(Etc.dict1("id", x0)) }
-//
-//    // create
-//    verifyTrue(Etc.dictEq(
-//      haven.create(Etc.emptyDict, x0),
-//      Etc.dict1("id", x0)))
-//
-//    // read
-//    verifyTrue(Etc.dictEq(
-//      haven.readById(x0),
-//      Etc.dict1("id", x0)))
-//
-//    verifyEq(selectPathRefs(x0), ["id":["x0"]])
-//
-//    // update (no refs)
-//    verifyTrue(Etc.dictEq(
-//      haven.update(x0, Etc.dict1("foo", "bar"), null),
-//      Etc.dict2("id", x0, "foo", "bar")))
-//    verifyEq(selectPathRefs(x0), ["id":["x0"]])
-//
-//    verifyTrue(Etc.dictEq(
-//      haven.update(x0, Etc.dict1("foo", Remove.val), null),
-//      Etc.dict1("id", x0)))
-//    verifyEq(selectPathRefs(x0), ["id":["x0"]])
-//
-//    // update (ref)
-//    verifyTrue(Etc.dictEq(
-//      haven.update(x0, Etc.dict1("foo", ref("bar")), null),
-//      Etc.dict2("id", x0, "foo", ref("bar"))))
-//    verifyEq(selectPathRefs(x0), ["id":["x0"], "foo":["bar"]])
-//
-//    verifyTrue(Etc.dictEq(
-//      haven.update(x0, Etc.dict1("foo", Remove.val), null),
-//      Etc.dict1("id", x0)))
-//    verifyEq(selectPathRefs(x0), ["id":["x0"]])
-//
-//    // update (ref list)
-//    verifyTrue(Etc.dictEq(
-//      haven.update(x0, Etc.dict1("foo", [ref("bar"), ref("quux")]), null),
-//      Etc.dict2("id", x0, "foo", [ref("bar"), ref("quux")])))
-//    verifyEq(selectPathRefs(x0), ["id":["x0"], "foo":["bar", "quux"]])
-//
-//    verifyTrue(Etc.dictEq(
-//      haven.update(x0, Etc.dict1("foo", Remove.val), null),
-//      Etc.dict1("id", x0)))
-//    verifyEq(selectPathRefs(x0), ["id":["x0"]])
-//
-//    // delete
-//    haven.delete(x0)
-//    verifyNull(haven.readById(x0, false))
-//  }
-//
-//  private Str:Str[] selectPathRefs(Ref source)
-//  {
-//    refs  := Str:Str[][:]
-//
-//    stmt := haven.testConn.sql(
-//      "select path_, target from path_ref where source = @source"
-//    ).prepare
-//
-//    stmt.query(["source": source.id]).each |r|
-//    {
-//      Str path := r->path_
-//      Str target := r->target
-//
-//      if (refs.containsKey(path))
-//      {
-//        refs[path].add(target)
-//        refs[path].sort
-//      }
-//      else
-//      {
-//        refs[path] = [target]
-//      }
-//    }
-//
-//    stmt.close
-//
-//    return refs
-//  }
+  Void testCrud()
+  {
+    echo("==============================================================")
+
+    x0 := Ref("x0")
+
+    verifyErr(Err#) { haven.create(Etc.dict1("id", x0)) }
+
+    // create
+    verifyTrue(Etc.dictEq(
+      haven.create(Etc.emptyDict, x0),
+      Etc.dict1("id", x0)))
+
+    // read
+    verifyTrue(Etc.dictEq(
+      haven.readById(x0),
+      Etc.dict1("id", x0)))
+
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    // update (no refs)
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", "bar"), null),
+      Etc.dict2("id", x0, "foo", "bar")))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", Remove.val), null),
+      Etc.dict1("id", x0)))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    // update (ref)
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", ref("bar")), null),
+      Etc.dict2("id", x0, "foo", ref("bar"))))
+    verifyEq(selectPathRefs(x0), ["id":["x0"], "foo":["bar"]])
+
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", Remove.val), null),
+      Etc.dict1("id", x0)))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    // update (ref list)
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", [ref("bar"), ref("quux")]), null),
+      Etc.dict2("id", x0, "foo", [ref("bar"), ref("quux")])))
+    verifyEq(selectPathRefs(x0), ["id":["x0"], "foo":["bar", "quux"]])
+
+    verifyTrue(Etc.dictEq(
+      haven.update(x0, Etc.dict1("foo", Remove.val), null),
+      Etc.dict1("id", x0)))
+    verifyEq(selectPathRefs(x0), ["id":["x0"]])
+
+    // delete
+    haven.delete(x0)
+    verifyNull(haven.readById(x0, false))
+  }
+
+  private Str:Str[] selectPathRefs(Ref source)
+  {
+    refs  := Str:Str[][:]
+
+    pool.execute(|SqlConn conn|
+    {
+      stmt := conn.sql(
+        "select path_, target from path_ref where source = @source"
+      ).prepare
+
+      stmt.query(["source": source.id]).each |r|
+      {
+        Str path := r->path_
+        Str target := r->target
+
+        if (refs.containsKey(path))
+        {
+          refs[path].add(target)
+          refs[path].sort
+        }
+        else
+        {
+          refs[path] = [target]
+        }
+      }
+
+      stmt.close
+    })
+
+    return refs
+  }
 
   private Void doReadAll(
     Filter filter,
