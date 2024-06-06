@@ -43,7 +43,7 @@ class Haven
   **
   Dict? readById(Ref? id, Bool checked := true)
   {
-    Dict? result := null
+    Buf? result := null
 
     pool.execute(|SqlConn conn|
     {
@@ -52,7 +52,7 @@ class Haven
       result = doReadSingle(rows, checked, id.toStr)
     })
 
-    return result
+    return (result == null) ? null : BrioReader(result.in).readDict
   }
 
   **
@@ -63,9 +63,6 @@ class Haven
   {
     if (ids.isEmpty)
       return Dict[,]
-
-    refMap := Ref:Int[:]
-    res := Dict?[,].fill(null, ids.size)
 
     // create SQL
     sb := StrBuf()
@@ -81,6 +78,7 @@ class Haven
 
     // params
     params := Str:Obj?[:]
+    refMap := Ref:Int[:]
     ids.each |id, i|
     {
       refMap[id] = i
@@ -88,17 +86,25 @@ class Haven
     }
 
     // run query
+    bufs := Buf[,]
     pool.execute(|SqlConn conn|
     {
       stmt := fetch(conn, sql)
       stmt.query(params).each |r|
       {
-        d := BrioReader(((Buf)r->brio).in).readDict
-        res[refMap[d->id]] = d
+        bufs.add(r->brio)
       }
     })
 
-    if (checked && res.any |Dict? d->Bool| { d == null})
+    // convert to dicts
+    res := Dict?[,].fill(null, ids.size)
+    bufs.each |b|
+    {
+      d := BrioReader(b.in).readDict
+      res[refMap[d->id]] = d
+    }
+
+    if (checked && res.any |Dict? d->Bool| { d == null })
       throw UnknownRecErr("missing ids")
     else
       return res
@@ -131,7 +137,7 @@ class Haven
   **
   Dict? read(Filter filter, Bool checked := true)
   {
-    Dict? result := null
+    Buf? result := null
 
     q := Query.fromFilter(this, filter)
 
@@ -139,10 +145,10 @@ class Haven
     {
       stmt := fetch(conn, q.sql)
       rows := stmt.query(q.params)
-      result =  doReadSingle(rows, checked, filter.toStr)
+      result = doReadSingle(rows, checked, filter.toStr)
     })
 
-    return result
+    return (result == null) ? null : BrioReader(result.in).readDict
   }
 
   **
@@ -155,7 +161,7 @@ class Haven
 
     q := Query.fromFilter(this, filter)
 
-    res := Dict[,]
+    res := Buf[,]
     pool.execute(|SqlConn conn|
     {
       stmt := fetch(conn, q.sql)
@@ -163,11 +169,11 @@ class Haven
       i := 0
       while ((i < rows.size) && (i < limit))
       {
-        res.add(BrioReader(((Buf)rows[i++]->brio).in).readDict)
+        res.add(rows[i++]->brio)
       }
     })
 
-    return res
+    return res.map(|r->Dict| { BrioReader(r.in).readDict } )
   }
 
   **
@@ -226,7 +232,7 @@ class Haven
   **
   ** Read a single value from a ResultSet
   **
-  private Dict? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
+  private Buf? doReadSingle(sql::Row[] rows, Bool checked, Str errMsg)
   {
     if (rows.isEmpty)
     {
@@ -237,8 +243,7 @@ class Haven
     }
     else
     {
-      Buf brio := rows[0]->brio
-      return BrioReader(brio.in).readDict
+      return rows[0]->brio
     }
   }
 
@@ -324,7 +329,8 @@ class Haven
     {
       // fetch the current row
       rows := fetch(conn, selectById).query(["id": id.id])
-      Dict before := doReadSingle(rows, true, id.toStr)
+      Buf? brio := doReadSingle(rows, true, id.toStr)
+      Dict before := BrioReader(brio.in).readDict
       beforeRefs := Rec.findRefPaths(before)
 
       // construct the new row
