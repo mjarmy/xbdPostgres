@@ -42,7 +42,6 @@ class HavenTest : Test
       }
       stmt.close
     })
-    echo("count $count")
     verifyTrue(count > 0)
 
     id := null
@@ -55,7 +54,6 @@ class HavenTest : Test
       }
       stmt.close
     })
-    echo("id $id")
     verifyEq(id, "id")
   }
 
@@ -1070,48 +1068,48 @@ class HavenTest : Test
    verifyEq(res, null)
  }
 
-//  Void testSpec()
-//  {
-//    echo("==============================================================")
-//
-//    doReadAll(
-//      Filter("ph::Sensor"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x0))",
-//        Str:Obj[
-//          "x0":"ph::Sensor",
-//        ]),
-//        true)
-//
-//    doReadAll(
-//      Filter("ph.points::AirFlowSensor"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x0))",
-//        Str:Obj[
-//          "x0":"ph.points::AirFlowSensor",
-//        ]))
-//
-//    doReadAll(
-//      Filter("ph.points::AirPressureSensor and equipRef == @p:demo:r:2de0dfb5-6e04b073"),
-//      Query(
-//        "select rec.brio from rec
-//         where
-//           (
-//             (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))
-//             and
-//             (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x2))
-//           )",
-//        Str:Obj[
-//          "x0":"equipRef",
-//          "x1":"p:demo:r:2de0dfb5-6e04b073",
-//          "x2":"ph.points::AirPressureSensor",
-//        ]))
-//  }
-//
+  Void testSpec()
+  {
+    echo("==============================================================")
+
+    doReadAll(
+      Filter("ph::Sensor"),
+      Query(
+        "select rec.brio from rec
+         where
+           (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x0))",
+        Str:Obj[
+          "x0":"ph::Sensor",
+        ]),
+        true)
+
+    doReadAll(
+      Filter("ph.points::AirFlowSensor"),
+      Query(
+        "select rec.brio from rec
+         where
+           (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x0))",
+        Str:Obj[
+          "x0":"ph.points::AirFlowSensor",
+        ]))
+
+    doReadAll(
+      Filter("ph.points::AirPressureSensor and equipRef == @p:demo:r:2de0dfb5-6e04b073"),
+      Query(
+        "select rec.brio from rec
+         where
+           (
+             (exists (select 1 from path_ref v1 where v1.source = rec.id and v1.path_ = @x0 and v1.target = @x1))
+             and
+             (exists (select 1 from spec s1 where s1.qname = rec.spec and s1.inherits_from = @x2))
+           )",
+        Str:Obj[
+          "x0":"equipRef",
+          "x1":"p:demo:r:2de0dfb5-6e04b073",
+          "x2":"ph.points::AirPressureSensor",
+        ]))
+  }
+
 //  Void testCrud()
 //  {
 //    echo("==============================================================")
