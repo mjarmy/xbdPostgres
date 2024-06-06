@@ -16,7 +16,7 @@ using util
 **
 class Haven
 {
-  new make(SqlConnPool pool)
+  new make(HavenPool pool)
   {
     this.pool = pool
 
@@ -301,7 +301,7 @@ class Haven
   const Str selectById :=
     "select brio from rec where id = @id"
 
-  private SqlConnPool pool
+  private HavenPool pool
 
   ** refTags is a Set that mirrors the records in the ref_tag table.
   private ConcurrentMap refTags := ConcurrentMap()

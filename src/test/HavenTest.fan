@@ -16,7 +16,7 @@ class HavenTest : Test
 {
   override Void setup()
   {
-    pool = SqlConnPool
+    pool = HavenPool
     {
       it.uri      = "jdbc:postgresql://localhost/postgres"
       it.username = "xbd"
