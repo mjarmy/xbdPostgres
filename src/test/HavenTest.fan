@@ -1204,7 +1204,7 @@ class HavenTest : Test
     // make sure the queries are equal
     verbose("-------------------------------------")
     verbose("sql eq ${expectedQuery.sql == query.sql}")
-    verbose("params eq ${expectedQuery.params == query.params}")
+    verbose("query params eq ${expectedQuery.params == query.params}")
     verbose
     verifyEq(expectedQuery, query)
 

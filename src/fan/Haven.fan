@@ -23,6 +23,7 @@ class Haven
     // load ref tags
     pool.execute(|SqlConn conn| {
       stmt := conn.sql("select name from ref_tag")
+
       stmt.query.each |r|
       {
         name := r->name
@@ -44,7 +45,8 @@ class Haven
     Dict? result := null
 
     pool.execute(|SqlConn conn| {
-      stmt := fetch(conn, "#selectById", |->Str| { selectById })
+      stmt := fetch(conn, selectById)
+
       rows := stmt.query(["id": id.id])
       result = doReadSingle(rows, checked, id.toStr)
     })
@@ -64,6 +66,18 @@ class Haven
     refMap := Ref:Int[:]
     res := Dict?[,].fill(null, ids.size)
 
+    // create SQL
+    sb := StrBuf()
+    sb.add("select brio from rec where id in (")
+    ids.each |id, i|
+    {
+      if (i > 0)
+        sb.add(", ")
+      sb.add("@x$i")
+    }
+    sb.add(")")
+    sql := sb.toStr
+
     // params
     params := Str:Obj?[:]
     ids.each |id, i|
@@ -74,20 +88,7 @@ class Haven
 
     // run query
     pool.execute(|SqlConn conn| {
-
-      stmt := fetch(conn, "#selectByIds${ids.size}", |->Str| {
-        // create SQL
-        sb := StrBuf()
-        sb.add("select brio from rec where id in (")
-        ids.each |id, i|
-        {
-          if (i > 0)
-            sb.add(", ")
-          sb.add("@x$i")
-        }
-        sb.add(")")
-        return sb.toStr
-      })
+      stmt := fetch(conn, sql)
 
       stmt.query(params).each |r|
       {
@@ -114,14 +115,14 @@ class Haven
 
     res := Dict[,]
     pool.execute(|SqlConn conn| {
-      stmt := conn.sql(q.sql).prepare
+      stmt := fetch(conn, q.sql)
+
       rows := stmt.query(q.params)
       i := 0
       while ((i < rows.size) && (i < limit))
       {
         res.add(BrioReader(((Buf)rows[i++]->brio).in).readDict)
       }
-      stmt.close
     })
 
     return res
@@ -176,20 +177,20 @@ class Haven
 // Prepared Statements
 //////////////////////////////////////////////////////////////////////////
 
-  ** Fetch a prepared statement from the connection stash,
+  ** Fetch a prepared statement from the connection's stash,
   ** or create the prepared statement.
-  private Statement fetch(SqlConn conn, Str key, |->Str| sqlFunc)
+  private Statement fetch(SqlConn conn, Str sql)
   {
-    if (conn.stash.containsKey(key))
+    if (conn.stash.containsKey(sql))
     {
-      echo("fetch: found $key")
-      return conn.stash[key]
+      return conn.stash[sql]
     }
     else
     {
-      echo("fetch: ------------> PREPARING $key")
-      stmt := conn.sql(sqlFunc()).prepare
-      conn.stash[key] = stmt
+      debug := sql.replace("\n", " ")
+      echo("fetch: ------------> PREPARING '$debug'")
+      stmt := conn.sql(sql).prepare
+      conn.stash[sql] = stmt
       return stmt
     }
   }
