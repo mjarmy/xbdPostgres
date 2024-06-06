@@ -65,7 +65,7 @@ class Haven
       return Dict[,]
 
     // create SQL
-    sb := StrBuf()
+    sb := StrBuf(64)
     sb.add("select brio from rec where id in (")
     ids.each |id, i|
     {
