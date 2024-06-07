@@ -20,9 +20,9 @@ internal class QueryBuilder {
     this.haven = haven
 
     if (isCount)
-      sql.add("select count(*) as count from rec where ")
+      sql.add("select count(*) as count from rec r0 where ")
     else
-      sql.add("select rec.brio from rec where ")
+      sql.add("select brio from rec r0 where ")
 
     visit(f)
   }
@@ -128,7 +128,7 @@ internal class QueryBuilder {
     params.add(spec)
 
     // use a nested subquery
-    sql.add("(exists (select 1 from spec s").add(specs).add(" where s").add(specs).add(".qname = rec.spec ")
+    sql.add("(exists (select 1 from spec s").add(specs).add(" where s").add(specs).add(".qname = r0.spec ")
     sql.add("and s").add(specs).add(".inherits_from = @x").add(x).add("))")
   }
 
@@ -144,7 +144,7 @@ internal class QueryBuilder {
     if (paths.size == 1)
     {
       // process the node
-      nodeFunc("rec", paths[0])
+      nodeFunc("r0", paths[0])
     }
     // joins
     else
@@ -162,7 +162,7 @@ internal class QueryBuilder {
         sql.add("inner join rec r").add(i).add(" on r").add(i).add(".id = p").add(i).add(".target ")
       }
 
-      sql.add("where (p").add(a).add(".source = rec.id) and ")
+      sql.add("where (p").add(a).add(".source = r0.id) and ")
       for (i := 0; i < paths.size-1; i++)
       {
         params.add(paths[i])
