@@ -59,42 +59,42 @@ internal class QueryBuilder {
     case FilterType.has:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { has(alias, path) })
+        |Int alias, Str path| { has(alias, path) })
 
     case FilterType.missing:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { missing(alias, path) })
+        |Int alias, Str path| { missing(alias, path) })
 
     case FilterType.eq:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { eq(alias, path, f.argB) })
+        |Int alias, Str path| { eq(alias, path, f.argB) })
 
     case FilterType.ne:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { ne(alias, path, f.argB) })
+        |Int alias, Str path| { ne(alias, path, f.argB) })
 
     case FilterType.lt:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { cmp(alias, path, f.argB, "<") })
+        |Int alias, Str path| { cmp(alias, path, f.argB, "<") })
 
     case FilterType.le:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { cmp(alias, path, f.argB, "<=") })
+        |Int alias, Str path| { cmp(alias, path, f.argB, "<=") })
 
     case FilterType.gt:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { cmp(alias, path, f.argB, ">") })
+        |Int alias, Str path| { cmp(alias, path, f.argB, ">") })
 
     case FilterType.ge:
       visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path| { cmp(alias, path, f.argB, ">=") })
+        |Int alias, Str path| { cmp(alias, path, f.argB, ">=") })
 
     default:
         throw Err("Encountered unknown FilterType ${f.type}")
@@ -135,7 +135,7 @@ internal class QueryBuilder {
   ** visit a leaf AST node
   private Void visitLeaf(
     FilterPath fp,
-    |Str alias, Str path| nodeFunc)
+    |Int alias, Str path| nodeFunc)
   {
     // Create the paths using Haven's whitelisted ref paths
     paths := haven.refPaths(fp)
@@ -144,7 +144,7 @@ internal class QueryBuilder {
     if (paths.size == 1)
     {
       // process the node
-      nodeFunc("r0", paths[0])
+      nodeFunc(0, paths[0])
     }
     // joins
     else
@@ -169,28 +169,28 @@ internal class QueryBuilder {
         sql.add("(p").add(a+i).add(".path_ = @x").add(x).add(") and ")
       }
       // process the node
-      nodeFunc("r${joins}", paths[-1])
+      nodeFunc(joins, paths[-1])
 
       sql.add("))")
     }
   }
 
   ** 'has' AST node
-  private Void has(Str alias, Str path)
+  private Void has(Int alias, Str path)
   {
     params.add("{\"$path\"}")
-    sql.add("(").add(alias).add(".paths @> @x").add(x).add("::text[])")
+    sql.add("(r").add(alias).add(".paths @> @x").add(x).add("::text[])")
   }
 
   ** 'missing' AST node
-  private Void missing(Str alias, Str path)
+  private Void missing(Int alias, Str path)
   {
     params.add("{\"$path\"}")
-    sql.add("(not (").add(alias).add(".paths @> @x").add(x).add("::text[]))")
+    sql.add("(not (r").add(alias).add(".paths @> @x").add(x).add("::text[]))")
   }
 
   ** 'eq' AST node
-  private Void eq(Str alias, Str path, Obj? val)
+  private Void eq(Int alias, Str path, Obj? val)
   {
     // Misc toStr()
     if ((val is Str) || (val is Uri) || (val is Date) || (val is Time))
@@ -198,7 +198,7 @@ internal class QueryBuilder {
       col := columnNames[val.typeof]
 
       addObjParam(path, val.toStr)
-      sql.add("(").add(alias).add(".").add(col).add(" @> @x").add(x).add("::jsonb)")
+      sql.add("(r").add(alias).add(".").add(col).add(" @> @x").add(x).add("::jsonb)")
     }
     // Ref
     else if (val is Ref)
@@ -211,22 +211,22 @@ internal class QueryBuilder {
       Number n := (Number) val
 
       addObjParam(path, n.toFloat)
-      sql.add("((").add(alias).add(".nums @> @x").add(x).add("::jsonb)")
+      sql.add("((r").add(alias).add(".nums @> @x").add(x).add("::jsonb)")
       addObjParam(path, n.unit == null ? null : n.unit.toStr)
-      sql.add(" and (").add(alias).add(".units @> @x").add(x).add("::jsonb))")
+      sql.add(" and (r").add(alias).add(".units @> @x").add(x).add("::jsonb))")
     }
     // Bool
     else if (val is Bool)
     {
       addObjParam(path, val)
-      sql.add("(").add(alias).add(".bools @> @x").add(x).add("::jsonb)")
+      sql.add("(r").add(alias).add(".bools @> @x").add(x).add("::jsonb)")
     }
     // DateTime
     else if (val is DateTime)
     {
       DateTime ts := (DateTime) val
       addObjParam(path, Duration(ts.ticks).toMillis)
-      sql.add("(").add(alias).add(".dateTimes @> @x").add(x).add("::jsonb)")
+      sql.add("(r").add(alias).add(".dateTimes @> @x").add(x).add("::jsonb)")
     }
 
     // val type cannot be used for this node
@@ -235,7 +235,7 @@ internal class QueryBuilder {
   }
 
   ** 'ne' AST node
-  private Void ne(Str alias, Str path, Obj? val)
+  private Void ne(Int alias, Str path, Obj? val)
   {
     // Ref
     if (val is Ref)
@@ -252,19 +252,19 @@ internal class QueryBuilder {
       // We have to check if the column is null because of 3-Value booleans
       sql.add("(")
       has(alias, path)
-      sql.add(" and ((").add(alias).add(".").add(col).add(" is null) or (not ")
+      sql.add(" and ((r").add(alias).add(".").add(col).add(" is null) or (not ")
       eq(alias, path, val)
       sql.add(")))")
     }
   }
 
   ** test a ref for equality using a nested subquery
-  private Void refEq(Str alias, Str path, Ref ref)
+  private Void refEq(Int alias, Str path, Ref ref)
   {
     valRefs++
 
     sql.add("(exists (select 1 from path_ref v").add(valRefs).add(" ")
-    sql.add("where v").add(valRefs).add(".source = ").add(alias).add(".id ")
+    sql.add("where v").add(valRefs).add(".source = r").add(alias).add(".id ")
     params.add(path)
     sql.add("and v").add(valRefs).add(".path_ = @x").add(x).add(" ")
     params.add(ref.id)
@@ -272,7 +272,7 @@ internal class QueryBuilder {
   }
 
   ** 'cmp' AST node >,>=,<,<=
-  private Void cmp(Str alias, Str path, Obj? val, Str op)
+  private Void cmp(Int alias, Str path, Obj? val, Str op)
   {
     // https://hashrocket.com/blog/posts/dealing-with-nested-json-objects-in-postgresql
     // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
@@ -287,7 +287,7 @@ internal class QueryBuilder {
       sql.add(" and ")
 
       params.add(path)
-      sql.add("((").add(alias).add(".").add(col).add(" ->> @x").add(x).add(")")
+      sql.add("((r").add(alias).add(".").add(col).add(" ->> @x").add(x).add(")")
       params.add(val.toStr)
       sql.add(" ").add(op).add(" @x").add(x).add(")")
 
@@ -303,12 +303,12 @@ internal class QueryBuilder {
       sql.add(" and ")
 
       params.add(path)
-      sql.add("(((").add(alias).add(".nums -> @x").add(x).add(")::real)")
+      sql.add("(((r").add(alias).add(".nums -> @x").add(x).add(")::real)")
       params.add(n.toFloat)
       sql.add(" ").add(op).add(" @x").add(x).add(")")
 
       addObjParam(path, n.unit == null ? null : n.unit.toStr)
-      sql.add(" and (").add(alias).add(".units @> @x").add(x).add("::jsonb)")
+      sql.add(" and (r").add(alias).add(".units @> @x").add(x).add("::jsonb)")
 
       sql.add(")")
     }
@@ -320,7 +320,7 @@ internal class QueryBuilder {
       sql.add(" and ")
 
       params.add(path)
-      sql.add("(((").add(alias).add(".bools -> @x").add(x).add(")::boolean)")
+      sql.add("(((r").add(alias).add(".bools -> @x").add(x).add(")::boolean)")
       params.add(val)
       sql.add(" ").add(op).add(" @x").add(x).add(")")
 
@@ -336,7 +336,7 @@ internal class QueryBuilder {
       sql.add(" and ")
 
       params.add(path)
-      sql.add("(((").add(alias).add(".dateTimes -> @x").add(x).add(")::bigint)")
+      sql.add("(((r").add(alias).add(".dateTimes -> @x").add(x).add(")::bigint)")
       params.add(Duration(ts.ticks).toMillis)
       sql.add(" ").add(op).add(" @x").add(x).add(")")
 
