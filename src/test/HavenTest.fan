@@ -906,6 +906,10 @@ class HavenTest : Test
   {
     echo("--------------------------------------------------------------")
     echo("Filter: '$filter'")
+    if (expectedQuery.sql.size > QueryBuilder.initialBufSize)
+    {
+      echo("************ EXTRA LONG SQL: ${expectedQuery.sql.size}")
+    }
     verbose
 
     // Dump the expected query
@@ -1037,16 +1041,16 @@ class HavenTest : Test
     }
   }
 
-  private static Void verbose(Obj o := "")
-  {
-    echo(o.toStr)
-  }
-
   private static Marker M() { Marker.val }
   private static Ref ref(Str str) { Ref.fromStr(str) }
   private static Number n(Num val, Str? unit := null)
   {
     Number.makeNum(val, unit == null ? null : Unit.fromStr(unit))
+  }
+
+  private static Void verbose(Obj o := "")
+  {
+    //echo(o.toStr)
   }
 
 //////////////////////////////////////////////////////////////////////////

@@ -368,6 +368,8 @@ internal class QueryBuilder {
 // Fields
 //////////////////////////////////////////////////////////////////////////
 
+  internal static const Int initialBufSize := 256
+
   private static const Type:Str columnNames := Type:Str[
     Uri#:      "uris",
     Str#:      "strs",
@@ -380,7 +382,7 @@ internal class QueryBuilder {
 
   private Haven haven
 
-  private StrBuf sql := StrBuf()
+  private StrBuf sql := StrBuf(initialBufSize)
 
   private StrBuf paramBuf := StrBuf() // re-usable
   private Obj[] params := Obj[,]
