@@ -1039,7 +1039,7 @@ class HavenTest : Test
 
   private static Void verbose(Obj o := "")
   {
-    echo(o.toStr)
+    //echo(o.toStr)
   }
 
   private static Marker M() { Marker.val }

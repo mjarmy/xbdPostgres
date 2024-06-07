@@ -125,11 +125,11 @@ internal class QueryBuilder {
   private Void visitIsSpec(Str spec)
   {
     specs++
-    addParam(spec)
+    params.add(spec)
 
     // use a nested subquery
-    sql.add("(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ")
-    sql.add("and s${specs}.inherits_from = @x${x()}))")
+    sql.add("(exists (select 1 from spec s$specs where s").add(specs).add(".qname = rec.spec ")
+    sql.add("and s").add(specs).add(".inherits_from = @x").add(x).add("))")
   }
 
   ** visit a leaf AST node
@@ -153,20 +153,20 @@ internal class QueryBuilder {
       joins += paths.size-1
 
       sql.add("(exists (")
-      sql.add("select 1 from path_ref p${a} ")
-      sql.add("inner join rec r${a} on r${a}.id = p${a}.target ")
+      sql.add("select 1 from path_ref p").add(a).add(" ")
+      sql.add("inner join rec r").add(a).add(" on r").add(a).add(".id = p").add(a).add(".target ")
 
       for (i := a+1; i <= joins; i++)
       {
-        sql.add("inner join path_ref p$i on p${i}.source = r${i-1}.id ")
-        sql.add("inner join rec r$i on r${i}.id = p${i}.target ")
+        sql.add("inner join path_ref p").add(i).add(" on p").add(i).add(".source = r").add(i-1).add(".id ")
+        sql.add("inner join rec r").add(i).add(" on r").add(i).add(".id = p").add(i).add(".target ")
       }
 
-      sql.add("where (p${a}.source = rec.id) and ")
+      sql.add("where (p").add(a).add(".source = rec.id) and ")
       for (i := 0; i < paths.size-1; i++)
       {
-        addParam(paths[i])
-        sql.add("(p${a+i}.path_ = @x${x()}) and ")
+        params.add(paths[i])
+        sql.add("(p").add(a+i).add(".path_ = @x").add(x).add(") and ")
       }
       // process the node
       nodeFunc("r${joins}", paths[-1])
@@ -178,15 +178,15 @@ internal class QueryBuilder {
   ** 'has' AST node
   private Void has(Str alias, Str path)
   {
-    addParam("{\"$path\"}")
-    sql.add("(${alias}.paths @> @x${x()}::text[])")
+    params.add("{\"$path\"}")
+    sql.add("(").add(alias).add(".paths @> @x").add(x).add("::text[])")
   }
 
   ** 'missing' AST node
   private Void missing(Str alias, Str path)
   {
-    addParam("{\"$path\"}")
-    sql.add("(not (${alias}.paths @> @x${x()}::text[]))")
+    params.add("{\"$path\"}")
+    sql.add("(not (").add(alias).add(".paths @> @x").add(x).add("::text[]))")
   }
 
   ** 'eq' AST node
@@ -198,7 +198,7 @@ internal class QueryBuilder {
       col := columnNames[val.typeof]
 
       addObjParam(path, val.toStr)
-      sql.add("(${alias}.$col @> @x${x()}::jsonb)")
+      sql.add("(").add(alias).add(".$col @> @x").add(x).add("::jsonb)")
     }
     // Ref
     else if (val is Ref)
@@ -211,22 +211,22 @@ internal class QueryBuilder {
       Number n := (Number) val
 
       addObjParam(path, n.toFloat)
-      sql.add("((${alias}.nums @> @x${x()}::jsonb)")
+      sql.add("((").add(alias).add(".nums @> @x").add(x).add("::jsonb)")
       addObjParam(path, n.unit == null ? null : n.unit.toStr)
-      sql.add(" and (${alias}.units @> @x${x()}::jsonb))")
+      sql.add(" and (").add(alias).add(".units @> @x").add(x).add("::jsonb))")
     }
     // Bool
     else if (val is Bool)
     {
       addObjParam(path, val)
-      sql.add("(${alias}.bools @> @x${x()}::jsonb)")
+      sql.add("(").add(alias).add(".bools @> @x").add(x).add("::jsonb)")
     }
     // DateTime
     else if (val is DateTime)
     {
       DateTime ts := (DateTime) val
       addObjParam(path, Duration(ts.ticks).toMillis)
-      sql.add("(${alias}.dateTimes @> @x${x()}::jsonb)")
+      sql.add("(").add(alias).add(".dateTimes @> @x").add(x).add("::jsonb)")
     }
 
     // val type cannot be used for this node
@@ -252,7 +252,7 @@ internal class QueryBuilder {
       // We have to check if the column is null because of 3-Value booleans
       sql.add("(")
       has(alias, path)
-      sql.add(" and ((${alias}.$col is null) or (not ")
+      sql.add(" and ((").add(alias).add(".$col is null) or (not ")
       eq(alias, path, val)
       sql.add(")))")
     }
@@ -264,11 +264,11 @@ internal class QueryBuilder {
     valRefs++
 
     sql.add("(exists (select 1 from path_ref v$valRefs ")
-    sql.add("where v${valRefs}.source = ${alias}.id ")
-    addParam(path)
-    sql.add("and v${valRefs}.path_ = @x${x()} ")
-    addParam(ref.id)
-    sql.add("and v${valRefs}.target = @x${x()}))")
+    sql.add("where v").add(valRefs).add(".source = ").add(alias).add(".id ")
+    params.add(path)
+    sql.add("and v").add(valRefs).add(".path_ = @x").add(x).add(" ")
+    params.add(ref.id)
+    sql.add("and v").add(valRefs).add(".target = @x").add(x).add("))")
   }
 
   ** 'cmp' AST node >,>=,<,<=
@@ -286,10 +286,10 @@ internal class QueryBuilder {
       has(alias, path)
       sql.add(" and ")
 
-      addParam(path)
-      sql.add("((${alias}.$col ->> @x${x()})")
-      addParam(val.toStr)
-      sql.add(" $op @x${x()})")
+      params.add(path)
+      sql.add("((").add(alias).add(".$col ->> @x").add(x).add(")")
+      params.add(val.toStr)
+      sql.add(" $op @x").add(x).add(")")
 
       sql.add(")")
     }
@@ -302,13 +302,13 @@ internal class QueryBuilder {
       has(alias, path)
       sql.add(" and ")
 
-      addParam(path)
-      sql.add("(((${alias}.nums -> @x${x()})::real)")
-      addParam(n.toFloat)
-      sql.add(" $op @x${x()})")
+      params.add(path)
+      sql.add("(((").add(alias).add(".nums -> @x").add(x).add(")::real)")
+      params.add(n.toFloat)
+      sql.add(" $op @x").add(x).add(")")
 
       addObjParam(path, n.unit == null ? null : n.unit.toStr)
-      sql.add(" and (${alias}.units @> @x${x()}::jsonb)")
+      sql.add(" and (").add(alias).add(".units @> @x").add(x).add("::jsonb)")
 
       sql.add(")")
     }
@@ -319,10 +319,10 @@ internal class QueryBuilder {
       has(alias, path)
       sql.add(" and ")
 
-      addParam(path)
-      sql.add("(((${alias}.bools -> @x${x()})::boolean)")
-      addParam(val)
-      sql.add(" $op @x${x()})")
+      params.add(path)
+      sql.add("(((").add(alias).add(".bools -> @x").add(x).add(")::boolean)")
+      params.add(val)
+      sql.add(" $op @x").add(x).add(")")
 
       sql.add(")")
     }
@@ -335,10 +335,10 @@ internal class QueryBuilder {
       has(alias, path)
       sql.add(" and ")
 
-      addParam(path)
-      sql.add("(((${alias}.dateTimes -> @x${x()})::bigint)")
-      addParam(Duration(ts.ticks).toMillis)
-      sql.add(" $op @x${x()})")
+      params.add(path)
+      sql.add("(((").add(alias).add(".dateTimes -> @x").add(x).add(")::bigint)")
+      params.add(Duration(ts.ticks).toMillis)
+      sql.add(" $op @x").add(x).add(")")
 
       sql.add(")")
     }
@@ -351,16 +351,9 @@ internal class QueryBuilder {
   ** add a JSON Object param for a path:val pair
   private Void addObjParam(Str path, Obj? val)
   {
-    addParam(
+    params.add(
       JsonOutStream.writeJsonToStr(
         Str:Obj?[path:val]))
-  }
-
-  ** add a param
-  private Void addParam(Obj val)
-  {
-    //sql.add("x${params.size}")
-    params.add(val)
   }
 
   private Int x() { params.size-1 }
