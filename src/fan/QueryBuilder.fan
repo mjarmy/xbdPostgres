@@ -24,68 +24,77 @@ internal class QueryBuilder {
     else
       sql.add("select rec.brio from rec where ")
 
-    sql.add(visit(f))
+    visit(f)
   }
 
   ** create the query
   internal Query toQuery()
   {
-    return Query(sql.toStr, params)
+    map := Str:Obj[:]
+    b := StrBuf()
+    params.each |v, i|
+    {
+      b.add("x").add(i)
+      map[b.toStr] = v
+      b.clear
+    }
+
+    return Query(sql.toStr, map)
   }
 
   ** visit AST node
-  private Str visit(Filter f)
+  private Void visit(Filter f)
   {
     switch (f.type)
     {
     case FilterType.and:
-      return visitAnd(f.argA, f.argB)
+      visitAnd(f.argA, f.argB)
 
     case FilterType.or:
-      return visitOr(f.argA, f.argB)
+      visitOr(f.argA, f.argB)
 
     case FilterType.isSpec:
-      return visitIsSpec((Str)f.argA)
+      visitIsSpec((Str)f.argA)
 
     case FilterType.has:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { has(alias, path) })
+        |Str alias, Str path| { has(alias, path) })
 
     case FilterType.missing:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { missing(alias, path) })
+        |Str alias, Str path| { missing(alias, path) })
 
     case FilterType.eq:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { eq(alias, path, f.argB) })
+        |Str alias, Str path| { eq(alias, path, f.argB) })
 
     case FilterType.ne:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { ne(alias, path, f.argB) })
+        |Str alias, Str path| { ne(alias, path, f.argB) })
 
     case FilterType.lt:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<") })
+        |Str alias, Str path| { cmp(alias, path, f.argB, "<") })
 
     case FilterType.le:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<=") })
+        |Str alias, Str path| { cmp(alias, path, f.argB, "<=") })
 
     case FilterType.gt:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">") })
+        |Str alias, Str path| { cmp(alias, path, f.argB, ">") })
 
     case FilterType.ge:
-      return visitLeaf(
+      visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">=") })
+        |Str alias, Str path| { cmp(alias, path, f.argB, ">=") })
 
     default:
         throw Err("Encountered unknown FilterType ${f.type}")
@@ -93,46 +102,40 @@ internal class QueryBuilder {
   }
 
   ** visit 'and'
-  private Str visitAnd(Filter a, Filter b)
+  private Void visitAnd(Filter a, Filter b)
   {
-    sb := StrBuf()
-    sb.add("(")
-    sb.add(visit(a))
-    sb.add(" and ")
-    sb.add(visit(b))
-    sb.add(")")
-    return sb.toStr
+    sql.add("(")
+    visit(a)
+    sql.add(" and ")
+    visit(b)
+    sql.add(")")
   }
 
   ** visit 'or'
-  private Str visitOr(Filter a, Filter b)
+  private Void visitOr(Filter a, Filter b)
   {
-    sb := StrBuf()
-    sb.add("(")
-    sb.add(visit(a))
-    sb.add(" or ")
-    sb.add(visit(b))
-    sb.add(")")
-    return sb.toStr
+    sql.add("(")
+    visit(a)
+    sql.add(" or ")
+    visit(b)
+    sql.add(")")
   }
 
   ** visit 'isSpec'
-  private Str visitIsSpec(Str spec)
+  private Void visitIsSpec(Str spec)
   {
     specs++
-    x := addParam(spec)
+    addParam(spec)
 
     // use a nested subquery
-    sb := StrBuf()
-    sb.add("(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ")
-    sb.add("and s${specs}.inherits_from = @$x))")
-    return sb.toStr
+    sql.add("(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ")
+    sql.add("and s${specs}.inherits_from = @x${x()}))")
   }
 
   ** visit a leaf AST node
-  private Str visitLeaf(
+  private Void visitLeaf(
     FilterPath fp,
-    |Str alias, Str path-> Str| nodeFunc)
+    |Str alias, Str path| nodeFunc)
   {
     // Create the paths using Haven's whitelisted ref paths
     paths := haven.refPaths(fp)
@@ -141,7 +144,7 @@ internal class QueryBuilder {
     if (paths.size == 1)
     {
       // process the node
-      return nodeFunc("rec", paths[0])
+      nodeFunc("rec", paths[0])
     }
     // joins
     else
@@ -149,125 +152,127 @@ internal class QueryBuilder {
       a := joins + 1
       joins += paths.size-1
 
-      sb := StrBuf()
-      sb.add("(exists (")
-      sb.add("select 1 from path_ref p${a} ")
-      sb.add("inner join rec r${a} on r${a}.id = p${a}.target ")
+      sql.add("(exists (")
+      sql.add("select 1 from path_ref p${a} ")
+      sql.add("inner join rec r${a} on r${a}.id = p${a}.target ")
 
       for (i := a+1; i <= joins; i++)
       {
-        sb.add("inner join path_ref p$i on p${i}.source = r${i-1}.id ")
-        sb.add("inner join rec r$i on r${i}.id = p${i}.target ")
+        sql.add("inner join path_ref p$i on p${i}.source = r${i-1}.id ")
+        sql.add("inner join rec r$i on r${i}.id = p${i}.target ")
       }
 
-      sb.add("where (p${a}.source = rec.id) and ")
+      sql.add("where (p${a}.source = rec.id) and ")
       for (i := 0; i < paths.size-1; i++)
       {
-        x := addParam(paths[i])
-        sb.add("(p${a+i}.path_ = @$x) and ")
+        addParam(paths[i])
+        sql.add("(p${a+i}.path_ = @x${x()}) and ")
       }
       // process the node
-      sb.add(nodeFunc("r${joins}", paths[-1]))
+      nodeFunc("r${joins}", paths[-1])
 
-      sb.add("))")
-
-      return sb.toStr
+      sql.add("))")
     }
   }
 
   ** 'has' AST node
-  private Str has(Str alias, Str path)
+  private Void has(Str alias, Str path)
   {
-    x := addParam("{\"$path\"}")
-    return "(${alias}.paths @> @$x::text[])"
+    addParam("{\"$path\"}")
+    sql.add("(${alias}.paths @> @x${x()}::text[])")
   }
 
   ** 'missing' AST node
-  private Str missing(Str alias, Str path)
+  private Void missing(Str alias, Str path)
   {
-    name := addParam("{\"$path\"}")
-    return "(not (${alias}.paths @> @$name::text[]))"
+    addParam("{\"$path\"}")
+    sql.add("(not (${alias}.paths @> @x${x()}::text[]))")
   }
 
   ** 'eq' AST node
-  private Str eq(Str alias, Str path, Obj? val)
+  private Void eq(Str alias, Str path, Obj? val)
   {
     // Misc toStr()
     if ((val is Str) || (val is Uri) || (val is Date) || (val is Time))
     {
-      x := addObjParam(path, val.toStr)
       col := columnNames[val.typeof]
-      return "(${alias}.$col @> @$x::jsonb)"
+
+      addObjParam(path, val.toStr)
+      sql.add("(${alias}.$col @> @x${x()}::jsonb)")
     }
     // Ref
     else if (val is Ref)
     {
-      return refEq(alias, path, val)
+      refEq(alias, path, val)
     }
     // Num
     else if (val is Number)
     {
       Number n := (Number) val
-      xn := addObjParam(path, n.toFloat)
-      xu := addObjParam(path, n.unit == null ? null : n.unit.toStr)
-      return "((${alias}.nums @> @$xn::jsonb) and (${alias}.units @> @$xu::jsonb))"
+
+      addObjParam(path, n.toFloat)
+      sql.add("((${alias}.nums @> @x${x()}::jsonb)")
+      addObjParam(path, n.unit == null ? null : n.unit.toStr)
+      sql.add(" and (${alias}.units @> @x${x()}::jsonb))")
     }
     // Bool
     else if (val is Bool)
     {
-      x := addObjParam(path, val)
-      return "(${alias}.bools @> @$x::jsonb)"
+      addObjParam(path, val)
+      sql.add("(${alias}.bools @> @x${x()}::jsonb)")
     }
     // DateTime
     else if (val is DateTime)
     {
       DateTime ts := (DateTime) val
-      xn := addObjParam(path, Duration(ts.ticks).toMillis)
-      return "(${alias}.dateTimes @> @$xn::jsonb)"
+      addObjParam(path, Duration(ts.ticks).toMillis)
+      sql.add("(${alias}.dateTimes @> @x${x()}::jsonb)")
     }
 
     // val type cannot be used for this node
     else
-      return "false";
+      sql.add("false")
   }
 
   ** 'ne' AST node
-  private Str ne(Str alias, Str path, Obj? val)
+  private Void ne(Str alias, Str path, Obj? val)
   {
     // Ref
     if (val is Ref)
     {
-      return "(not " + refEq(alias, path, val) + ")"
+      sql.add("(not ")
+      refEq(alias, path, val)
+      sql.add(")")
     }
     // anything else
     else
     {
-      hasClause := has(alias, path)
-      eqClause := eq(alias, path, val)
       col := columnNames[val.typeof]
 
       // We have to check if the column is null because of 3-Value booleans
-      return "($hasClause and ((${alias}.$col is null) or (not $eqClause)))"
+      sql.add("(")
+      has(alias, path)
+      sql.add(" and ((${alias}.$col is null) or (not ")
+      eq(alias, path, val)
+      sql.add(")))")
     }
   }
 
   ** test a ref for equality using a nested subquery
-  private Str refEq(Str alias, Str path, Ref ref)
+  private Void refEq(Str alias, Str path, Ref ref)
   {
     valRefs++
-    xp := addParam(path)
-    xv := addParam(ref.id)
 
-    sb := StrBuf()
-    sb.add("(exists (select 1 from path_ref v$valRefs ")
-    sb.add("where v${valRefs}.source = ${alias}.id ")
-    sb.add("and v${valRefs}.path_ = @$xp ")
-    sb.add("and v${valRefs}.target = @$xv))")
-    return sb.toStr
+    sql.add("(exists (select 1 from path_ref v$valRefs ")
+    sql.add("where v${valRefs}.source = ${alias}.id ")
+    addParam(path)
+    sql.add("and v${valRefs}.path_ = @x${x()} ")
+    addParam(ref.id)
+    sql.add("and v${valRefs}.target = @x${x()}))")
   }
 
   ** 'cmp' AST node >,>=,<,<=
-  private Str cmp(Str alias, Str path, Obj? val, Str op)
+  private Void cmp(Str alias, Str path, Obj? val, Str op)
   {
     // https://hashrocket.com/blog/posts/dealing-with-nested-json-objects-in-postgresql
     // https://stackoverflow.com/questions/53841916/how-to-compare-numeric-in-postgresql-jsonb
@@ -275,80 +280,90 @@ internal class QueryBuilder {
     // Misc toStr()
     if ((val is Str) || (val is Date) || (val is Time))
     {
-      hasClause := has(alias, path)
       col := columnNames[val.typeof]
 
-      // double-stabby gives us '::text'
-      xp := addParam(path)
-      xv := addParam(val.toStr)
-      cmpClause := "((${alias}.$col ->> @$xp) $op @$xv)";
+      sql.add("(")
+      has(alias, path)
+      sql.add(" and ")
 
-      return "($hasClause and $cmpClause)"
+      addParam(path)
+      sql.add("((${alias}.$col ->> @x${x()})")
+      addParam(val.toStr)
+      sql.add(" $op @x${x()})")
+
+      sql.add(")")
     }
     // Number
     else if (val is Number)
     {
       Number n := (Number) val
 
-      hasClause := has(alias, path)
+      sql.add("(")
+      has(alias, path)
+      sql.add(" and ")
 
-      // single-stabby plus cast
-      xp := addParam(path)
-      xv := addParam(n.toFloat)
-      cmpClause := "(((${alias}.nums -> @$xp)::real) $op @$xv)";
+      addParam(path)
+      sql.add("(((${alias}.nums -> @x${x()})::real)")
+      addParam(n.toFloat)
+      sql.add(" $op @x${x()})")
 
-      xu := addObjParam(path, n.unit == null ? null : n.unit.toStr)
-      unitEqClause := "(${alias}.units @> @$xu::jsonb)"
+      addObjParam(path, n.unit == null ? null : n.unit.toStr)
+      sql.add(" and (${alias}.units @> @x${x()}::jsonb)")
 
-      return "($hasClause and $cmpClause and $unitEqClause)"
+      sql.add(")")
     }
     // Bool
     else if (val is Bool)
     {
-      hasClause := has(alias, path)
+      sql.add("(")
+      has(alias, path)
+      sql.add(" and ")
 
-      // single-stabby plus cast
-      xp := addParam(path)
-      xv := addParam(val)
-      cmpClause := "(((${alias}.bools -> @$xp)::boolean) $op @$xv)";
+      addParam(path)
+      sql.add("(((${alias}.bools -> @x${x()})::boolean)")
+      addParam(val)
+      sql.add(" $op @x${x()})")
 
-      return "($hasClause and $cmpClause)"
+      sql.add(")")
     }
     // DateTime
     else if (val is DateTime)
     {
       DateTime ts := (DateTime) val
 
-      hasClause := has(alias, path)
+      sql.add("(")
+      has(alias, path)
+      sql.add(" and ")
 
-      // single-stabby plus cast
-      xp := addParam(path)
-      xv := addParam(Duration(ts.ticks).toMillis)
-      cmpClause := "(((${alias}.dateTimes -> @$xp)::bigint) $op @$xv)";
+      addParam(path)
+      sql.add("(((${alias}.dateTimes -> @x${x()})::bigint)")
+      addParam(Duration(ts.ticks).toMillis)
+      sql.add(" $op @x${x()})")
 
-      return "($hasClause and $cmpClause)"
+      sql.add(")")
     }
 
     // val type cannot be used for this node
     else
-      return "false";
+      sql.add("false")
   }
 
   ** add a JSON Object param for a path:val pair
-  private Str addObjParam(Str path, Obj? val)
+  private Void addObjParam(Str path, Obj? val)
   {
-    return addParam(
+    addParam(
       JsonOutStream.writeJsonToStr(
         Str:Obj?[path:val]))
   }
 
   ** add a param
-  private Str addParam(Obj val)
+  private Void addParam(Obj val)
   {
-    name := "x${params.size}"
-    params.add(name, val)
-    return name
+    //sql.add("x${params.size}")
+    params.add(val)
   }
+
+  private Int x() { params.size-1 }
 
 //////////////////////////////////////////////////////////////////////////
 // Fields
@@ -367,7 +382,7 @@ internal class QueryBuilder {
   private Haven haven
 
   private StrBuf sql := StrBuf()
-  private Str:Obj params := Str:Obj[:]
+  private Obj[] params := Obj[,]
 
   private Int joins := 0
   private Int specs := 0
