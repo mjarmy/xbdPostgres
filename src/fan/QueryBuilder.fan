@@ -15,89 +15,77 @@ using util
 internal class QueryBuilder {
 
   ** construct from filter
-  internal new make(Haven haven, Filter f)
+  internal new make(Haven haven, Filter f, Bool isCount)
   {
     this.haven = haven
-    this.where = visit(f, 1)
+
+    if (isCount)
+      sql.add("select count(*) as count from rec where ")
+    else
+      sql.add("select rec.brio from rec where ")
+
+    sql.add(visit(f))
   }
 
   ** create the query
-  internal Query toQuery(Bool isCount)
+  internal Query toQuery()
   {
-    sql := StrBuf()
-
-    if (isCount)
-      sql.add("select count(*) as count from rec\n")
-    else
-      sql.add("select rec.brio from rec\n")
-
-    sql.add("where\n")
-    sql.add(where)
-
     return Query(sql.toStr, params)
   }
 
   ** visit AST node
-  private Str visit(Filter f, Int indent)
+  private Str visit(Filter f)
   {
     switch (f.type)
     {
     case FilterType.and:
-      return visitAnd(f.argA, f.argB, indent)
+      return visitAnd(f.argA, f.argB)
 
     case FilterType.or:
-      return visitOr(f.argA, f.argB, indent)
+      return visitOr(f.argA, f.argB)
 
     case FilterType.isSpec:
-      return visitIsSpec((Str)f.argA, indent)
+      return visitIsSpec((Str)f.argA)
 
     case FilterType.has:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { has(alias, path) },
-        indent)
+        |Str alias, Str path->Str| { has(alias, path) })
 
     case FilterType.missing:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { missing(alias, path) },
-        indent)
+        |Str alias, Str path->Str| { missing(alias, path) })
 
     case FilterType.eq:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { eq(alias, path, f.argB) },
-        indent)
+        |Str alias, Str path->Str| { eq(alias, path, f.argB) })
 
     case FilterType.ne:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { ne(alias, path, f.argB) },
-        indent)
+        |Str alias, Str path->Str| { ne(alias, path, f.argB) })
 
     case FilterType.lt:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<") },
-        indent)
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<") })
 
     case FilterType.le:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<=") },
-        indent)
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, "<=") })
 
     case FilterType.gt:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">") },
-        indent)
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">") })
 
     case FilterType.ge:
       return visitLeaf(
         (FilterPath)f.argA,
-        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">=") },
-        indent)
+        |Str alias, Str path->Str| { cmp(alias, path, f.argB, ">=") })
 
     default:
         throw Err("Encountered unknown FilterType ${f.type}")
@@ -105,55 +93,47 @@ internal class QueryBuilder {
   }
 
   ** visit 'and'
-  private Str visitAnd(Filter a, Filter b, Int indent)
+  private Str visitAnd(Filter a, Filter b)
   {
-    pad := doIndent(indent)
-
-    return [
-      pad + "(",
-      visit(a, indent+1),
-      pad + "  and",
-      visit(b, indent+1),
-      pad + ")",
-    ].join("\n")
+    sb := StrBuf()
+    sb.add("(")
+    sb.add(visit(a))
+    sb.add(" and ")
+    sb.add(visit(b))
+    sb.add(")")
+    return sb.toStr
   }
 
   ** visit 'or'
-  private Str visitOr(Filter a, Filter b, Int indent)
+  private Str visitOr(Filter a, Filter b)
   {
-    pad := doIndent(indent)
-
-    return [
-      pad + "(",
-      visit(a, indent+1),
-      pad + "  or",
-      visit(b, indent+1),
-      pad + ")",
-    ].join("\n")
+    sb := StrBuf()
+    sb.add("(")
+    sb.add(visit(a))
+    sb.add(" or ")
+    sb.add(visit(b))
+    sb.add(")")
+    return sb.toStr
   }
 
   ** visit 'isSpec'
-  private Str visitIsSpec(Str spec, Int indent)
+  private Str visitIsSpec(Str spec)
   {
     specs++
     x := addParam(spec)
 
     // use a nested subquery
-    return [
-      doIndent(indent),
-      "(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ",
-      "and s${specs}.inherits_from = @$x))"
-    ].join()
+    sb := StrBuf()
+    sb.add("(exists (select 1 from spec s$specs where s${specs}.qname = rec.spec ")
+    sb.add("and s${specs}.inherits_from = @$x))")
+    return sb.toStr
   }
 
   ** visit a leaf AST node
   private Str visitLeaf(
     FilterPath fp,
-    |Str alias, Str path-> Str| nodeFunc,
-    Int indent)
+    |Str alias, Str path-> Str| nodeFunc)
   {
-    pad := doIndent(indent)
-
     // Create the paths using Haven's whitelisted ref paths
     paths := haven.refPaths(fp)
 
@@ -161,7 +141,7 @@ internal class QueryBuilder {
     if (paths.size == 1)
     {
       // process the node
-      return pad + nodeFunc("rec", paths[0])
+      return nodeFunc("rec", paths[0])
     }
     // joins
     else
@@ -170,17 +150,17 @@ internal class QueryBuilder {
       joins += paths.size-1
 
       sb := StrBuf()
-      sb.add(pad + "(exists (\n")
-      sb.add(pad + "  select 1 from path_ref p${a}\n")
-      sb.add(pad + "  inner join rec r${a} on r${a}.id = p${a}.target\n")
+      sb.add("(exists (")
+      sb.add("select 1 from path_ref p${a} ")
+      sb.add("inner join rec r${a} on r${a}.id = p${a}.target ")
 
       for (i := a+1; i <= joins; i++)
       {
-        sb.add(pad + "  inner join path_ref p$i on p${i}.source = r${i-1}.id\n")
-        sb.add(pad + "  inner join rec r$i on r${i}.id = p${i}.target\n")
+        sb.add("inner join path_ref p$i on p${i}.source = r${i-1}.id ")
+        sb.add("inner join rec r$i on r${i}.id = p${i}.target ")
       }
 
-      sb.add(pad + "  where (p${a}.source = rec.id) and ")
+      sb.add("where (p${a}.source = rec.id) and ")
       for (i := 0; i < paths.size-1; i++)
       {
         x := addParam(paths[i])
@@ -277,12 +257,13 @@ internal class QueryBuilder {
     valRefs++
     xp := addParam(path)
     xv := addParam(ref.id)
-    return [
-      "(exists (select 1 from path_ref v$valRefs ",
-      "where v${valRefs}.source = ${alias}.id ",
-      "and v${valRefs}.path_ = @$xp ",
-      "and v${valRefs}.target = @$xv))"
-    ].join()
+
+    sb := StrBuf()
+    sb.add("(exists (select 1 from path_ref v$valRefs ")
+    sb.add("where v${valRefs}.source = ${alias}.id ")
+    sb.add("and v${valRefs}.path_ = @$xp ")
+    sb.add("and v${valRefs}.target = @$xv))")
+    return sb.toStr
   }
 
   ** 'cmp' AST node >,>=,<,<=
@@ -369,15 +350,6 @@ internal class QueryBuilder {
     return name
   }
 
-  ** create some indentation padding
-  private static Str doIndent(Int indent)
-  {
-    sb := StrBuf()
-    for (i := 0; i < indent; i++)
-      sb.add("  ")
-    return sb.toStr
-  }
-
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
@@ -394,7 +366,7 @@ internal class QueryBuilder {
 
   private Haven haven
 
-  private Str where
+  private StrBuf sql := StrBuf()
   private Str:Obj params := Str:Obj[:]
 
   private Int joins := 0

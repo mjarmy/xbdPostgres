@@ -14,20 +14,17 @@ using haystack
 internal const class Query
 {
   **
-  ** Only used for unit tests
-  **
-  internal new make(Str sql, Str:Obj params)
-  {
-    this.sql = sql
-    this.params = params
-  }
-
-  **
   ** Create a Query from a Filter
   **
   internal static new fromFilter(Haven haven, Filter f, Bool isCount := false)
   {
-     return QueryBuilder(haven, f).toQuery(isCount)
+     return QueryBuilder(haven, f, isCount).toQuery
+  }
+
+  internal new make(Str sql, Str:Obj params)
+  {
+    this.sql = sql
+    this.params = params
   }
 
 //////////////////////////////////////////////////////////////////////////
