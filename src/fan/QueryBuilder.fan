@@ -128,7 +128,7 @@ internal class QueryBuilder {
     params.add(spec)
 
     // use a nested subquery
-    sql.add("(exists (select 1 from spec s$specs where s").add(specs).add(".qname = rec.spec ")
+    sql.add("(exists (select 1 from spec s").add(specs).add(" where s").add(specs).add(".qname = rec.spec ")
     sql.add("and s").add(specs).add(".inherits_from = @x").add(x).add("))")
   }
 
@@ -198,7 +198,7 @@ internal class QueryBuilder {
       col := columnNames[val.typeof]
 
       addObjParam(path, val.toStr)
-      sql.add("(").add(alias).add(".$col @> @x").add(x).add("::jsonb)")
+      sql.add("(").add(alias).add(".").add(col).add(" @> @x").add(x).add("::jsonb)")
     }
     // Ref
     else if (val is Ref)
@@ -252,7 +252,7 @@ internal class QueryBuilder {
       // We have to check if the column is null because of 3-Value booleans
       sql.add("(")
       has(alias, path)
-      sql.add(" and ((").add(alias).add(".$col is null) or (not ")
+      sql.add(" and ((").add(alias).add(".").add(col).add(" is null) or (not ")
       eq(alias, path, val)
       sql.add(")))")
     }
@@ -263,7 +263,7 @@ internal class QueryBuilder {
   {
     valRefs++
 
-    sql.add("(exists (select 1 from path_ref v$valRefs ")
+    sql.add("(exists (select 1 from path_ref v").add(valRefs).add(" ")
     sql.add("where v").add(valRefs).add(".source = ").add(alias).add(".id ")
     params.add(path)
     sql.add("and v").add(valRefs).add(".path_ = @x").add(x).add(" ")
@@ -287,9 +287,9 @@ internal class QueryBuilder {
       sql.add(" and ")
 
       params.add(path)
-      sql.add("((").add(alias).add(".$col ->> @x").add(x).add(")")
+      sql.add("((").add(alias).add(".").add(col).add(" ->> @x").add(x).add(")")
       params.add(val.toStr)
-      sql.add(" $op @x").add(x).add(")")
+      sql.add(" ").add(op).add(" @x").add(x).add(")")
 
       sql.add(")")
     }
@@ -305,7 +305,7 @@ internal class QueryBuilder {
       params.add(path)
       sql.add("(((").add(alias).add(".nums -> @x").add(x).add(")::real)")
       params.add(n.toFloat)
-      sql.add(" $op @x").add(x).add(")")
+      sql.add(" ").add(op).add(" @x").add(x).add(")")
 
       addObjParam(path, n.unit == null ? null : n.unit.toStr)
       sql.add(" and (").add(alias).add(".units @> @x").add(x).add("::jsonb)")
@@ -322,7 +322,7 @@ internal class QueryBuilder {
       params.add(path)
       sql.add("(((").add(alias).add(".bools -> @x").add(x).add(")::boolean)")
       params.add(val)
-      sql.add(" $op @x").add(x).add(")")
+      sql.add(" ").add(op).add(" @x").add(x).add(")")
 
       sql.add(")")
     }
@@ -338,7 +338,7 @@ internal class QueryBuilder {
       params.add(path)
       sql.add("(((").add(alias).add(".dateTimes -> @x").add(x).add(")::bigint)")
       params.add(Duration(ts.ticks).toMillis)
-      sql.add(" $op @x").add(x).add(")")
+      sql.add(" ").add(op).add(" @x").add(x).add(")")
 
       sql.add(")")
     }
