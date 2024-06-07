@@ -178,14 +178,20 @@ internal class QueryBuilder {
   ** 'has' AST node
   private Void has(Int alias, Str path)
   {
-    params.add("{\"$path\"}")
+    paramBuf.add("{\"").add(path).add("\"}")
+    params.add(paramBuf.toStr)
+    paramBuf.clear
+
     sql.add("(r").add(alias).add(".paths @> @x").add(x).add("::text[])")
   }
 
   ** 'missing' AST node
   private Void missing(Int alias, Str path)
   {
-    params.add("{\"$path\"}")
+    paramBuf.add("{\"").add(path).add("\"}")
+    params.add(paramBuf.toStr)
+    paramBuf.clear
+
     sql.add("(not (r").add(alias).add(".paths @> @x").add(x).add("::text[]))")
   }
 
@@ -375,6 +381,8 @@ internal class QueryBuilder {
   private Haven haven
 
   private StrBuf sql := StrBuf()
+
+  private StrBuf paramBuf := StrBuf() // re-usable
   private Obj[] params := Obj[,]
 
   private Int joins := 0
