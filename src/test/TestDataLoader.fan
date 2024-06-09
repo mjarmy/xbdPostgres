@@ -28,7 +28,7 @@ class TestDataLoader
     pool.execute(|SqlConn conn| { nuke(conn, "test_proj") })
 
     // create Haven
-    haven := Haven { it.projName = "test_proj"; it.pool = pool }
+    haven := Haven("test_proj", pool)
     haven.init
 
     // load the data

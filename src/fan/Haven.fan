@@ -16,10 +16,10 @@ using util
 **
 const class Haven
 {
-  new make(|This|? f) {
-    if (f != null) f(this)
-
-    useSchema = "set search_path to $projName"
+  new make(Str projName, HavenPool pool) {
+    this.projName = projName
+    this.pool = pool
+    this.useSchema = "set search_path to $projName"
   }
 
   Void init()

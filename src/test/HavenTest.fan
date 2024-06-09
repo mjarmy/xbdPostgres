@@ -23,11 +23,7 @@ class HavenTest : Test
       it.password = "s3crkEt"
     }
 
-    haven = Haven
-    {
-      it.projName = "test_proj"
-      it.pool     = this.pool
-    }
+    haven = Haven("test_proj", pool)
     haven.init
   }
 

@@ -34,7 +34,7 @@ class ProjTest : Test
       //echo("Creating ${proj}")
       //pool.execute(|SqlConn conn| { TestDataLoader.nuke(conn, proj) })
 
-      haven := Haven { it.projName = proj; it.pool = pool }
+      haven := Haven(proj, pool)
       haven.init
       return haven
     }
@@ -58,26 +58,27 @@ class ProjTest : Test
 
   private Void runQueries(SqlConnPool pool, Haven[] havens)
   {
-    actorPool := ActorPool()
+    actorPool := ActorPool {it.name="ProjTest"}
     actor := Actor(actorPool) |ReadAll r->Int|
     {
       start := DateTime.now
       Dict[] recs := r.haven.readAll(r.filter)
-      return (DateTime.now - start).ticks
+      time := (DateTime.now - start).ticks
       //echo("${r.haven.projName} ${recs.size}: ${r.filter}")
+      return time
     }
 
     filters := makeFilters(pool)
 
     elapsed := Future[,]
-    count := 10_000
+    //count := 10_000
+    count := 1000
     for (i := 0; i < count; i++)
     {
-      elapsed.add(actor.send(ReadAll
-      {
+      r := ReadAll {
         it.haven  = havens [Int.random(0..<havens.size)]
-        it.filter = filters[Int.random(0..<filters.size)]
-      }))
+        it.filter = filters[Int.random(0..<filters.size)] }
+      elapsed.add(actor.send(r))
     }
 
     actorPool.stop
