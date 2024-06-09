@@ -17,6 +17,9 @@ class ProjTest : Test
 {
   Void testMultipleProjects()
   {
+    echo("===============================================================")
+    echo
+
     pool := HavenPool
     {
       it.uri      = "jdbc:postgresql://localhost/postgres"
@@ -28,7 +31,7 @@ class ProjTest : Test
     // set up multiple haven projects
     Haven[] havens := Str["proj1", "proj2"].map |Str proj->Haven|
     {
-      echo("Creating ${proj}")
+      //echo("Creating ${proj}")
       //pool.execute(|SqlConn conn| { TestDataLoader.nuke(conn, proj) })
 
       haven := Haven { it.projName = proj; it.pool = pool }
@@ -47,31 +50,48 @@ class ProjTest : Test
     runQueries(pool, havens)
 
     // done
-    echo("Done")
     pool.close
+
+    echo
+    echo("===============================================================")
   }
 
   private Void runQueries(SqlConnPool pool, Haven[] havens)
   {
     actorPool := ActorPool()
-    actor := Actor(actorPool) |ReadAll r|
+    actor := Actor(actorPool) |ReadAll r->Int|
     {
+      start := DateTime.now
       Dict[] recs := r.haven.readAll(r.filter)
+      return (DateTime.now - start).ticks
       //echo("${r.haven.projName} ${recs.size}: ${r.filter}")
     }
 
     filters := makeFilters(pool)
-    for (i := 0; i < 10000; i++)
+
+    elapsed := Future[,]
+    count := 10_000
+    for (i := 0; i < count; i++)
     {
-      actor.send(ReadAll
+      elapsed.add(actor.send(ReadAll
       {
         it.haven  = havens [Int.random(0..<havens.size)]
         it.filter = filters[Int.random(0..<filters.size)]
-      })
+      }))
     }
 
     actorPool.stop
     actorPool.join
+
+    Int total := elapsed.reduce(0) |Obj r, Future v->Obj| {
+      return (Int)r + (Int)v.get
+    }
+    avg := Duration(total/count).ticks
+    Float avgMs := avg.toFloat/1000000.0f
+
+    echo
+    echo("runQueries: avg ${avgMs}ms")
+    echo
   }
 
   private Filter[] makeFilters(SqlConnPool pool)

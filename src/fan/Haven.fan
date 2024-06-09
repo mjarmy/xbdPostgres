@@ -550,7 +550,7 @@ const class Haven
 
     return smap.getOrAdd(sql, |Str k->Statement|
     {
-      echo("Haven.fetch: $projName '$sql'")
+      echo("Haven.fetch: $conn $projName '$sql'")
       return conn.sql(sql).prepare
     })
   }
