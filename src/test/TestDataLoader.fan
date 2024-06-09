@@ -24,20 +24,35 @@ class TestDataLoader
       it.password = "s3crkEt"
     }
 
-    pool.execute(|SqlConn conn|
-    {
-      conn.sql("delete from spec").execute
-      conn.sql("delete from ref_tag").execute
-      conn.sql("delete from path_ref").execute
-      conn.sql("delete from rec").execute
-    })
+    // nuke old records if they exist
+    pool.execute(|SqlConn conn| { nuke(conn, "test_proj") })
 
-    haven := Haven(pool)
+    // create Haven
+    haven := Haven { it.projName = "test_proj"; it.pool = pool }
+    haven.init
+
+    // load the data
     td := TestData()
     loadSpecs(haven, td)
     loadRecs(haven, td)
 
+    // done
     pool.close
+  }
+
+  internal static Void nuke(SqlConn conn, Str projName)
+  {
+    if (Haven.schemaExists(conn, projName))
+    {
+      Haven.useSchema(conn, projName)
+
+      conn.sql("delete from spec").execute
+      conn.sql("delete from ref_tag").execute
+      conn.sql("delete from path_ref").execute
+      conn.sql("delete from rec").execute
+
+      conn.commit
+    }
   }
 
   ** load all the specs

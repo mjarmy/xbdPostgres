@@ -1,7 +1,10 @@
-create role xbd with password 's3crkEt';
-alter role xbd with login;
-create schema authorization xbd;
-set search_path to xbd;
+-- create role xbd with password 's3crkEt';
+-- alter role xbd with login;
+-- create schema authorization xbd;
+-- set search_path to xbd;
+
+-- grant select, insert, update, delete on all tables in schema xbd to xbd;
+-- grant usage, select on all sequences in schema xbd to xbd;
 
 -- Specs
 create table spec (
@@ -53,6 +56,4 @@ create table path_ref (
 );
 create index path_ref_path_target on path_ref (path_, target);
 
-grant select, insert, update, delete on all tables in schema xbd to xbd;
-grant usage, select on all sequences in schema xbd to xbd;
 

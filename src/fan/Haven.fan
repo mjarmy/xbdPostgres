@@ -14,24 +14,129 @@ using util
 **
 ** Haven stores and queries Dicts in a Postgres database
 **
-class Haven
+const class Haven
 {
-  new make(HavenPool pool)
-  {
-    this.pool = pool
+  new make(|This|? f) { if (f != null) f(this) }
 
-    // load ref tags
+  Void init()
+  {
     pool.execute(|SqlConn conn|
     {
-      stmt := conn.sql("select name from ref_tag")
+      if (!schemaExists(conn, projName))
+        createSchema(conn)
 
-      stmt.query.each |r|
-      {
-        name := r->name
-        refTags[name] = name
-      }
-      stmt.close
+      useSchema(conn, projName)
+      loadRefTags(conn)
+
+      conn.commit
     })
+  }
+
+  internal static Bool schemaExists(SqlConn conn, Str projName)
+  {
+    stmt := conn.sql(
+      "select exists (
+        select schema_name from information_schema.schemata
+        where schema_name = @projName)"
+      ).prepare
+
+    Bool exists := stmt.query([
+      "projName": projName
+      ]).first->exists
+
+    stmt.close
+    return exists
+  }
+
+  internal static Void useSchema(SqlConn conn, Str projName)
+  {
+    conn.sql("set search_path to $projName").execute
+  }
+
+// This works, we just don't need it right now
+//  private Bool tableExists(SqlConn conn, Str tableName)
+//  {
+//    stmt := conn.sql(
+//      "select exists (
+//          select from pg_tables
+//          where  schemaname = @schemaName
+//          and    tablename  = @tableName)"
+//      ).prepare
+//
+//    Bool exists := stmt.query([
+//      "schemaName": projName,
+//      "tableName":  tableName
+//      ]).first->exists
+//
+//    stmt.close
+//    return exists
+//  }
+
+  private Void createSchema(SqlConn conn)
+  {
+    conn.sql(
+      "create schema $projName;
+       set search_path to $projName;
+
+       -- Specs
+       create table spec (
+         qname         text not null,
+         inherits_from text not null,
+         constraint spec_pkey primary key (qname, inherits_from)
+       );
+       create index spec_inherits_from on spec (inherits_from);
+
+       -- Ref_tag is the set of every tag that contains a ref
+       create table ref_tag (
+         name text primary key
+       );
+
+       -- Recs
+       create table rec (
+         id text   primary key,
+         brio      bytea  not null,
+         paths     text[] not null,
+         strs      jsonb,
+         nums      jsonb,
+         units     jsonb,
+         bools     jsonb,
+         uris      jsonb,
+         dates     jsonb,
+         times     jsonb,
+         dateTimes jsonb,
+         spec       text -- implicit foreign key to spec(qname)
+       );
+       create index rec_paths     on rec using gin (paths);
+       create index rec_strs      on rec using gin (strs      jsonb_path_ops);
+       create index rec_nums      on rec using gin (nums      jsonb_path_ops);
+       create index rec_units     on rec using gin (units     jsonb_path_ops);
+       create index rec_bools     on rec using gin (bools     jsonb_path_ops);
+       create index rec_uris      on rec using gin (uris      jsonb_path_ops);
+       create index rec_dates     on rec using gin (dates     jsonb_path_ops);
+       create index rec_times     on rec using gin (times     jsonb_path_ops);
+       create index rec_dateTimes on rec using gin (dateTimes jsonb_path_ops);
+       create index rec_spec      on rec (spec);
+
+       -- Ref lookups via self-join
+       create table path_ref (
+         source text not null references rec (id),
+         path_  text not null,
+         target text not null, -- implicit foreign key to rec(id)
+         constraint path_ref_pkey primary key (source, path_, target)
+       );
+       create index path_ref_path_target on path_ref (path_, target);"
+     ).execute
+  }
+
+  private Void loadRefTags(SqlConn conn)
+  {
+    stmt := conn.sql("select name from ref_tag")
+    stmt.query.each |r|
+    {
+      name := r->name
+      refTags[name] = name
+    }
+    stmt.close
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -456,7 +561,7 @@ class Haven
   }
 
 //////////////////////////////////////////////////////////////////////////
-// Fields
+// SQL constants
 //////////////////////////////////////////////////////////////////////////
 
   const Str selectById :=
@@ -512,10 +617,16 @@ class Haven
      values
        (@qname, @inheritsFrom)"
 
-  private HavenPool pool
+//////////////////////////////////////////////////////////////////////////
+// Fields
+//////////////////////////////////////////////////////////////////////////
+
+  public const Str projName
+  internal const HavenPool pool
+  //internal const Log log := Log.get("haven")
 
   ** refTags is a Set that mirrors the records in the ref_tag table.
-  private ConcurrentMap refTags := ConcurrentMap()
+  private const ConcurrentMap refTags := ConcurrentMap()
 }
 
 **************************************************************************

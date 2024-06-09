@@ -22,7 +22,13 @@ class HavenTest : Test
       it.username = "xbd"
       it.password = "s3crkEt"
     }
-    haven = Haven(pool)
+
+    haven = Haven
+    {
+      it.projName = "test_proj"
+      it.pool     = this.pool
+    }
+    haven.init
   }
 
   override Void teardown()
@@ -904,11 +910,12 @@ class HavenTest : Test
     Query expectedQuery,
     Bool allowSequential := false)
   {
-    echo("--------------------------------------------------------------")
-    echo("Filter: '$filter'")
+    echo("==============================================================")
+    echo(filter)
+    //verbose(expectedQuery.sql)
     if (expectedQuery.sql.size > QueryBuilder.initialBufSize)
     {
-      echo("************ EXTRA LONG SQL: ${expectedQuery.sql.size}")
+      verbose("************ EXTRA LONG SQL: ${expectedQuery.sql.size}")
     }
     verbose
 
