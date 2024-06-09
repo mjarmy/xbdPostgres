@@ -17,16 +17,29 @@ const class HavenPool : SqlConnPool
 
   protected override Void onOpen(SqlConn c)
   {
+    echo("------------------------------")
+    echo("HavenPool.onOpen $c")
+    echo("------------------------------")
+
     // Turn off auto-commit for new connections.
     c.autoCommit = false
   }
 
   protected override Void onClose(SqlConn c)
   {
+    echo("------------------------------")
+    echo("HavenPool.onClose $c")
+
     // Close the stashed prepared statements.
-    c.stash.each |prep, sql|
+    c.stash.each |v, proj|
     {
-      ((Statement) prep).close
+      smap := (Str:Statement) v
+      smap.each |prep, sql|
+      {
+        ((Statement) prep).close
+        echo("  $proj '$sql'")
+      }
     }
+    echo("------------------------------")
   }
 }

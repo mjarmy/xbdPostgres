@@ -44,7 +44,7 @@ class TestDataLoader
   {
     if (Haven.schemaExists(conn, projName))
     {
-      Haven.useSchema(conn, projName)
+      conn.sql("set search_path to $projName").execute
 
       conn.sql("delete from spec").execute
       conn.sql("delete from ref_tag").execute
@@ -56,7 +56,7 @@ class TestDataLoader
   }
 
   ** load all the specs
-  internal Void loadSpecs(Haven haven, TestData td)
+  internal static Void loadSpecs(Haven haven, TestData td)
   {
     n := 0
     td.xetoNs.libs.each |lib|
@@ -70,7 +70,7 @@ class TestDataLoader
   }
 
   ** Load a xeto spec and its inheritance hierarchy
-  private Void loadSpec(Haven haven, Spec spec)
+  private static Void loadSpec(Haven haven, Spec spec)
   {
     // Ignore synthetic types like "_0" for now
     if (spec.name.startsWith("_")) return
@@ -84,7 +84,7 @@ class TestDataLoader
 
   ** Recursively traverse the spec's inheritance hierarchy up to the root. If
   ** the spec has multiple inheritance, multiple paths will be generated.
-  private Void traverseHierarchy(Spec spec, [Str:Str] inherit /* Set */)
+  private static Void traverseHierarchy(Spec spec, [Str:Str] inherit /* Set */)
   {
     // Add to the set of inherited types
     if (!inherit.containsKey(spec.qname))
@@ -103,7 +103,7 @@ class TestDataLoader
   }
 
   ** load the recs from the testdata
-  private Void loadRecs(Haven haven, TestData td)
+  internal static Void loadRecs(Haven haven, TestData td)
   {
     n := 0
     td.recs.each |dict|

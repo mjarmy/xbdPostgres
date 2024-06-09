@@ -16,7 +16,11 @@ using util
 **
 const class Haven
 {
-  new make(|This|? f) { if (f != null) f(this) }
+  new make(|This|? f) {
+    if (f != null) f(this)
+
+    useSchema = "set search_path to $projName"
+  }
 
   Void init()
   {
@@ -25,7 +29,6 @@ const class Haven
       if (!schemaExists(conn, projName))
         createSchema(conn)
 
-      useSchema(conn, projName)
       loadRefTags(conn)
 
       conn.commit
@@ -46,11 +49,6 @@ const class Haven
 
     stmt.close
     return exists
-  }
-
-  internal static Void useSchema(SqlConn conn, Str projName)
-  {
-    conn.sql("set search_path to $projName").execute
   }
 
 // This works, we just don't need it right now
@@ -130,6 +128,7 @@ const class Haven
 
   private Void loadRefTags(SqlConn conn)
   {
+    conn.sql(useSchema).execute
     stmt := conn.sql("select name from ref_tag")
     stmt.query.each |r|
     {
@@ -150,7 +149,7 @@ const class Haven
   {
     Buf? result := null
 
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, selectById)
       rows := stmt.query(["id": id.id])
@@ -192,7 +191,7 @@ const class Haven
 
     // run query
     bufs := Buf[,]
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, sql)
       stmt.query(params).each |r|
@@ -226,7 +225,7 @@ const class Haven
 
     q := Query.fromFilter(this, filter, true)
 
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, q.sql)
       rows := stmt.query(q.params)
@@ -246,7 +245,7 @@ const class Haven
 
     q := Query.fromFilter(this, filter)
 
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, q.sql)
       rows := stmt.query(q.params)
@@ -267,7 +266,7 @@ const class Haven
     q := Query.fromFilter(this, filter)
 
     res := Buf[,]
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, q.sql)
       rows := stmt.query(q.params)
@@ -291,7 +290,7 @@ const class Haven
 
     q := Query.fromFilter(this, filter)
 
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, q.sql)
       i := 0
@@ -317,7 +316,7 @@ const class Haven
     q := Query.fromFilter(this, filter)
 
     Obj? res := null
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, q.sql)
       i := 0
@@ -413,7 +412,7 @@ const class Haven
       "spec":      rec.spec
     ]
 
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       fetch(conn, insertRec).execute(params)
       insertPathRefs(conn, rec.id, rec.refs)
@@ -430,7 +429,7 @@ const class Haven
   {
     Dict? after := null
 
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       // fetch the current row
       rows := fetch(conn, selectById).query(["id": id.id])
@@ -479,7 +478,7 @@ const class Haven
   ** Delete record from the database
   Void delete(Ref id)
   {
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       fetch(conn, deletePathRef).execute(["source": id.id])
       fetch(conn, deleteRec).execute(["id": id.id])
@@ -522,7 +521,7 @@ const class Haven
   **
   Void createSpec(Str qname, Str[] inheritsFrom)
   {
-    pool.execute(|SqlConn conn|
+    doExecute(|SqlConn conn|
     {
       stmt := fetch(conn, insertSpec)
 
@@ -539,35 +538,41 @@ const class Haven
   }
 
 //////////////////////////////////////////////////////////////////////////
-// Prepared Statements
+// Private Statements
 //////////////////////////////////////////////////////////////////////////
 
-  ** Fetch a prepared statement from the connection's stash,
+  ** Fetch a prepared statement for this project from the connection's stash,
   ** or create the prepared statement.
   private Statement fetch(SqlConn conn, Str sql)
   {
-    if (conn.stash.containsKey(sql))
+    Str:Statement smap := conn.stash.getOrAdd(
+      projName, |Str k->Obj?| { return Str:Statement[:] })
+
+    return smap.getOrAdd(sql, |Str k->Statement|
     {
-      return conn.stash[sql]
-    }
-    else
+      echo("Haven.fetch: $projName '$sql'")
+      return conn.sql(sql).prepare
+    })
+  }
+
+  ** Execute some statments against the current schema.
+  private Void doExecute(|SqlConn conn| func)
+  {
+    pool.execute(|SqlConn conn|
     {
-      //debug := sql.replace("\n", " ")
-      //echo("fetch: ------------> PREPARING '$debug'")
-      stmt := conn.sql(sql).prepare
-      conn.stash[sql] = stmt
-      return stmt
-    }
+      conn.sql(useSchema).execute
+      func(conn)
+    })
   }
 
 //////////////////////////////////////////////////////////////////////////
 // SQL constants
 //////////////////////////////////////////////////////////////////////////
 
-  const Str selectById :=
+  private static const Str selectById :=
     "select brio from rec where id = @id"
 
-  const Str insertRec :=
+  private static const Str insertRec :=
     "insert into rec (
        id, brio, paths,
        strs, nums, units,
@@ -581,16 +586,16 @@ const class Haven
        @dates::jsonb, @times::jsonb, @dateTimes::jsonb,
        @spec)"
 
-  const Str insertPathRef :=
+  private static const Str insertPathRef :=
     "insert into path_ref
        (source, path_, target)
      values
        (@source, @path, @target)"
 
-  const Str insertRefTag :=
+  private static const Str insertRefTag :=
     "insert into ref_tag (name) values (@name)"
 
-  const Str updateRec :=
+  private static const Str updateRec :=
     "update rec set
        brio      = @brio,
        paths     = @paths,
@@ -605,13 +610,13 @@ const class Haven
        spec      = @spec
      where id = @id"
 
-  const Str deleteRec :=
+  private static const Str deleteRec :=
     "delete from rec where id = @id"
 
-  const Str deletePathRef :=
+  private static const Str deletePathRef :=
     "delete from path_ref where source = @source"
 
-  const Str insertSpec :=
+  private static const Str insertSpec :=
     "insert into spec
        (qname, inherits_from)
      values
@@ -623,7 +628,8 @@ const class Haven
 
   public const Str projName
   internal const HavenPool pool
-  //internal const Log log := Log.get("haven")
+
+  private const Str useSchema
 
   ** refTags is a Set that mirrors the records in the ref_tag table.
   private const ConcurrentMap refTags := ConcurrentMap()
