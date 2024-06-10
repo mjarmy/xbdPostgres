@@ -15,8 +15,9 @@ class FilterAstTest : Test
 {
   Void test()
   {
+    doTest("a",              AstType.markers)
     doTest("fooRef == @abc", AstType.refEq)
-    doTest("x < 42", AstType.adHoc)
+    doTest("x < 42",         AstType.adHoc)
   }
 
   private Void doTest(Str f, AstType t)

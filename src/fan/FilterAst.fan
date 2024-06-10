@@ -29,8 +29,12 @@ internal const class FilterAst
 
     switch (f.type)
     {
+      case FilterType.has:
+        return AstType.markers
+
       case FilterType.eq:
         return visitEq(f.argA, f.argB)
+
       default:
         return AstType.adHoc
     }
@@ -53,6 +57,7 @@ internal const class FilterAst
 
 internal enum class AstType
 {
+  markers,
   refEq,
   adHoc
 }
