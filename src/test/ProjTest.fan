@@ -59,26 +59,30 @@ class ProjTest : Test
   private Void runQueries(SqlConnPool pool, Haven[] havens)
   {
     actorPool := ActorPool {it.name="ProjTest"}
-    actor := Actor(actorPool) |ReadAll r->Int|
+    actors := Actor[,]
+    for (i := 0; i < 10; i++)
     {
-      start := DateTime.now
-      Dict[] recs := r.haven.readAll(r.filter)
-      time := (DateTime.now - start).ticks
-      //echo("${r.haven.projName} ${recs.size}: ${r.filter}")
-      return time
+      actors.add(Actor(actorPool) |ReadAll r->Int|
+      {
+        start := DateTime.now
+        Dict[] recs := r.haven.readAll(r.filter)
+        time := (DateTime.now - start).ticks
+        //echo("${r.haven.projName} ${recs.size}: ${r.filter}")
+        return time
+      })
     }
 
     filters := makeFilters(pool)
 
     elapsed := Future[,]
-    //count := 10_000
-    count := 1000
+    count := 50_000
     for (i := 0; i < count; i++)
     {
+      a := actors[Int.random(0..<actors.size)]
       r := ReadAll {
         it.haven  = havens [Int.random(0..<havens.size)]
         it.filter = filters[Int.random(0..<filters.size)] }
-      elapsed.add(actor.send(r))
+      elapsed.add(a.send(r))
     }
 
     actorPool.stop
@@ -87,8 +91,8 @@ class ProjTest : Test
     Int total := elapsed.reduce(0) |Obj r, Future v->Obj| {
       return (Int)r + (Int)v.get
     }
-    avg := Duration(total/count).ticks
-    Float avgMs := avg.toFloat/1000000.0f
+    avg := Duration(total/count)
+    Float avgMs := avg.ticks.toFloat/1_000_000.0f
 
     echo
     echo("runQueries: avg ${avgMs}ms")
