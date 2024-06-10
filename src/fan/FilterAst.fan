@@ -11,44 +11,65 @@ using haystack
 **
 ** FilterAst
 **
-internal const class FilterAst
+internal class FilterAst
 {
   internal new make(Filter filter)
   {
     this.filter = filter
-
   }
 
   internal AstType type()
   {
-    return visit(filter)
-  }
+    visit(filter)
 
-  private AstType visit(Filter f)
-  {
+    if (other > 0)
+      return AstType.adHoc
 
-    switch (f.type)
-    {
-      case FilterType.has:
-        return AstType.markers
+    else if (markers > 0)
+      return AstType.markers
 
-      case FilterType.eq:
-        return visitEq(f.argA, f.argB)
+    else if (refs == 1)
+      return AstType.ref
 
-      default:
-        return AstType.adHoc
-    }
-  }
+    else if (specs == 1)
+      return AstType.spec
 
-  private AstType visitEq(FilterPath path, Obj arg)
-  {
-    if ((path.size == 1) && (arg is Ref))
-      return AstType.refEq
     else
       return AstType.adHoc
   }
 
-  internal const Filter filter
+  private Void visit(Filter f)
+  {
+    switch (f.type)
+    {
+      // leafs
+      case FilterType.has:
+        markers++
+
+      case FilterType.isSpec:
+        specs++
+
+      case FilterType.eq:
+        if (((f.argA as FilterPath).size == 1) && (f.argB is Ref))
+          refs++
+
+      // compound
+      case FilterType.and:
+        visit(f.argA)
+        visit(f.argB)
+
+      // other
+      default:
+        other++
+    }
+  }
+
+  private const Filter filter
+
+  private Int markers := 0
+  private Int refs    := 0
+  private Int specs   := 0
+  private Int other   := 0
 }
 
 **************************************************************************
@@ -58,6 +79,7 @@ internal const class FilterAst
 internal enum class AstType
 {
   markers,
-  refEq,
+  ref,
+  spec,
   adHoc
 }

@@ -15,14 +15,22 @@ class FilterAstTest : Test
 {
   Void test()
   {
-    doTest("a",              AstType.markers)
-    doTest("fooRef == @abc", AstType.refEq)
-    doTest("x < 42",         AstType.adHoc)
+    doTest("a",                 AstType.markers)
+    doTest("a and b",           AstType.markers)
+    doTest("a and b and c",     AstType.markers)
+
+    doTest("fooRef == @abc",    AstType.ref)
+
+    doTest("foo::Bar",          AstType.spec)
+
+    doTest("a or b",            AstType.adHoc)
+    doTest("a and b and not c", AstType.adHoc)
+    doTest("x < 42",            AstType.adHoc)
   }
 
   private Void doTest(Str f, AstType t)
   {
-    echo(f)
+    echo("---> $f")
     verifyEq(FilterAst(Filter(f)).type, t)
   }
 }
